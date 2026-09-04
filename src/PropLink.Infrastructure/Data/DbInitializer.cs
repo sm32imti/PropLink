@@ -30,6 +30,7 @@ public static class DbInitializer
                 // Automatic schema evolution for new columns and tables
                 string[] migrationQueries = new[]
                 {
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""NidNumber"" character varying(50);",
                     @"ALTER TABLE ""Properties"" ADD COLUMN IF NOT EXISTS ""RejectionReason"" character varying(2000);",
                     @"ALTER TABLE ""Properties"" ADD COLUMN IF NOT EXISTS ""TransactionStatus"" integer DEFAULT 0;",
                     @"ALTER TABLE ""PropertyDocuments"" ADD COLUMN IF NOT EXISTS ""StorageReference"" text DEFAULT '';",
@@ -93,6 +94,7 @@ public static class DbInitializer
                 FullName = "Tamjid (Administrator)",
                 Email = "tamjid@gmail.com",
                 PhoneNumber = "+1-555-0100",
+                NidNumber = "1992837482910",
                 Role = "Admin",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("tamjid123"),
                 CreatedAt = DateTime.UtcNow
@@ -111,12 +113,17 @@ public static class DbInitializer
                 FullName = "Marcus Sterling",
                 Email = "user@proplink.com",
                 PhoneNumber = "+1-555-0144",
+                NidNumber = "1234567890123",
                 Role = "User",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("user123"),
                 CreatedAt = DateTime.UtcNow
             };
 
             context.Users.Add(defaultUser);
+        }
+        else if (string.IsNullOrEmpty(defaultUser.NidNumber))
+        {
+            defaultUser.NidNumber = "1234567890123";
         }
 
         context.SaveChanges();
