@@ -288,23 +288,24 @@ public class PropertyController : Controller
                 CreatedAt = DateTime.UtcNow
             };
 
-            // 1. Upload Gallery Images to Public Cloud Storage
+            // 1. Save Gallery Images directly to Supabase Database (bytea)
             int order = 1;
             if (model.Images != null && model.Images.Any(f => f.Length > 0))
             {
                 foreach (var imgFile in model.Images.Where(f => f.Length > 0))
                 {
-                    using var stream = imgFile.OpenReadStream();
-                    var cloudUrl = await _cloudStorageService.UploadPublicImageAsync(
-                        stream, 
-                        imgFile.FileName, 
-                        imgFile.ContentType ?? "image/jpeg");
+                    using var memoryStream = new MemoryStream();
+                    await imgFile.CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+                    var imageId = Guid.NewGuid();
 
                     property.Images.Add(new PropertyImage
                     {
-                        Id = Guid.NewGuid(),
+                        Id = imageId,
                         PropertyId = property.Id,
-                        ImageUrl = cloudUrl,
+                        FileData = fileBytes,
+                        ContentType = string.IsNullOrWhiteSpace(imgFile.ContentType) ? "image/jpeg" : imgFile.ContentType,
+                        ImageUrl = $"/storage/images/{imageId}",
                         Caption = Path.GetFileNameWithoutExtension(imgFile.FileName),
                         IsPrimary = (order == 1),
                         DisplayOrder = order++,
@@ -327,25 +328,24 @@ public class PropertyController : Controller
                 });
             }
 
-            // 2. Process Seller NID Document
+            // 2. Process Seller NID Document directly to Supabase Database (bytea)
             if (model.NidDocument != null && model.NidDocument.Length > 0)
             {
-                using var nidStream = model.NidDocument.OpenReadStream();
-                var nidCloudRef = await _cloudStorageService.UploadPrivateDocumentAsync(
-                    nidStream, 
-                    model.NidDocument.FileName, 
-                    model.NidDocument.ContentType ?? "application/pdf", 
-                    "nid_documents");
+                using var memoryStream = new MemoryStream();
+                await model.NidDocument.CopyToAsync(memoryStream);
+                var nidBytes = memoryStream.ToArray();
+                var nidDocId = Guid.NewGuid();
 
                 property.Documents.Add(new PropertyDocument
                 {
-                    Id = Guid.NewGuid(),
+                    Id = nidDocId,
                     PropertyId = property.Id,
                     DocumentType = "NID",
                     FileName = model.NidDocument.FileName,
-                    StorageReference = nidCloudRef,
-                    FilePath = nidCloudRef,
-                    ContentType = model.NidDocument.ContentType ?? "application/pdf",
+                    FileData = nidBytes,
+                    StorageReference = $"db://documents/{nidDocId}",
+                    FilePath = $"db://documents/{nidDocId}",
+                    ContentType = string.IsNullOrWhiteSpace(model.NidDocument.ContentType) ? "application/pdf" : model.NidDocument.ContentType,
                     FileSizeBytes = model.NidDocument.Length,
                     Status = VerificationStatus.Pending,
                     UploadedAt = DateTime.UtcNow
@@ -368,25 +368,24 @@ public class PropertyController : Controller
                 });
             }
 
-            // 3. Process Property Deed / Title Document
+            // 3. Process Property Deed / Title Document directly to Supabase Database (bytea)
             if (model.PropertyDocument != null && model.PropertyDocument.Length > 0)
             {
-                using var docStream = model.PropertyDocument.OpenReadStream();
-                var docCloudRef = await _cloudStorageService.UploadPrivateDocumentAsync(
-                    docStream, 
-                    model.PropertyDocument.FileName, 
-                    model.PropertyDocument.ContentType ?? "application/pdf", 
-                    "ownership_deeds");
+                using var memoryStream = new MemoryStream();
+                await model.PropertyDocument.CopyToAsync(memoryStream);
+                var docBytes = memoryStream.ToArray();
+                var deedDocId = Guid.NewGuid();
 
                 property.Documents.Add(new PropertyDocument
                 {
-                    Id = Guid.NewGuid(),
+                    Id = deedDocId,
                     PropertyId = property.Id,
                     DocumentType = "Deed / Title",
                     FileName = model.PropertyDocument.FileName,
-                    StorageReference = docCloudRef,
-                    FilePath = docCloudRef,
-                    ContentType = model.PropertyDocument.ContentType ?? "application/pdf",
+                    FileData = docBytes,
+                    StorageReference = $"db://documents/{deedDocId}",
+                    FilePath = $"db://documents/{deedDocId}",
+                    ContentType = string.IsNullOrWhiteSpace(model.PropertyDocument.ContentType) ? "application/pdf" : model.PropertyDocument.ContentType,
                     FileSizeBytes = model.PropertyDocument.Length,
                     Status = VerificationStatus.Pending,
                     UploadedAt = DateTime.UtcNow
@@ -424,23 +423,43 @@ public class PropertyController : Controller
     }
 
     // ==========================================
-    // PUBLIC CLOUD IMAGE PROXY
+    // PUBLIC IMAGE PROXY (Direct from Database)
     // ==========================================
     [HttpGet]
     [Route("storage/images/{id}")]
     [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetPublicImage(string id)
     {
+        // 1. Try finding by Primary Key GUID in Database
+        if (Guid.TryParse(id, out var imageGuid))
+        {
+            var dbImage = await _context.PropertyImages.FindAsync(imageGuid);
+            if (dbImage?.FileData != null && dbImage.FileData.Length > 0)
+            {
+                return File(dbImage.FileData, dbImage.ContentType ?? "image/jpeg");
+            }
+        }
+
+        // 2. Try finding by ImageUrl or Caption in Database
+        var matchedImage = await _context.PropertyImages
+            .FirstOrDefaultAsync(i => i.ImageUrl.Contains(id) && i.FileData != null && i.FileData.Length > 0);
+        if (matchedImage?.FileData != null)
+        {
+            return File(matchedImage.FileData, matchedImage.ContentType ?? "image/jpeg");
+        }
+
+        // 3. Fallback to Cloud Storage Service if external
         var doc = await _cloudStorageService.GetPrivateDocumentAsync(id);
         if (doc == null)
         {
             doc = await _cloudStorageService.GetPrivateDocumentAsync($"proplink-images/properties/{id}");
         }
-        if (doc == null)
+        if (doc != null)
         {
-            return Redirect("https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80");
+            return File(doc.Value.FileBytes, doc.Value.ContentType, doc.Value.FileName);
         }
-        return File(doc.Value.FileBytes, doc.Value.ContentType, doc.Value.FileName);
+
+        return Redirect("https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80");
     }
 
     // ==========================================
@@ -530,19 +549,24 @@ public class PropertyController : Controller
         property.RejectionReason = null;
         property.AdminReviewNotes = "Resubmitted by seller with revisions on " + DateTime.UtcNow.ToString("g");
 
-        // Optional: Upload additional images to cloud storage
+        // Optional: Upload additional images directly to Supabase Database (bytea)
         if (model.NewImages != null && model.NewImages.Any())
         {
             int order = property.Images.Count + 1;
             foreach (var imgFile in model.NewImages.Where(f => f.Length > 0))
             {
-                using var stream = imgFile.OpenReadStream();
-                var cloudUrl = await _cloudStorageService.UploadPublicImageAsync(stream, imgFile.FileName, imgFile.ContentType);
+                using var memoryStream = new MemoryStream();
+                await imgFile.CopyToAsync(memoryStream);
+                var fileBytes = memoryStream.ToArray();
+                var imageId = Guid.NewGuid();
+
                 property.Images.Add(new PropertyImage
                 {
-                    Id = Guid.NewGuid(),
+                    Id = imageId,
                     PropertyId = property.Id,
-                    ImageUrl = cloudUrl,
+                    FileData = fileBytes,
+                    ContentType = string.IsNullOrWhiteSpace(imgFile.ContentType) ? "image/jpeg" : imgFile.ContentType,
+                    ImageUrl = $"/storage/images/{imageId}",
                     Caption = Path.GetFileNameWithoutExtension(imgFile.FileName),
                     IsPrimary = false,
                     DisplayOrder = order++,
@@ -551,38 +575,38 @@ public class PropertyController : Controller
             }
         }
 
-        // Optional: Replace NID Document
+        // Optional: Replace NID Document directly in Supabase Database (bytea)
         if (model.NewNidDocument != null && model.NewNidDocument.Length > 0)
         {
-            using var stream = model.NewNidDocument.OpenReadStream();
-            var nidCloudRef = await _cloudStorageService.UploadPrivateDocumentAsync(
-                stream, 
-                model.NewNidDocument.FileName, 
-                model.NewNidDocument.ContentType, 
-                "nid_documents");
+            using var memoryStream = new MemoryStream();
+            await model.NewNidDocument.CopyToAsync(memoryStream);
+            var nidBytes = memoryStream.ToArray();
 
             var existingNid = property.Documents.FirstOrDefault(d => d.DocumentType == "NID");
             if (existingNid != null)
             {
                 existingNid.FileName = model.NewNidDocument.FileName;
-                existingNid.StorageReference = nidCloudRef;
-                existingNid.FilePath = nidCloudRef;
-                existingNid.ContentType = model.NewNidDocument.ContentType;
+                existingNid.FileData = nidBytes;
+                existingNid.StorageReference = $"db://documents/{existingNid.Id}";
+                existingNid.FilePath = $"db://documents/{existingNid.Id}";
+                existingNid.ContentType = string.IsNullOrWhiteSpace(model.NewNidDocument.ContentType) ? "application/pdf" : model.NewNidDocument.ContentType;
                 existingNid.FileSizeBytes = model.NewNidDocument.Length;
                 existingNid.Status = VerificationStatus.Pending;
                 existingNid.UploadedAt = DateTime.UtcNow;
             }
             else
             {
+                var docId = Guid.NewGuid();
                 property.Documents.Add(new PropertyDocument
                 {
-                    Id = Guid.NewGuid(),
+                    Id = docId,
                     PropertyId = property.Id,
                     DocumentType = "NID",
                     FileName = model.NewNidDocument.FileName,
-                    StorageReference = nidCloudRef,
-                    FilePath = nidCloudRef,
-                    ContentType = model.NewNidDocument.ContentType,
+                    FileData = nidBytes,
+                    StorageReference = $"db://documents/{docId}",
+                    FilePath = $"db://documents/{docId}",
+                    ContentType = string.IsNullOrWhiteSpace(model.NewNidDocument.ContentType) ? "application/pdf" : model.NewNidDocument.ContentType,
                     FileSizeBytes = model.NewNidDocument.Length,
                     Status = VerificationStatus.Pending,
                     UploadedAt = DateTime.UtcNow
@@ -590,38 +614,38 @@ public class PropertyController : Controller
             }
         }
 
-        // Optional: Replace Deed Document
+        // Optional: Replace Deed Document directly in Supabase Database (bytea)
         if (model.NewPropertyDocument != null && model.NewPropertyDocument.Length > 0)
         {
-            using var stream = model.NewPropertyDocument.OpenReadStream();
-            var docCloudRef = await _cloudStorageService.UploadPrivateDocumentAsync(
-                stream, 
-                model.NewPropertyDocument.FileName, 
-                model.NewPropertyDocument.ContentType, 
-                "ownership_deeds");
+            using var memoryStream = new MemoryStream();
+            await model.NewPropertyDocument.CopyToAsync(memoryStream);
+            var docBytes = memoryStream.ToArray();
 
             var existingDoc = property.Documents.FirstOrDefault(d => d.DocumentType != "NID");
             if (existingDoc != null)
             {
                 existingDoc.FileName = model.NewPropertyDocument.FileName;
-                existingDoc.StorageReference = docCloudRef;
-                existingDoc.FilePath = docCloudRef;
-                existingDoc.ContentType = model.NewPropertyDocument.ContentType;
+                existingDoc.FileData = docBytes;
+                existingDoc.StorageReference = $"db://documents/{existingDoc.Id}";
+                existingDoc.FilePath = $"db://documents/{existingDoc.Id}";
+                existingDoc.ContentType = string.IsNullOrWhiteSpace(model.NewPropertyDocument.ContentType) ? "application/pdf" : model.NewPropertyDocument.ContentType;
                 existingDoc.FileSizeBytes = model.NewPropertyDocument.Length;
                 existingDoc.Status = VerificationStatus.Pending;
                 existingDoc.UploadedAt = DateTime.UtcNow;
             }
             else
             {
+                var docId = Guid.NewGuid();
                 property.Documents.Add(new PropertyDocument
                 {
-                    Id = Guid.NewGuid(),
+                    Id = docId,
                     PropertyId = property.Id,
                     DocumentType = "Deed / Title",
                     FileName = model.NewPropertyDocument.FileName,
-                    StorageReference = docCloudRef,
-                    FilePath = docCloudRef,
-                    ContentType = model.NewPropertyDocument.ContentType,
+                    FileData = docBytes,
+                    StorageReference = $"db://documents/{docId}",
+                    FilePath = $"db://documents/{docId}",
+                    ContentType = string.IsNullOrWhiteSpace(model.NewPropertyDocument.ContentType) ? "application/pdf" : model.NewPropertyDocument.ContentType,
                     FileSizeBytes = model.NewPropertyDocument.Length,
                     Status = VerificationStatus.Pending,
                     UploadedAt = DateTime.UtcNow

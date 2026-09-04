@@ -10,10 +10,11 @@ public class PropertyDocument
     
     public string DocumentType { get; set; } = string.Empty; // e.g., "NID", "Deed", "TaxReceipt", "UtilityBill", "IdentityProof"
     public string FileName { get; set; } = string.Empty;
+    public byte[]? FileData { get; set; } // Physical file bytes stored in database for multi-user sharing
     public string StorageReference { get; set; } = string.Empty; // Cloud storage object key
     public string FilePath { get; set; } = string.Empty; // Optional URI or path reference
     public long FileSizeBytes { get; set; }
-    public string ContentType { get; set; } = string.Empty;
+    public string ContentType { get; set; } = "application/pdf";
 
     public VerificationStatus Status { get; set; } = VerificationStatus.Pending;
     public string? ReviewRemarks { get; set; }

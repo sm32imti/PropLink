@@ -7,6 +7,8 @@ public class PropertyImage
     public Property? Property { get; set; }
     
     public string ImageUrl { get; set; } = string.Empty;
+    public byte[]? FileData { get; set; }
+    public string ContentType { get; set; } = "image/jpeg";
     public string Caption { get; set; } = string.Empty;
     public bool IsPrimary { get; set; }
     public int DisplayOrder { get; set; }
