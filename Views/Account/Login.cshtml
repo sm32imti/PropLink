@@ -1,0 +1,107 @@
+@model PropLink.Web.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In to PropLink";
+}
+
+<section class="auth-section py-5">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-8">
+                <div class="auth-card p-4 p-md-5">
+                    <!-- Brand Icon & Title -->
+                    <div class="text-center mb-4">
+                        <div class="auth-icon-wrapper mx-auto mb-3">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </div>
+                        <h2 class="auth-title">Welcome Back</h2>
+                        <p class="auth-subtitle">Sign in to your verified PropLink account</p>
+                    </div>
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
+                            <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+                            <div>@TempData["SuccessMessage"]</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                            <div asp-validation-summary="All" class="mb-0 small fw-medium"></div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-controller="Account" asp-action="Login" method="post" class="auth-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="ReturnUrl" />
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label small fw-bold">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                                <input asp-for="Email" class="form-control form-control-custom border-start-0 ps-0" placeholder="name@example.com" id="loginEmail" required />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label asp-for="Password" class="form-label small fw-bold mb-1">Password</label>
+                                <a href="#" class="small text-decoration-none text-primary" onclick="alert('Please contact your administrator at tamjid@gmail.com for password resets.'); return false;">Forgot password?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
+                                <input asp-for="Password" class="form-control form-control-custom border-start-0 ps-0" type="password" placeholder="Enter your password" id="loginPassword" required />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" asp-for="RememberMe" id="rememberMe">
+                            <label class="form-check-label small text-muted" for="rememberMe">
+                                Keep me signed in on this device
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>Sign In</span>
+                        </button>
+                    </form>
+
+                    <!-- Quick Fill Demo Accounts -->
+                    <div class="demo-accounts-box mt-4 pt-3 border-top">
+                        <div class="text-center small text-muted fw-bold mb-2">Quick Demo Accounts:</div>
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillCredentials('tamjid@gmail.com', 'tamjid123')">
+                                <i class="bi bi-shield-lock me-1"></i> Admin (Tamjid)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillCredentials('user@proplink.com', 'user123')">
+                                <i class="bi bi-person me-1"></i> Standard User
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4 pt-2">
+                        <p class="small text-muted mb-0">
+                            Don't have an account? 
+                            <a asp-controller="Account" asp-action="Register" class="text-primary fw-bold text-decoration-none">Create an Account</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function fillCredentials(email, password) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+        }
+    </script>
+}

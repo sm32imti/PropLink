@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PropLink.Application/PropLink.Application.csproj" />
+    <Project Path="src/PropLink.Domain/PropLink.Domain.csproj" />
+    <Project Path="src/PropLink.Infrastructure/PropLink.Infrastructure.csproj" />
+  </Folder>
+  <Project Path="PropLink.csproj" />
+</Solution>

@@ -1,0 +1,83 @@
+<nav class="navbar navbar-expand-lg proplink-navbar sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+            <div class="brand-logo-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <span class="brand-name">Prop<span>Link</span></span>
+            <span class="badge badge-trust ms-1">
+                <i class="bi bi-patch-check-fill text-success me-1"></i>Verified
+            </span>
+        </a>
+
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
+                <li class="nav-item">
+                    <a class="nav-link active" asp-controller="Home" asp-action="Index">Explore</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "Home")#featured-listings">Verified Listings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "Home")#how-it-works">How It Works</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "Home")#trust-guarantee">Trust Guarantee</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <div class="dropdown">
+                        <button class="btn btn-outline-custom dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="seller-avatar bg-primary text-white" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                @(string.IsNullOrEmpty(User.Identity.Name) ? "U" : User.Identity.Name.Substring(0, 1))
+                            </div>
+                            <span class="fw-bold">@User.Identity.Name</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                @(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "User")
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+                            <li><h6 class="dropdown-header">Signed in as <strong>@User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value</strong></h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="#"><i class="bi bi-speedometer2 text-danger"></i> Admin Dashboard</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            }
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="#"><i class="bi bi-plus-circle text-success"></i> List a Property</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="#"><i class="bi bi-building text-primary"></i> My Listings</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="#"><i class="bi bi-chat-dots text-secondary"></i> My Inquiries</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="px-2">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2">
+                                        <i class="bi bi-box-arrow-right"></i> Sign Out
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-outline-custom d-flex align-items-center gap-2">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Register</span>
+                    </a>
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary-custom d-flex align-items-center gap-2">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Sign In</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</nav>
