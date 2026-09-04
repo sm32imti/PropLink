@@ -76,8 +76,10 @@ public class AdminController : Controller
                     DocumentType = d.DocumentType,
                     FileName = d.FileName,
                     StorageReference = d.StorageReference,
-                    SecureViewUrl = Url.Action("ViewSecureDocument", "Admin", new { docId = d.Id }) ?? "#",
+                    SecureViewUrl = Url.Action("ViewSecureDocument", "Admin", new { docId = d.Id, download = false }) ?? $"/admin/documents/view-secure?docId={d.Id}&download=false",
+                    SecureDownloadUrl = Url.Action("ViewSecureDocument", "Admin", new { docId = d.Id, download = true }) ?? $"/admin/documents/view-secure?docId={d.Id}&download=true",
                     ContentType = d.ContentType,
+                    FileSizeBytes = d.FileSizeBytes,
                     UploadedAt = d.UploadedAt
                 }).ToList()
             }).ToList()
@@ -167,11 +169,13 @@ public class AdminController : Controller
     }
 
     // ==========================================
-    // 4. SECURE DOCUMENT STREAMING (PROTECTED)
+    // 4. SECURE DOCUMENT PREVIEW & DOWNLOAD (PROTECTED)
     // ==========================================
     [HttpGet]
     [Route("admin/documents/view-secure")]
-    public async Task<IActionResult> ViewSecureDocument(Guid docId)
+    [Route("admin/documents/preview/{docId:guid}")]
+    [Route("admin/documents/download/{docId:guid}")]
+    public async Task<IActionResult> ViewSecureDocument(Guid docId, bool download = false)
     {
         var document = await _context.PropertyDocuments
             .Include(d => d.Property)
@@ -179,7 +183,7 @@ public class AdminController : Controller
 
         if (document == null)
         {
-            return NotFound("Document not found.");
+            return NotFound("Document not found in verification vault.");
         }
 
         var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -192,15 +196,57 @@ public class AdminController : Controller
             return Forbid();
         }
 
-        var fileResult = await _cloudStorageService.GetPrivateDocumentAsync(document.StorageReference);
-        if (fileResult == null)
+        // 1. Direct from Database (Supabase PostgreSQL bytea)
+        if (document.FileData != null && document.FileData.Length > 0)
         {
-            // If placeholder seed or demo file, return a clean simulated PDF preview
-            var samplePdf = System.Text.Encoding.UTF8.GetBytes(
-                $"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n218\n%%EOF\n");
-            return File(samplePdf, "application/pdf", document.FileName);
+            var mimeType = !string.IsNullOrWhiteSpace(document.ContentType) 
+                ? document.ContentType 
+                : (document.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) 
+                    ? "application/pdf" 
+                    : (document.FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) 
+                        ? "image/png" 
+                        : (document.FileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || document.FileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                            ? "image/jpeg" 
+                            : "application/octet-stream")));
+
+            if (download)
+            {
+                return File(document.FileData, mimeType, document.FileName);
+            }
+            else
+            {
+                Response.Headers["Content-Disposition"] = $"inline; filename=\"{document.FileName}\"";
+                return File(document.FileData, mimeType);
+            }
         }
 
-        return File(fileResult.Value.FileBytes, fileResult.Value.ContentType, fileResult.Value.FileName);
+        // 2. Check external cloud storage service
+        var fileResult = await _cloudStorageService.GetPrivateDocumentAsync(document.StorageReference);
+        if (fileResult != null)
+        {
+            if (download)
+            {
+                return File(fileResult.Value.FileBytes, fileResult.Value.ContentType, fileResult.Value.FileName);
+            }
+            else
+            {
+                Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileResult.Value.FileName}\"";
+                return File(fileResult.Value.FileBytes, fileResult.Value.ContentType);
+            }
+        }
+
+        // 3. Fallback for sample seed data
+        var samplePdf = System.Text.Encoding.UTF8.GetBytes(
+            $"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n218\n%%EOF\n");
+
+        if (download)
+        {
+            return File(samplePdf, "application/pdf", document.FileName);
+        }
+        else
+        {
+            Response.Headers["Content-Disposition"] = $"inline; filename=\"{document.FileName}\"";
+            return File(samplePdf, "application/pdf");
+        }
     }
 }

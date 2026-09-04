@@ -55,19 +55,23 @@ public class ProfileController : Controller
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
 
-        var sellingHistory = userProperties.Select(p => new MyPropertyListingViewModel
-        {
-            Id = p.Id,
-            Title = p.Title,
-            Price = p.Price,
-            PropertyType = p.PropertyType,
-            Location = $"{p.City}, {p.State}",
-            MainImageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl
-                           ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
-            VerificationStatus = p.VerificationStatus,
-            TransactionStatus = p.TransactionStatus,
-            RejectionReason = p.RejectionReason,
-            CreatedAt = p.CreatedAt
+        var sellingHistory = userProperties.Select(p => {
+            var coverImg = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
+            return new MyPropertyListingViewModel
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Price = p.Price,
+                PropertyType = p.PropertyType,
+                Location = $"{p.City}, {p.State}",
+                MainImageUrl = !string.IsNullOrWhiteSpace(coverImg) 
+                    ? coverImg 
+                    : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+                VerificationStatus = p.VerificationStatus,
+                TransactionStatus = p.TransactionStatus,
+                RejectionReason = p.RejectionReason,
+                CreatedAt = p.CreatedAt
+            };
         }).ToList();
 
         // 2. Fetch authenticated user's BUYING / TRANSACTION HISTORY
@@ -78,18 +82,22 @@ public class ProfileController : Controller
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
 
-        var buyingHistory = userPurchases.Select(t => new PropertyTransactionViewModel
-        {
-            TransactionId = t.Id,
-            PropertyId = t.PropertyId,
-            PropertyTitle = t.Property?.Title ?? "Property Agreement",
-            PropertyImageUrl = t.Property?.Images.FirstOrDefault()?.ImageUrl 
-                               ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
-            AgreedPrice = t.AgreedPrice,
-            Location = t.Property != null ? $"{t.Property.City}, {t.Property.State}" : "Prime Location",
-            TransactionStatus = t.Status,
-            Notes = t.Notes,
-            TransactionDate = t.TransactionDate
+        var buyingHistory = userPurchases.Select(t => {
+            var propImg = t.Property?.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
+            return new PropertyTransactionViewModel
+            {
+                TransactionId = t.Id,
+                PropertyId = t.PropertyId,
+                PropertyTitle = t.Property?.Title ?? "Property Agreement",
+                PropertyImageUrl = !string.IsNullOrWhiteSpace(propImg)
+                    ? propImg 
+                    : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+                AgreedPrice = t.AgreedPrice,
+                Location = t.Property != null ? $"{t.Property.City}, {t.Property.State}" : "Prime Location",
+                TransactionStatus = t.Status,
+                Notes = t.Notes,
+                TransactionDate = t.TransactionDate
+            };
         }).ToList();
 
         var viewModel = new ProfileViewModel

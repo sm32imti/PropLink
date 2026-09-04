@@ -47,7 +47,7 @@
                             @for (int i = 0; i < Model.ImageUrls.Count; i++)
                             {
                                 <div class="carousel-item @(i == 0 ? "active" : "")">
-                                    <img src="@Model.ImageUrls[i]" class="d-block w-100 property-gallery-main-img" alt="@Model.Title" style="height: 480px; object-fit: cover;" />
+                                    <img src="@Model.ImageUrls[i]" class="d-block w-100 property-gallery-main-img" alt="@Model.Title" style="height: 480px; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                                 </div>
                             }
                         </div>
@@ -69,7 +69,7 @@
                         <div class="p-3 d-flex gap-2 overflow-auto bg-light border-top">
                             @for (int i = 0; i < Model.ImageUrls.Count; i++)
                             {
-                                <img src="@Model.ImageUrls[i]" class="rounded-3 gallery-thumb-img border" style="width: 80px; height: 60px; object-fit: cover; cursor: pointer;" onclick="$('#propertyGalleryCarousel').carousel(@i);" alt="Thumbnail" />
+                                <img src="@Model.ImageUrls[i]" class="rounded-3 gallery-thumb-img border" style="width: 80px; height: 60px; object-fit: cover; cursor: pointer;" onclick="$('#propertyGalleryCarousel').carousel(@i);" alt="Thumbnail" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                             }
                         </div>
                     }

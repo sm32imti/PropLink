@@ -111,7 +111,7 @@
                                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
                                     <div class="row g-0 h-100">
                                         <div class="col-sm-5 position-relative">
-                                            <img src="@item.MainImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 180px;" alt="@item.Title" />
+                                            <img src="@item.MainImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 180px;" alt="@item.Title" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                                             <span class="badge position-absolute top-0 start-0 m-2 @(item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved ? "bg-success" : (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Pending ? "bg-warning text-dark" : "bg-danger"))">
                                                 <i class="bi @(item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved ? "bi-patch-check-fill" : "bi-clock-history") me-1"></i>
                                                 @item.VerificationStatus
@@ -205,7 +205,7 @@
                                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
                                     <div class="row g-0 h-100">
                                         <div class="col-sm-5 position-relative">
-                                            <img src="@purchase.PropertyImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 180px;" alt="@purchase.PropertyTitle" />
+                                            <img src="@purchase.PropertyImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 180px;" alt="@purchase.PropertyTitle" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                                             <span class="badge position-absolute top-0 start-0 m-2 bg-success">
                                                 <i class="bi bi-shield-check me-1"></i> Verified
                                             </span>

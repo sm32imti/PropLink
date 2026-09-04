@@ -129,7 +129,7 @@
                                         @foreach (var img in item.ImageUrls)
                                         {
                                             <a href="@img" target="_blank" title="View full image">
-                                                <img src="@img" class="rounded-3 border shadow-sm" style="width: 90px; height: 65px; object-fit: cover;" alt="Photo" />
+                                                <img src="@img" class="rounded-3 border shadow-sm" style="width: 90px; height: 65px; object-fit: cover;" alt="Photo" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                                             </a>
                                         }
                                     </div>
@@ -161,17 +161,25 @@
                                         <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
                                             @foreach (var doc in item.Documents)
                                             {
-                                                <li class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-white border">
-                                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
-                                                        <i class="bi @(doc.DocumentType == "NID" ? "bi-person-badge text-primary" : "bi-file-earmark-text text-success") fs-5"></i>
+                                                <li class="d-flex flex-wrap justify-content-between align-items-center p-2 rounded-3 bg-white border gap-2">
+                                                    <div class="d-flex align-items-center gap-2 overflow-hidden flex-grow-1" style="min-width: 140px;">
+                                                        <i class="bi @(doc.DocumentType == "NID" ? "bi-person-badge text-primary" : "bi-file-earmark-text text-success") fs-4"></i>
                                                         <div class="text-truncate">
                                                             <strong class="d-block small text-dark">@doc.DocumentType</strong>
-                                                            <span class="small text-muted text-truncate d-block" style="max-width: 160px;">@doc.FileName</span>
+                                                            <span class="small text-muted text-truncate d-block" style="max-width: 150px;" title="@doc.FileName">@doc.FileName</span>
                                                         </div>
                                                     </div>
-                                                    <a href="@doc.SecureViewUrl" target="_blank" class="btn btn-sm btn-outline-primary px-3 py-1 d-flex align-items-center gap-1">
-                                                        <i class="bi bi-eye"></i> View
-                                                    </a>
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        <!-- PREVIEW BUTTON (Opens Modal Viewer) -->
+                                                        <button type="button" class="btn btn-sm btn-primary-custom px-2 py-1 d-flex align-items-center gap-1"
+                                                                onclick="openDocumentViewer('@doc.SecureViewUrl', '@doc.SecureDownloadUrl', '@doc.DocumentType: @doc.FileName', '@doc.FileName')">
+                                                            <i class="bi bi-eye"></i> Preview
+                                                        </button>
+                                                        <!-- DOWNLOAD BUTTON -->
+                                                        <a href="@doc.SecureDownloadUrl" class="btn btn-sm btn-outline-secondary px-2 py-1 d-flex align-items-center gap-1" title="Download directly to your device">
+                                                            <i class="bi bi-download"></i> Download
+                                                        </a>
+                                                    </div>
                                                 </li>
                                             }
                                         </ul>
@@ -251,3 +259,58 @@
         }
     </div>
 </div>
+
+<!-- ADMIN DOCUMENT PREVIEW MODAL (Full Screen / Responsive Viewer) -->
+<div class="modal fade" id="docViewerModal" tabindex="-1" aria-labelledby="docViewerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">
+        <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+            <div class="modal-header bg-dark text-white border-0 py-3 px-4">
+                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                    <i class="bi bi-file-earmark-lock-fill text-warning fs-4"></i>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="docViewerModalLabel">Document Verification Vault</h5>
+                        <span class="small text-light opacity-75" id="docViewerFileName">Confidential Property Document</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a id="docViewerDownloadBtn" href="#" class="btn btn-sm btn-success d-flex align-items-center gap-1 fw-semibold">
+                        <i class="bi bi-download"></i> Download File
+                    </a>
+                    <a id="docViewerNewTabBtn" href="#" target="_blank" class="btn btn-sm btn-outline-light d-flex align-items-center gap-1">
+                        <i class="bi bi-box-arrow-up-right"></i> Open in New Tab
+                    </a>
+                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 bg-light position-relative" style="height: 75vh; min-height: 500px;">
+                <div id="docViewerLoading" class="position-absolute top-50 start-50 translate-middle text-center">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="small text-muted mb-0">Loading confidential document from Supabase vault...</p>
+                </div>
+                <iframe id="docViewerFrame" src="" class="w-100 h-100 border-0" style="display: block;" onload="document.getElementById('docViewerLoading').style.display='none';"></iframe>
+            </div>
+            <div class="modal-footer bg-white border-top py-2 px-4 d-flex justify-content-between">
+                <span class="small text-muted"><i class="bi bi-shield-check text-success me-1"></i> PropLink Legal Compliance Security Active</span>
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Close Viewer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openDocumentViewer(viewUrl, downloadUrl, title, fileName) {
+        document.getElementById('docViewerModalLabel').innerText = title;
+        document.getElementById('docViewerFileName').innerText = fileName || 'Legal Verification Document';
+        document.getElementById('docViewerDownloadBtn').href = downloadUrl;
+        document.getElementById('docViewerNewTabBtn').href = viewUrl;
+        
+        var loading = document.getElementById('docViewerLoading');
+        if (loading) loading.style.display = 'block';
+        
+        var iframe = document.getElementById('docViewerFrame');
+        iframe.src = viewUrl;
+        
+        var modal = new bootstrap.Modal(document.getElementById('docViewerModal'));
+        modal.show();
+    }
+</script>
