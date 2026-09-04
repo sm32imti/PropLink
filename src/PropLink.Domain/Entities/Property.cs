@@ -23,7 +23,9 @@ public class Property
 
     // Statuses
     public ListingStatus ListingStatus { get; set; } = ListingStatus.Draft;
-    public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.NotSubmitted;
+    public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Pending;
+    public TransactionStatus TransactionStatus { get; set; } = TransactionStatus.Available;
+    public string? RejectionReason { get; set; }
     public string? AdminReviewNotes { get; set; }
     public DateTime? ReviewedAt { get; set; }
 
@@ -37,4 +39,5 @@ public class Property
     public ICollection<PropertyImage> Images { get; set; } = new List<PropertyImage>();
     public ICollection<PropertyDocument> Documents { get; set; } = new List<PropertyDocument>();
     public ICollection<Inquiry> Inquiries { get; set; } = new List<Inquiry>();
+    public ICollection<PropertyTransaction> Transactions { get; set; } = new List<PropertyTransaction>();
 }

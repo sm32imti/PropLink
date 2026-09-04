@@ -17,7 +17,9 @@ public class PropertyCardViewModel
     public int Bathrooms { get; set; }
     public double SquareFeet { get; set; }
     public string ImageUrl { get; set; } = string.Empty;
-    public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Verified;
+    public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Approved;
+    public TransactionStatus TransactionStatus { get; set; } = TransactionStatus.Available;
+    public string? RejectionReason { get; set; }
     public string SellerName { get; set; } = string.Empty;
     public string TimeAgo { get; set; } = "Recently added";
 }
