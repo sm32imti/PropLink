@@ -21,7 +21,11 @@
                 <span class="text-truncate">@Model.Address, @Model.City, @Model.State</span>
             </div>
 
-            <h5 class="property-title text-truncate mb-2" title="@Model.Title">@Model.Title</h5>
+            <h5 class="property-title text-truncate mb-2" title="@Model.Title">
+                <a asp-controller="Property" asp-action="Details" asp-route-id="@Model.Id" class="text-dark text-decoration-none">
+                    @Model.Title
+                </a>
+            </h5>
             <p class="property-description line-clamp-2 mb-3">@Model.Description</p>
 
             <div class="property-specs-grid mb-3">
@@ -52,9 +56,9 @@
                         <div class="time-ago">@Model.TimeAgo</div>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-outline-primary-custom" onclick="alert('Viewing verified documentation and contact info for @Model.Title')">
+                <a asp-controller="Property" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary-custom">
                     View Details
-                </button>
+                </a>
             </div>
         </div>
     </div>

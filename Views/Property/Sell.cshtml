@@ -1,0 +1,274 @@
+@model PropLink.Web.Models.SellPropertyViewModel
+@{
+    ViewData["Title"] = "Sell Your Property with Verification";
+}
+
+<div class="sell-property-page py-5">
+    <div class="container py-3">
+        <!-- Header Banner -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10 text-center">
+                <div class="badge badge-trust mb-3 px-3 py-2">
+                    <i class="bi bi-shield-fill-check text-emerald me-1"></i> Admin-Audited Real Estate Marketplace
+                </div>
+                <h1 class="h2 fw-bold mb-2">Sell Your Property on <span class="gradient-text">PropLink</span></h1>
+                <p class="text-muted max-w-700 mx-auto mb-0">
+                    Listings with verified title deeds and authenticated seller NID receive higher engagement and connect directly with serious buyers.
+                </p>
+            </div>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-10">
+                    <div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                            <h6 class="fw-bold mb-0">Please correct the following errors:</h6>
+                        </div>
+                        <div asp-validation-summary="All" class="small mb-0"></div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <form asp-controller="Property" asp-action="Sell" method="post" enctype="multipart/form-data" class="sell-property-form" id="sellPropertyForm">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Step 1: Property Information -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
+                        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                            <div class="step-badge-num fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: var(--emerald-gradient); color: #fff;">
+                                1
+                            </div>
+                            <div>
+                                <h4 class="h5 fw-bold mb-0">Property Specifications</h4>
+                                <p class="small text-muted mb-0">Enter the essential dimensions, category, and pricing.</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="Title" class="form-label small fw-bold">Property Title <span class="text-danger">*</span></label>
+                                <input asp-for="Title" class="form-control form-control-custom" placeholder="e.g. Modern Sunset Luxury Villa with Infinity Pool" required />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PropertyType" class="form-label small fw-bold">Property Type <span class="text-danger">*</span></label>
+                                <select asp-for="PropertyType" class="form-select form-control-custom">
+                                    @foreach (PropLink.Domain.Enums.PropertyType type in Enum.GetValues(typeof(PropLink.Domain.Enums.PropertyType)))
+                                    {
+                                        <option value="@type">@type</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="PropertyType" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Price" class="form-label small fw-bold">Asking Price ($) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0 fw-bold">$</span>
+                                    <input asp-for="Price" type="number" step="any" min="1" class="form-control form-control-custom border-start-0" placeholder="e.g. 750000" required />
+                                </div>
+                                <span asp-validation-for="Price" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="SquareFeet" class="form-label small fw-bold">Square Footage (Sq Ft) <span class="text-danger">*</span></label>
+                                <input asp-for="SquareFeet" type="number" step="any" min="1" class="form-control form-control-custom" placeholder="e.g. 2800" required />
+                                <span asp-validation-for="SquareFeet" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Bedrooms" class="form-label small fw-bold">Bedrooms</label>
+                                <input asp-for="Bedrooms" type="number" min="0" max="50" class="form-control form-control-custom" placeholder="e.g. 4" />
+                                <span asp-validation-for="Bedrooms" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Bathrooms" class="form-label small fw-bold">Bathrooms</label>
+                                <input asp-for="Bathrooms" type="number" min="0" max="50" class="form-control form-control-custom" placeholder="e.g. 3" />
+                                <span asp-validation-for="Bathrooms" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label small fw-bold">Detailed Description <span class="text-danger">*</span></label>
+                                <textarea asp-for="Description" class="form-control form-control-custom" rows="5" placeholder="Highlight key architectural features, renovations, smart appliances, parking, neighborhood amenities..." required></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2 pt-3 border-top">
+                            <div class="col-12">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-geo-alt text-emerald me-1"></i> Location Details</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Address" class="form-label small fw-bold">Street Address <span class="text-danger">*</span></label>
+                                <input asp-for="Address" class="form-control form-control-custom" placeholder="e.g. 742 Evergreen Terrace" required />
+                                <span asp-validation-for="Address" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="City" class="form-label small fw-bold">City <span class="text-danger">*</span></label>
+                                <input asp-for="City" class="form-control form-control-custom" placeholder="e.g. Beverly Hills" required />
+                                <span asp-validation-for="City" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="State" class="form-label small fw-bold">State / Region <span class="text-danger">*</span></label>
+                                <input asp-for="State" class="form-control form-control-custom" placeholder="e.g. CA" required />
+                                <span asp-validation-for="State" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ZipCode" class="form-label small fw-bold">Zip Code <span class="text-danger">*</span></label>
+                                <input asp-for="ZipCode" class="form-control form-control-custom" placeholder="e.g. 90210" required />
+                                <span asp-validation-for="ZipCode" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Property Images (Global Cloud Storage) -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
+                        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                            <div class="step-badge-num fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: var(--emerald-gradient); color: #fff;">
+                                2
+                            </div>
+                            <div>
+                                <h4 class="h5 fw-bold mb-0">Property Photos & Gallery</h4>
+                                <p class="small text-muted mb-0">Upload high-resolution images stored securely in our cloud repository.</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Select Photos (Multiple allowed)</label>
+                            <input type="file" asp-for="Images" multiple accept="image/*" class="form-control form-control-custom" id="propertyImagesInput" onchange="previewImages(this)" />
+                            <div class="form-text small text-muted">Supports JPG, PNG, WEBP.</div>
+                        </div>
+
+                        <!-- Live Image Preview Container -->
+                        <div id="imagePreviewContainer" class="d-flex flex-wrap gap-3 mt-3"></div>
+                    </div>
+
+                    <!-- Step 3: Mandatory Verification Documents (Private Cloud Storage) -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white border-start border-emerald border-4">
+                        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                            <div class="step-badge-num fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: var(--emerald-gradient); color: #fff;">
+                                3
+                            </div>
+                            <div>
+                                <h4 class="h5 fw-bold mb-0 text-emerald"><i class="bi bi-shield-lock-fill me-1"></i> Mandatory Verification Documents</h4>
+                                <p class="small text-muted mb-0">Stored securely in private cloud storage. Inaccessible to the public.</p>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning small mb-4 rounded-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-lock-fill fs-5 flex-shrink-0 text-warning"></i>
+                            <div>
+                                <strong>Privacy Notice:</strong> Your NID and Property Deed are confidential documents used solely by PropLink administrators for authentication. They will NEVER be publicly displayed.
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Seller NID Document -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-4 border h-100">
+                                    <label asp-for="NidDocument" class="form-label small fw-bold d-flex align-items-center justify-content-between">
+                                        <span><i class="bi bi-person-badge text-emerald me-1"></i> Seller National ID (NID) <span class="text-danger">*</span></span>
+                                        <span class="badge bg-danger-subtle text-danger">Mandatory</span>
+                                    </label>
+                                    <input type="file" asp-for="NidDocument" accept=".pdf,.jpg,.jpeg,.png" class="form-control form-control-custom bg-white" />
+                                    <span asp-validation-for="NidDocument" class="text-danger small d-block mt-1"></span>
+                                    <div class="form-text small text-muted mt-2">
+                                        Upload a scanned copy of your government-issued ID, Passport, or NID Card (PDF/PNG/JPG).
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Property Ownership Deed -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-4 border h-100">
+                                    <label asp-for="PropertyDocument" class="form-label small fw-bold d-flex align-items-center justify-content-between">
+                                        <span><i class="bi bi-file-earmark-text text-emerald me-1"></i> Title Deed / Ownership Proof <span class="text-danger">*</span></span>
+                                        <span class="badge bg-danger-subtle text-danger">Mandatory</span>
+                                    </label>
+                                    <input type="file" asp-for="PropertyDocument" accept=".pdf,.jpg,.jpeg,.png" class="form-control form-control-custom bg-white" />
+                                    <span asp-validation-for="PropertyDocument" class="text-danger small d-block mt-1"></span>
+                                    <div class="form-text small text-muted mt-2">
+                                        Upload registered Title Deed, Municipal Tax Slip, or Certificate of Ownership (PDF/PNG/JPG).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submission Confirmation & Status Notice -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-center">
+                        <i class="bi bi-clock-history fs-2 text-warning mb-2"></i>
+                        <h5 class="fw-bold mb-1">Post-Submission Verification Status</h5>
+                        <p class="small text-muted max-w-700 mx-auto mb-3">
+                            Upon clicking "Submit for Verification", your listing status will be set to <strong class="text-warning">PENDING</strong> and queued for administrator audit. It will be made publicly visible once approved.
+                        </p>
+                        <div>
+                            <button type="submit" class="btn btn-primary-custom px-5 py-3 fw-bold fs-6 d-inline-flex align-items-center gap-2" id="submitBtn">
+                                <i class="bi bi-cloud-arrow-up-fill"></i>
+                                <span>Submit Property for Admin Verification</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function previewImages(input) {
+            const container = document.getElementById('imagePreviewContainer');
+            container.innerHTML = '';
+
+            if (input.files) {
+                Array.from(input.files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'position-relative border rounded-3 overflow-hidden shadow-sm';
+                        wrapper.style.width = '120px';
+                        wrapper.style.height = '90px';
+
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+
+                        const badge = document.createElement('span');
+                        badge.className = 'position-absolute top-0 start-0 bg-dark text-white px-1 py-0 small';
+                        badge.style.fontSize = '0.65rem';
+                        badge.innerText = index === 0 ? 'Primary' : '#' + (index + 1);
+
+                        wrapper.appendChild(img);
+                        wrapper.appendChild(badge);
+                        container.appendChild(wrapper);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        document.getElementById('sellPropertyForm').addEventListener('submit', function(e) {
+            // Check form validity before modifying UI
+            if (this.checkValidity && !this.checkValidity()) {
+                return;
+            }
+            const btn = document.getElementById('submitBtn');
+            if (btn) {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Uploading & Submitting...';
+            }
+        });
+    </script>
+}

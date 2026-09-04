@@ -1,0 +1,188 @@
+@model PropLink.Web.Models.PropertiesIndexViewModel
+@{
+    ViewData["Title"] = "Verified Properties Catalog";
+}
+
+<div class="properties-catalog-page py-5">
+    <div class="container py-3">
+        <!-- Breadcrumb & Header -->
+        <div class="row align-items-center mb-4">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb small mb-2">
+                        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+                        <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Verified Properties</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 fw-bold mb-1">Browse <span class="gradient-text">Verified Listings</span></h1>
+                <p class="text-muted mb-0">Every property shown here has passed legal document and title verification.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a asp-controller="Property" asp-action="Sell" class="btn btn-primary-custom d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Sell Your Property</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+            <form method="get" asp-controller="Property" asp-action="Index" class="row g-3 align-items-center">
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-search me-1"></i> Keywords</label>
+                    <input type="text" name="searchQuery" value="@Model.SearchQuery" class="form-control form-control-custom" placeholder="Search by title, address, city..." />
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-building me-1"></i> Type</label>
+                    <select name="propertyType" class="form-select form-control-custom">
+                        <option value="">All Types</option>
+                        @foreach (PropLink.Domain.Enums.PropertyType type in Enum.GetValues(typeof(PropLink.Domain.Enums.PropertyType)))
+                        {
+                            <option value="@type" selected="@(Model.PropertyType == type ? "selected" : null)">@type</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> City</label>
+                    <input type="text" name="city" value="@Model.City" class="form-control form-control-custom" placeholder="e.g. Beverly Hills" />
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-currency-dollar me-1"></i> Max Price</label>
+                    <select name="maxPrice" class="form-select form-control-custom">
+                        <option value="">Any Price</option>
+                        <option value="500000" selected="@(Model.MaxPrice == 500000 ? "selected" : null)">Up to $500k</option>
+                        <option value="1000000" selected="@(Model.MaxPrice == 1000000 ? "selected" : null)">Up to $1.0M</option>
+                        <option value="2000000" selected="@(Model.MaxPrice == 2000000 ? "selected" : null)">Up to $2.0M</option>
+                        <option value="5000000" selected="@(Model.MaxPrice == 5000000 ? "selected" : null)">Up to $5.0M</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-12 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-search flex-grow-1 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-funnel"></i> Apply Filter
+                    </button>
+                    <a asp-controller="Property" asp-action="Index" class="btn btn-outline-secondary px-3" title="Clear Filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Catalog Results Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-muted small fw-semibold">
+                Showing <strong>@Model.Properties.Count</strong> of <strong>@Model.TotalItems</strong> verified properties
+            </span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="small text-muted d-none d-sm-inline">Sort by:</span>
+                <select class="form-select form-select-sm form-control-custom" style="width: auto;" onchange="location = this.value;">
+                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = "newest" })" selected="@(Model.SortBy != "price_asc" && Model.SortBy != "price_desc" ? "selected" : null)">Newest Listed</option>
+                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = "price_asc" })" selected="@(Model.SortBy == "price_asc" ? "selected" : null)">Price: Low to High</option>
+                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = "price_desc" })" selected="@(Model.SortBy == "price_desc" ? "selected" : null)">Price: High to Low</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Property Grid -->
+        @if (Model.Properties.Any())
+        {
+            <div class="row g-4 mb-5">
+                @foreach (var property in Model.Properties)
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <div class="property-card h-100 position-relative d-flex flex-column">
+                            <div class="property-image-wrapper">
+                                <img src="@property.ImageUrl" alt="@property.Title" class="property-img" loading="lazy" />
+                                
+                                <div class="property-badges">
+                                    <span class="badge badge-verified">
+                                        <i class="bi bi-patch-check-fill me-1"></i> Verified
+                                    </span>
+                                    <span class="badge badge-type ms-1">@property.PropertyType</span>
+                                </div>
+
+                                <div class="property-price-tag">
+                                    @property.FormattedPrice
+                                </div>
+                            </div>
+
+                            <div class="property-body d-flex flex-column flex-grow-1 p-3">
+                                <div class="property-location text-muted small mb-1">
+                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>@property.City, @property.State
+                                </div>
+                                <h3 class="property-title h6 fw-bold mb-2">
+                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@property.Id" class="text-dark text-decoration-none stretched-link">
+                                        @property.Title
+                                    </a>
+                                </h3>
+                                <p class="property-desc text-muted small mb-3 flex-grow-1">
+                                    @(property.Description.Length > 90 ? property.Description.Substring(0, 90) + "..." : property.Description)
+                                </p>
+
+                                <div class="property-specs d-flex justify-content-between py-2 border-top border-bottom small text-muted mb-3">
+                                    <span><i class="bi bi-door-open me-1 text-primary"></i>@property.Bedrooms Beds</span>
+                                    <span><i class="bi bi-water me-1 text-primary"></i>@property.Bathrooms Baths</span>
+                                    <span><i class="bi bi-bounding-box-circles me-1 text-primary"></i>@property.SquareFeet.ToString("N0") sqft</span>
+                                </div>
+
+                                <div class="property-footer d-flex justify-content-between align-items-center small">
+                                    <div class="seller-info d-flex align-items-center gap-1 text-muted">
+                                        <i class="bi bi-person-check-fill text-success"></i>
+                                        <span>@property.SellerName</span>
+                                    </div>
+                                    <span class="text-muted">@property.TimeAgo</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Server-side Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center gap-1">
+                        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link rounded-3" href="@Url.Action("Index", new { page = Model.CurrentPage - 1, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = Model.SortBy })">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link rounded-3" href="@Url.Action("Index", new { page = i, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = Model.SortBy })">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                            <a class="page-link rounded-3" href="@Url.Action("Index", new { page = Model.CurrentPage + 1, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = Model.SortBy })">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3">
+                <div class="empty-state-icon mx-auto text-muted mb-3" style="font-size: 3.5rem;">
+                    <i class="bi bi-houses"></i>
+                </div>
+                <h4 class="fw-bold mb-2">No Verified Properties Found</h4>
+                <p class="text-muted max-w-500 mx-auto mb-4">
+                    We couldn't find any approved properties matching your current filter criteria. Try adjusting your search query or price limit.
+                </p>
+                <div>
+                    <a asp-controller="Property" asp-action="Index" class="btn btn-primary-custom px-4 py-2">
+                        <i class="bi bi-arrow-repeat me-1"></i> Reset Filters
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>

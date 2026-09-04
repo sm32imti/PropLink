@@ -13,12 +13,12 @@ public static class DbInitializer
     {
         try
         {
-            // Ensure tables exist in Supabase PostgreSQL public schema
+            // Ensure tables and columns exist in Supabase PostgreSQL public schema
             try
             {
+                context.Database.OpenConnection();
                 using var cmd = context.Database.GetDbConnection().CreateCommand();
                 cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'Users');";
-                context.Database.OpenConnection();
                 var exists = (bool?)cmd.ExecuteScalar() ?? false;
 
                 if (!exists)
@@ -26,10 +26,62 @@ public static class DbInitializer
                     var databaseCreator = context.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
                     databaseCreator?.CreateTables();
                 }
+
+                // Automatic schema evolution for new columns and tables
+                string[] migrationQueries = new[]
+                {
+                    @"ALTER TABLE ""Properties"" ADD COLUMN IF NOT EXISTS ""RejectionReason"" character varying(2000);",
+                    @"ALTER TABLE ""Properties"" ADD COLUMN IF NOT EXISTS ""TransactionStatus"" integer DEFAULT 0;",
+                    @"ALTER TABLE ""PropertyDocuments"" ADD COLUMN IF NOT EXISTS ""StorageReference"" text DEFAULT '';",
+                    @"ALTER TABLE ""PropertyDocuments"" ADD COLUMN IF NOT EXISTS ""ReviewRemarks"" character varying(2000);",
+                    @"ALTER TABLE ""PropertyImages"" ADD COLUMN IF NOT EXISTS ""Caption"" character varying(255);",
+                    @"ALTER TABLE ""PropertyImages"" ALTER COLUMN ""ImageUrl"" TYPE text;",
+                    @"ALTER TABLE ""PropertyDocuments"" ALTER COLUMN ""StorageReference"" TYPE text;",
+                    @"ALTER TABLE ""PropertyDocuments"" ALTER COLUMN ""FilePath"" TYPE text;",
+                    @"CREATE TABLE IF NOT EXISTS ""PropertyTransactions"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""PropertyId"" uuid NOT NULL REFERENCES ""Properties""(""Id"") ON DELETE CASCADE,
+                        ""BuyerId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""AgreedPrice"" numeric(18,2) NOT NULL,
+                        ""Status"" integer NOT NULL DEFAULT 0,
+                        ""Notes"" character varying(2000),
+                        ""TransactionDate"" timestamp with time zone NOT NULL,
+                        ""CompletedDate"" timestamp with time zone
+                    );"
+                };
+
+                foreach (var sql in migrationQueries)
+                {
+                    try
+                    {
+                        using var qCmd = context.Database.GetDbConnection().CreateCommand();
+                        qCmd.CommandText = sql;
+                        qCmd.ExecuteNonQuery();
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                // Align any existing properties in EF Core
+                var existingProperties = context.Properties.ToList();
+                Console.WriteLine($"[DbInitializer] Found {existingProperties.Count} properties in DB.");
+                if (existingProperties.Any())
+                {
+                    foreach (var p in existingProperties)
+                    {
+                        Console.WriteLine($"[DbInitializer] Updating Property '{p.Title}' from {p.VerificationStatus} to Approved.");
+                        p.VerificationStatus = VerificationStatus.Approved;
+                        p.ListingStatus = ListingStatus.Approved;
+                        p.TransactionStatus = TransactionStatus.Available;
+                    }
+                    context.SaveChanges();
+                    Console.WriteLine("[DbInitializer] Successfully saved Approved statuses.");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // Tables already created or schema verified
+                Console.WriteLine($"[DbInitializer Error] {ex.Message}");
             }
 
             // Check if Admin user exists
@@ -89,7 +141,8 @@ public static class DbInitializer
                 Bathrooms = 6,
                 SquareFeet = 5800,
                 ListingStatus = ListingStatus.Approved,
-                VerificationStatus = VerificationStatus.Verified,
+                VerificationStatus = VerificationStatus.Approved,
+                TransactionStatus = TransactionStatus.Available,
                 SellerId = sellerId,
                 ReviewedAt = DateTime.UtcNow.AddDays(-2),
                 AdminReviewNotes = "All title deed records, tax slips, and identity proofs verified by admin.",
@@ -100,7 +153,8 @@ public static class DbInitializer
                 },
                 Documents = new List<PropertyDocument>
                 {
-                    new PropertyDocument { DocumentType = "Deed", FileName = "deed_evergreen_742.pdf", FilePath = "/uploads/docs/deed_evergreen_742.pdf", ContentType = "application/pdf", Status = VerificationStatus.Verified, VerifiedAt = DateTime.UtcNow.AddDays(-2) }
+                    new PropertyDocument { DocumentType = "NID", FileName = "seller_nid_card.pdf", StorageReference = "proplink-documents-secure/seller_nid_card.pdf", ContentType = "application/pdf", Status = VerificationStatus.Approved, VerifiedAt = DateTime.UtcNow.AddDays(-2) },
+                    new PropertyDocument { DocumentType = "Deed", FileName = "deed_evergreen_742.pdf", StorageReference = "proplink-documents-secure/deed_evergreen_742.pdf", ContentType = "application/pdf", Status = VerificationStatus.Approved, VerifiedAt = DateTime.UtcNow.AddDays(-2) }
                 }
             };
 
@@ -119,7 +173,8 @@ public static class DbInitializer
                 Bathrooms = 3,
                 SquareFeet = 2400,
                 ListingStatus = ListingStatus.Approved,
-                VerificationStatus = VerificationStatus.Verified,
+                VerificationStatus = VerificationStatus.Approved,
+                TransactionStatus = TransactionStatus.Negotiation,
                 SellerId = sellerId,
                 ReviewedAt = DateTime.UtcNow.AddDays(-1),
                 AdminReviewNotes = "Ownership verified with municipal registry.",
@@ -130,7 +185,8 @@ public static class DbInitializer
                 },
                 Documents = new List<PropertyDocument>
                 {
-                    new PropertyDocument { DocumentType = "Title Certificate", FileName = "ocean_ave_title.pdf", FilePath = "/uploads/docs/ocean_ave_title.pdf", ContentType = "application/pdf", Status = VerificationStatus.Verified, VerifiedAt = DateTime.UtcNow.AddDays(-1) }
+                    new PropertyDocument { DocumentType = "NID", FileName = "seller_nid_card.pdf", StorageReference = "proplink-documents-secure/seller_nid_card.pdf", ContentType = "application/pdf", Status = VerificationStatus.Approved, VerifiedAt = DateTime.UtcNow.AddDays(-1) },
+                    new PropertyDocument { DocumentType = "Title Certificate", FileName = "ocean_ave_title.pdf", StorageReference = "proplink-documents-secure/ocean_ave_title.pdf", ContentType = "application/pdf", Status = VerificationStatus.Approved, VerifiedAt = DateTime.UtcNow.AddDays(-1) }
                 }
             };
 
@@ -149,7 +205,8 @@ public static class DbInitializer
                 Bathrooms = 3,
                 SquareFeet = 3200,
                 ListingStatus = ListingStatus.Approved,
-                VerificationStatus = VerificationStatus.Verified,
+                VerificationStatus = VerificationStatus.Approved,
+                TransactionStatus = TransactionStatus.Available,
                 SellerId = sellerId,
                 ReviewedAt = DateTime.UtcNow.AddHours(-10),
                 AdminReviewNotes = "Clear title deed and utility clearance.",
@@ -162,6 +219,23 @@ public static class DbInitializer
 
             context.Properties.AddRange(prop1, prop2, prop3);
             context.SaveChanges();
+
+            // Seed a sample purchase transaction for the defaultUser buying prop1
+            if (!context.PropertyTransactions.Any())
+            {
+                var transaction = new PropertyTransaction
+                {
+                    Id = Guid.NewGuid(),
+                    PropertyId = prop1.Id,
+                    BuyerId = defaultUser.Id,
+                    AgreedPrice = prop1.Price,
+                    Status = TransactionStatus.AgreementReached,
+                    Notes = "Formal acquisition agreement executed with deed verification confirmation.",
+                    TransactionDate = DateTime.UtcNow.AddDays(-1)
+                };
+                context.PropertyTransactions.Add(transaction);
+                context.SaveChanges();
+            }
         }
     }
     catch

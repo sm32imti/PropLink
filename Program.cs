@@ -36,6 +36,9 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.C
         options.SlidingExpiration = true;
     });
 
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<PropLink.Application.Common.Interfaces.ICloudStorageService, PropLink.Infrastructure.Services.CloudStorageService>();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

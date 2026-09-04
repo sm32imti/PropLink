@@ -13,5 +13,6 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Property> Properties { get; set; } = new List<Property>();
+    public ICollection<PropertyTransaction> Purchases { get; set; } = new List<PropertyTransaction>();
     public ICollection<Inquiry> Inquiries { get; set; } = new List<Inquiry>();
 }

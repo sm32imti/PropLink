@@ -1,0 +1,177 @@
+@model PropLink.Web.Models.EditPropertyViewModel
+@{
+    ViewData["Title"] = "Edit & Resubmit Property";
+}
+
+<div class="edit-property-page py-5">
+    <div class="container py-3">
+        <!-- Breadcrumb & Header -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb small mb-2">
+                        <li class="breadcrumb-item"><a asp-controller="Profile" asp-action="Index" class="text-decoration-none text-muted">My Profile</a></li>
+                        <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Edit Property</li>
+                    </ol>
+                </nav>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h1 class="h2 fw-bold mb-1">Edit & Resubmit <span class="gradient-text">Listing</span></h1>
+                        <p class="text-muted mb-0">Update your specifications or documentation to clear review remarks.</p>
+                    </div>
+                    <span class="badge @(Model.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Rejected ? "bg-danger" : "bg-warning text-dark") px-3 py-2 fs-6">
+                        Status: @Model.VerificationStatus
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Rejected && !string.IsNullOrEmpty(Model.RejectionReason))
+        {
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-10">
+                    <div class="alert alert-danger rounded-4 p-4 border-start border-danger border-5 shadow-sm" role="alert">
+                        <div class="d-flex align-items-start gap-3">
+                            <i class="bi bi-x-circle-fill fs-2 text-danger flex-shrink-0"></i>
+                            <div>
+                                <h5 class="alert-heading fw-bold mb-1">Listing Verification Rejected by Administrator</h5>
+                                <p class="mb-2"><strong>Reason for Rejection:</strong> @Model.RejectionReason</p>
+                                <p class="small mb-0 text-muted">
+                                    Please review the requested corrections below, update your details or attach supporting documents, and click <strong>"Resubmit for Verification"</strong>. Your status will revert to <strong class="text-warning">PENDING</strong> for review.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <form asp-controller="Property" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="edit-property-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <!-- Specifications Card -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
+                        <h4 class="h5 fw-bold mb-4 pb-2 border-bottom">1. Property Information</h4>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="Title" class="form-label small fw-bold">Title</label>
+                                <input asp-for="Title" class="form-control form-control-custom" required />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PropertyType" class="form-label small fw-bold">Type</label>
+                                <select asp-for="PropertyType" class="form-select form-control-custom">
+                                    @foreach (PropLink.Domain.Enums.PropertyType type in Enum.GetValues(typeof(PropLink.Domain.Enums.PropertyType)))
+                                    {
+                                        <option value="@type" selected="@(Model.PropertyType == type ? "selected" : null)">@type</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Price" class="form-label small fw-bold">Price ($)</label>
+                                <input asp-for="Price" type="number" step="1000" class="form-control form-control-custom" required />
+                                <span asp-validation-for="Price" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="SquareFeet" class="form-label small fw-bold">Square Feet</label>
+                                <input asp-for="SquareFeet" type="number" class="form-control form-control-custom" required />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Bedrooms" class="form-label small fw-bold">Bedrooms</label>
+                                <input asp-for="Bedrooms" type="number" class="form-control form-control-custom" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Bathrooms" class="form-label small fw-bold">Bathrooms</label>
+                                <input asp-for="Bathrooms" type="number" class="form-control form-control-custom" />
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label small fw-bold">Description</label>
+                                <textarea asp-for="Description" class="form-control form-control-custom" rows="5" required></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Address" class="form-label small fw-bold">Address</label>
+                                <input asp-for="Address" class="form-control form-control-custom" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="City" class="form-label small fw-bold">City</label>
+                                <input asp-for="City" class="form-control form-control-custom" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="State" class="form-label small fw-bold">State</label>
+                                <input asp-for="State" class="form-control form-control-custom" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="ZipCode" class="form-label small fw-bold">Zip Code</label>
+                                <input asp-for="ZipCode" class="form-control form-control-custom" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Images Card -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
+                        <h4 class="h5 fw-bold mb-4 pb-2 border-bottom">2. Property Photos</h4>
+
+                        @if (Model.ExistingImageUrls.Any())
+                        {
+                            <label class="form-label small fw-bold text-muted mb-2">Current Photos:</label>
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                @foreach (var url in Model.ExistingImageUrls)
+                                {
+                                    <img src="@url" class="rounded-3 border" style="width: 100px; height: 75px; object-fit: cover;" alt="Photo" />
+                                }
+                            </div>
+                        }
+
+                        <label class="form-label small fw-bold">Upload Additional Photos (Optional)</label>
+                        <input type="file" asp-for="NewImages" multiple accept="image/*" class="form-control form-control-custom" />
+                    </div>
+
+                    <!-- Replace Verification Documents Card -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
+                        <h4 class="h5 fw-bold mb-2 pb-2 border-bottom text-primary">3. Update Verification Documents (Optional)</h4>
+                        <p class="small text-muted mb-4">If the administrator requested revised or higher-quality documents, attach updated files below.</p>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-4 border">
+                                    <label asp-for="NewNidDocument" class="form-label small fw-bold"><i class="bi bi-person-badge text-primary me-1"></i> Replace Seller NID Document</label>
+                                    <input type="file" asp-for="NewNidDocument" accept=".pdf,.jpg,.jpeg,.png" class="form-control form-control-custom bg-white" />
+                                    <div class="form-text small text-muted">Upload replacement NID only if needed.</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-4 border">
+                                    <label asp-for="NewPropertyDocument" class="form-label small fw-bold"><i class="bi bi-file-earmark-text text-success me-1"></i> Replace Deed / Title Document</label>
+                                    <input type="file" asp-for="NewPropertyDocument" accept=".pdf,.jpg,.jpeg,.png" class="form-control form-control-custom bg-white" />
+                                    <div class="form-text small text-muted">Upload revised ownership proof only if needed.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary-custom px-5 py-3 fw-bold fs-6">
+                            <i class="bi bi-send-check-fill me-1"></i> Resubmit for Admin Verification
+                        </button>
+                        <a asp-controller="Profile" asp-action="Index" class="btn btn-link text-muted ms-3">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

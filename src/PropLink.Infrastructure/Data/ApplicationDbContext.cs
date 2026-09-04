@@ -15,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<PropertyImage> PropertyImages => Set<PropertyImage>();
     public DbSet<PropertyDocument> PropertyDocuments => Set<PropertyDocument>();
     public DbSet<Inquiry> Inquiries => Set<Inquiry>();
+    public DbSet<PropertyTransaction> PropertyTransactions => Set<PropertyTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +31,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(p => p.City).HasMaxLength(100);
             entity.Property(p => p.State).HasMaxLength(100);
             entity.Property(p => p.ZipCode).HasMaxLength(20);
+            entity.Property(p => p.RejectionReason).HasMaxLength(2000);
+            entity.Property(p => p.AdminReviewNotes).HasMaxLength(2000);
 
             entity.HasOne(p => p.Seller)
                 .WithMany(u => u.Properties)
@@ -43,7 +46,9 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(d => d.Id);
             entity.Property(d => d.DocumentType).IsRequired().HasMaxLength(100);
             entity.Property(d => d.FileName).IsRequired().HasMaxLength(255);
-            entity.Property(d => d.FilePath).IsRequired().HasMaxLength(1000);
+            entity.Property(d => d.StorageReference);
+            entity.Property(d => d.FilePath);
+            entity.Property(d => d.ReviewRemarks).HasMaxLength(2000);
 
             entity.HasOne(d => d.Property)
                 .WithMany(p => p.Documents)
@@ -55,7 +60,8 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<PropertyImage>(entity =>
         {
             entity.HasKey(i => i.Id);
-            entity.Property(i => i.ImageUrl).IsRequired().HasMaxLength(1000);
+            entity.Property(i => i.ImageUrl).IsRequired();
+            entity.Property(i => i.Caption).HasMaxLength(255);
 
             entity.HasOne(i => i.Property)
                 .WithMany(p => p.Images)
@@ -77,6 +83,24 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(i => i.Buyer)
                 .WithMany(u => u.Inquiries)
                 .HasForeignKey(i => i.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure PropertyTransaction (Buying History & Negotiations)
+        modelBuilder.Entity<PropertyTransaction>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.AgreedPrice).HasPrecision(18, 2);
+            entity.Property(t => t.Notes).HasMaxLength(2000);
+
+            entity.HasOne(t => t.Property)
+                .WithMany(p => p.Transactions)
+                .HasForeignKey(t => t.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(t => t.Buyer)
+                .WithMany(u => u.Purchases)
+                .HasForeignKey(t => t.BuyerId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
