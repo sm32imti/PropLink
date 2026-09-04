@@ -1,0 +1,97 @@
+@model PropLink.Web.Models.RegisterViewModel
+@{
+    ViewData["Title"] = "Create an Account - PropLink";
+}
+
+<section class="auth-section py-5">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-8">
+                <div class="auth-card p-4 p-md-5">
+                    <!-- Brand Icon & Title -->
+                    <div class="text-center mb-4">
+                        <div class="auth-icon-wrapper mx-auto mb-3">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <h2 class="auth-title">Create an Account</h2>
+                        <p class="auth-subtitle">Join PropLink to browse and list verified properties</p>
+                    </div>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                            <div asp-validation-summary="All" class="mb-0 small fw-medium"></div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-controller="Account" asp-action="Register" method="post" class="auth-form">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Full Name -->
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label small fw-bold">Full Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-person text-muted"></i></span>
+                                <input asp-for="FullName" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. Tamjid Hossain" required />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Email Address -->
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label small fw-bold">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                                <input asp-for="Email" class="form-control form-control-custom border-start-0 ps-0" placeholder="you@example.com" required />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="mb-3">
+                            <label asp-for="PhoneNumber" class="form-label small fw-bold">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-telephone text-muted"></i></span>
+                                <input asp-for="PhoneNumber" class="form-control form-control-custom border-start-0 ps-0" placeholder="+1 (555) 000-0000" />
+                            </div>
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label small fw-bold">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
+                                <input asp-for="Password" type="password" class="form-control form-control-custom border-start-0 ps-0" placeholder="Min. 6 characters" required />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="mb-4">
+                            <label asp-for="ConfirmPassword" class="form-label small fw-bold">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-check2-circle text-muted"></i></span>
+                                <input asp-for="ConfirmPassword" type="password" class="form-control form-control-custom border-start-0 ps-0" placeholder="Re-enter password" required />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-arrow-right-circle"></i>
+                            <span>Create Account</span>
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4 pt-2">
+                        <p class="small text-muted mb-0">
+                            Already have an account? 
+                            <a asp-controller="Account" asp-action="Login" class="text-primary fw-bold text-decoration-none">Sign In Here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

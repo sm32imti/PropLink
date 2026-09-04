@@ -1,0 +1,61 @@
+@model PropLink.Web.Models.PropertyCardViewModel
+
+<div class="col-lg-4 col-md-6 property-item" data-type="@Model.PropertyType.ToString().ToLower()">
+    <div class="property-card h-100">
+        <div class="property-image-wrapper">
+            <img src="@Model.ImageUrl" alt="@Model.Title" class="property-img" loading="lazy" />
+            <div class="property-badges">
+                <span class="badge-verified">
+                    <i class="bi bi-shield-fill-check me-1"></i>Deed Verified
+                </span>
+                <span class="badge-type">@Model.PropertyType</span>
+            </div>
+            <div class="property-price-tag">
+                @Model.FormattedPrice
+            </div>
+        </div>
+
+        <div class="property-content">
+            <div class="d-flex align-items-center gap-1 text-muted small mb-2">
+                <i class="bi bi-geo-alt-fill text-primary-accent"></i>
+                <span class="text-truncate">@Model.Address, @Model.City, @Model.State</span>
+            </div>
+
+            <h5 class="property-title text-truncate mb-2" title="@Model.Title">@Model.Title</h5>
+            <p class="property-description line-clamp-2 mb-3">@Model.Description</p>
+
+            <div class="property-specs-grid mb-3">
+                @if (Model.Bedrooms > 0)
+                {
+                    <div class="spec-item">
+                        <i class="bi bi-door-open"></i>
+                        <span>@Model.Bedrooms Beds</span>
+                    </div>
+                }
+                <div class="spec-item">
+                    <i class="bi bi-droplet"></i>
+                    <span>@Model.Bathrooms Baths</span>
+                </div>
+                <div class="spec-item">
+                    <i class="bi bi-aspect-ratio"></i>
+                    <span>@Model.SquareFeet.ToString("N0") sqft</span>
+                </div>
+            </div>
+
+            <div class="property-footer d-flex align-items-center justify-content-between pt-3 border-top">
+                <div class="seller-info d-flex align-items-center gap-2">
+                    <div class="seller-avatar">
+                        @(string.IsNullOrEmpty(Model.SellerName) ? "P" : Model.SellerName.Substring(0, 1))
+                    </div>
+                    <div>
+                        <div class="seller-name text-truncate">@Model.SellerName</div>
+                        <div class="time-ago">@Model.TimeAgo</div>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary-custom" onclick="alert('Viewing verified documentation and contact info for @Model.Title')">
+                    View Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

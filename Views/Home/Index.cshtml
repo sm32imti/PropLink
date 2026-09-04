@@ -1,0 +1,314 @@
+@model PropLink.Web.Models.HomeViewModel
+@{
+    ViewData["Title"] = "Verified Real Estate Marketplace";
+}
+
+<!-- Hero Section with Dynamic Search -->
+<section class="hero-section" id="search-section">
+    <div class="hero-bg-overlay"></div>
+    <div class="container position-relative py-5">
+        <div class="row align-items-center justify-content-center text-center py-4">
+            <div class="col-xl-9 col-lg-10">
+                <div class="hero-badge mb-3">
+                    <i class="bi bi-shield-lock-fill me-1"></i>
+                    <span>Admin-Verified Properties & Documents</span>
+                </div>
+                <h1 class="hero-title mb-3">
+                    Find Real Estate You Can <span class="gradient-text">Actually Trust</span>
+                </h1>
+                <p class="hero-subtitle mb-4">
+                    PropLink audits ownership documents, title deeds, and tax clearances before any listing goes live. Zero fake listings, 100% peace of mind.
+                </p>
+
+                <!-- Search Card -->
+                <div class="hero-search-card text-start">
+                    <div class="search-tabs d-flex gap-2 mb-3">
+                        <button type="button" class="tab-btn active" data-tab="buy"><i class="bi bi-house-door me-1"></i> Buy</button>
+                        <button type="button" class="tab-btn" data-tab="rent"><i class="bi bi-key me-1"></i> Rent</button>
+                        <button type="button" class="tab-btn" data-tab="commercial"><i class="bi bi-building me-1"></i> Commercial</button>
+                    </div>
+
+                    <form class="search-form row g-2 align-items-center" onsubmit="event.preventDefault(); window.location.href='#featured-listings';">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> Location</label>
+                            <input type="text" class="form-control form-control-custom" placeholder="City, neighborhood, or zip..." />
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-tag me-1"></i> Property Type</label>
+                            <select class="form-select form-control-custom">
+                                <option selected>All Property Types</option>
+                                <option value="house">Single Family House</option>
+                                <option value="apartment">Modern Apartment</option>
+                                <option value="condo">Luxury Condo</option>
+                                <option value="townhouse">Townhouse</option>
+                                <option value="commercial">Commercial Space</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-currency-dollar me-1"></i> Max Price</label>
+                            <select class="form-select form-control-custom">
+                                <option selected>Any Price</option>
+                                <option value="500000">Up to $500,000</option>
+                                <option value="750000">Up to $750,000</option>
+                                <option value="1000000">Up to $1,000,000</option>
+                                <option value="2000000">Up to $2,000,000+</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-search w-100 d-flex align-items-center justify-content-center gap-2">
+                                <i class="bi bi-search"></i>
+                                <span>Search</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="search-footer-tags mt-3 pt-2 border-top d-flex flex-wrap align-items-center gap-3">
+                        <span class="small text-muted fw-semibold">Popular Searches:</span>
+                        <a href="#featured-listings" class="search-tag">Beverly Hills</a>
+                        <a href="#featured-listings" class="search-tag">Waterfront Condos</a>
+                        <a href="#featured-listings" class="search-tag">Modern Townhomes</a>
+                        <a href="#featured-listings" class="search-tag">San Francisco Commercial</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats & Trust Metrics -->
+<section class="stats-section py-4">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-lg-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon text-success"><i class="bi bi-shield-fill-check"></i></div>
+                    <div class="stat-number">@Model.TotalVerifiedListings.ToString("N0")+</div>
+                    <div class="stat-label">100% Verified Listings</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon text-primary"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-number">@Model.ActiveBuyers.ToString("N0")+</div>
+                    <div class="stat-label">Active Property Buyers</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon text-warning"><i class="bi bi-clock-history"></i></div>
+                    <div class="stat-number">&lt; @Model.AverageReviewHours.ToString("0.#") hrs</div>
+                    <div class="stat-label">Average Admin Verification</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon text-info"><i class="bi bi-geo-alt-fill"></i></div>
+                    <div class="stat-number">@Model.TotalCities+</div>
+                    <div class="stat-label">Metropolitan Areas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured & Verified Properties Section -->
+<section class="listings-section py-5" id="featured-listings">
+    <div class="container py-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
+            <div>
+                <span class="section-pill mb-2 d-inline-block">Curated & Verified</span>
+                <h2 class="section-title mb-1">Featured Properties</h2>
+                <p class="section-subtitle mb-0">Every property in this catalog has approved ownership documents on record.</p>
+            </div>
+            <div class="filter-pills-container d-flex flex-wrap gap-2">
+                <button class="filter-pill active" data-filter="all">All Listings</button>
+                <button class="filter-pill" data-filter="house">Houses</button>
+                <button class="filter-pill" data-filter="apartment">Apartments</button>
+                <button class="filter-pill" data-filter="condo">Condos</button>
+                <button class="filter-pill" data-filter="townhouse">Townhomes</button>
+                <button class="filter-pill" data-filter="commercial">Commercial</button>
+            </div>
+        </div>
+
+        <div class="row g-4" id="property-cards-container">
+            @foreach (var property in Model.FeaturedProperties)
+            {
+                <partial name="_PropertyCard" model="property" />
+            }
+        </div>
+
+        <div class="text-center mt-5">
+            <button class="btn btn-outline-custom px-4 py-2" onclick="alert('Showing all verified listings catalog.')">
+                <i class="bi bi-grid-3x3-gap me-2"></i> Browse All @Model.TotalVerifiedListings.ToString("N0")+ Listings
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works (Verification Workflow) -->
+<section class="how-it-works-section py-5" id="how-it-works">
+    <div class="container py-4">
+        <div class="text-center max-w-700 mx-auto mb-5">
+            <span class="section-pill mb-2 d-inline-block">The PropLink Standard</span>
+            <h2 class="section-title mb-2">How Document Verification Works</h2>
+            <p class="section-subtitle">We bridge trust between buyers and sellers through a 3-layer human verification pipeline.</p>
+        </div>
+
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card h-100">
+                    <div class="step-number">01</div>
+                    <div class="step-icon-wrapper">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                    </div>
+                    <h4 class="step-title">1. Seller Uploads Listing & Documents</h4>
+                    <p class="step-desc">
+                        Sellers create their listing specifications, photo gallery, and upload government-issued title deeds, tax receipts, and identity verification.
+                    </p>
+                    <ul class="step-checklist list-unstyled">
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Title Deed & Registration</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Recent Utility/Tax Receipts</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Seller ID Authentication</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card step-highlight h-100">
+                    <div class="step-number">02</div>
+                    <div class="step-icon-wrapper highlight">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4 class="step-title">2. Administrator Reviews & Audits</h4>
+                    <p class="step-desc">
+                        PropLink compliance administrators audit submitted documents against registry standards, ensuring rightful ownership and zero encumbrances.
+                    </p>
+                    <ul class="step-checklist list-unstyled">
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Ownership Cross-Verification</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Fraud & Duplicate Detection</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Average 8.5 hr turnaround</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card h-100">
+                    <div class="step-number">03</div>
+                    <div class="step-icon-wrapper">
+                        <i class="bi bi-patch-check"></i>
+                    </div>
+                    <h4 class="step-title">3. Verified Listing Goes Live</h4>
+                    <p class="step-desc">
+                        Once approved, the listing is published with a verified trust badge. Serious buyers connect directly with verified sellers in full confidence.
+                    </p>
+                    <ul class="step-checklist list-unstyled">
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>100% Genuine Inquiries</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Direct Secure Messaging</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i>Faster Closing Cycles</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trust Guarantee & Comparison -->
+<section class="comparison-section py-5" id="trust-guarantee">
+    <div class="container py-4">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <span class="section-pill mb-2 d-inline-block">The Difference</span>
+                <h2 class="section-title mb-3">Why Unverified Listings Cost You Time & Money</h2>
+                <p class="text-muted mb-4">
+                    Traditional classifieds are crowded with duplicate brokers, misleading photos, and unverified titles. PropLink eliminates the guesswork before you even book a visit.
+                </p>
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-bubble text-success bg-success-subtle"><i class="bi bi-check-lg"></i></div>
+                        <div>
+                            <h6 class="mb-1 fw-bold">100% Legal Ownership Verified</h6>
+                            <p class="small text-muted mb-0">Documents are reviewed by our administration team before publishing.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-bubble text-success bg-success-subtle"><i class="bi bi-eye"></i></div>
+                        <div>
+                            <h6 class="mb-1 fw-bold">Transparent Details & History</h6>
+                            <p class="small text-muted mb-0">Direct access to square footage, exact address, and verified photos.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-bubble text-success bg-success-subtle"><i class="bi bi-chat-heart"></i></div>
+                        <div>
+                            <h6 class="mb-1 fw-bold">Direct Seller Communication</h6>
+                            <p class="small text-muted mb-0">No endless middlemen or unauthorized brokers hijacking listings.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="comparison-card">
+                    <div class="table-responsive">
+                        <table class="table comparison-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th class="text-center text-danger">Unverified Platforms</th>
+                                    <th class="text-center text-success bg-brand-light rounded-top">PropLink Platform</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-semibold">Deed & Title Verification</td>
+                                    <td class="text-center text-muted"><i class="bi bi-x-circle-fill text-danger"></i> No Verification</td>
+                                    <td class="text-center fw-bold text-success bg-brand-light"><i class="bi bi-check-circle-fill text-success"></i> Mandatory Audit</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Duplicate Listings</td>
+                                    <td class="text-center text-muted"><i class="bi bi-x-circle-fill text-danger"></i> Frequent Spam</td>
+                                    <td class="text-center fw-bold text-success bg-brand-light"><i class="bi bi-check-circle-fill text-success"></i> Zero Duplicates</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Seller ID Validation</td>
+                                    <td class="text-center text-muted"><i class="bi bi-x-circle-fill text-danger"></i> Unchecked</td>
+                                    <td class="text-center fw-bold text-success bg-brand-light"><i class="bi bi-check-circle-fill text-success"></i> Identity Verified</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Admin Quality Review</td>
+                                    <td class="text-center text-muted"><i class="bi bi-x-circle-fill text-danger"></i> None</td>
+                                    <td class="text-center fw-bold text-success bg-brand-light rounded-bottom"><i class="bi bi-check-circle-fill text-success"></i> Human Review</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Seller Call to Action -->
+<section class="seller-cta-section py-5" id="seller-cta">
+    <div class="container py-4">
+        <div class="seller-cta-card text-center p-5">
+            <div class="cta-badge mb-3">
+                <i class="bi bi-stars me-1"></i> For Property Owners & Sellers
+            </div>
+            <h2 class="cta-title mb-3">Ready to List Your Property with Verification?</h2>
+            <p class="cta-subtitle max-w-700 mx-auto mb-4">
+                Listings with the PropLink Verification badge receive 4.5x more inquiries from pre-qualified buyers. Submit your listing and documentation in minutes.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="#search-section" class="btn btn-primary-custom px-4 py-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <span>Submit Listing & Documents</span>
+                </a>
+                <a href="#how-it-works" class="btn btn-outline-custom px-4 py-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-file-text"></i>
+                    <span>Read Verification Guidelines</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
