@@ -46,6 +46,7 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(d => d.Id);
             entity.Property(d => d.DocumentType).IsRequired().HasMaxLength(100);
             entity.Property(d => d.FileName).IsRequired().HasMaxLength(255);
+            entity.Property(d => d.ContentType).HasMaxLength(100);
             entity.Property(d => d.StorageReference);
             entity.Property(d => d.FilePath);
             entity.Property(d => d.ReviewRemarks).HasMaxLength(2000);
@@ -61,6 +62,7 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(i => i.Id);
             entity.Property(i => i.ImageUrl).IsRequired();
+            entity.Property(i => i.ContentType).HasMaxLength(100);
             entity.Property(i => i.Caption).HasMaxLength(255);
 
             entity.HasOne(i => i.Property)
