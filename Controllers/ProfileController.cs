@@ -83,6 +83,9 @@ public class ProfileController : Controller
                 Price = p.Price,
                 PropertyType = p.PropertyType,
                 Location = $"{p.City}, {p.State}",
+                Bedrooms = p.Bedrooms,
+                Bathrooms = p.Bathrooms,
+                SquareFeet = p.SquareFeet,
                 MainImageUrl = !string.IsNullOrWhiteSpace(coverImg) 
                     ? coverImg 
                     : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",

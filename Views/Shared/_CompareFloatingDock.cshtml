@@ -1,0 +1,35 @@
+@* Floating Comparison Dock Bar for PropLink *@
+<div id="compareFloatingDock" class="compare-floating-dock d-none" aria-live="polite">
+    <div class="container">
+        <div class="compare-dock-card shadow-lg rounded-4 p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="compare-dock-badge d-flex align-items-center justify-content-center">
+                    <i class="bi bi-intersect fs-5 text-emerald"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h6 class="fw-bold mb-0 text-heading">Property Comparator</h6>
+                        <span class="badge bg-emerald-light text-emerald fw-bold border border-emerald-subtle" id="compareDockCount">0/5 Selected</span>
+                    </div>
+                    <span class="small text-muted d-none d-md-inline">Compare specifications, price/sqft, and verified legal status side-by-side.</span>
+                </div>
+            </div>
+
+            <!-- Mini Thumbnails Slot -->
+            <div class="compare-dock-thumbnails d-flex align-items-center gap-2 flex-wrap" id="compareDockThumbnails">
+                <!-- Injected dynamically by comparator.js -->
+            </div>
+
+            <!-- Action Controls -->
+            <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-auto">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-3" id="clearCompareBtn" title="Clear all selected properties">
+                    <i class="bi bi-trash3 me-1"></i> Clear
+                </button>
+                <a href="/properties/compare" id="compareDockActionBtn" class="btn btn-sm btn-primary-custom px-3 py-2 rounded-3 d-flex align-items-center gap-2 fw-bold">
+                    <i class="bi bi-columns-gap"></i>
+                    <span>Compare Now</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

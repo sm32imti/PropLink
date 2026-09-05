@@ -38,9 +38,13 @@
     <!-- Distinct Footer Partial -->
     <partial name="_Footer" />
 
+    <!-- Floating Comparison Dock -->
+    <partial name="_CompareFloatingDock" />
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/comparator.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

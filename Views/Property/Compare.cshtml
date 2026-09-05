@@ -1,0 +1,714 @@
+@model PropLink.Web.Models.PropertyCompareViewModel
+@{
+    ViewData["Title"] = "Property Comparator - Compare Verified Listings";
+    var colCount = Model.Properties.Count;
+}
+
+<div class="property-comparator-page py-5">
+    <div class="container py-3">
+        <!-- Breadcrumb & Header Section -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb small mb-2">
+                        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+                        <li class="breadcrumb-item"><a asp-controller="Property" asp-action="Index" class="text-decoration-none text-muted">Verified Properties</a></li>
+                        <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Property Comparator</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 fw-bold mb-1">
+                    Compare <span class="gradient-text">Verified Properties</span>
+                </h1>
+                <p class="text-muted mb-0">
+                    Side-by-side metric analysis, price-per-square-foot calculations, and legal audit proofs.
+                </p>
+            </div>
+
+            <!-- Toolbar Controls -->
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                @if (Model.HasProperties)
+                {
+                    <button type="button" class="btn btn-sm btn-outline-custom d-flex align-items-center gap-2" id="toggleDiffBtn" title="Highlight rows with different values">
+                        <i class="bi bi-sliders"></i>
+                        <span id="diffBtnText">Highlight Differences</span>
+                    </button>
+
+                    <button type="button" class="btn btn-sm btn-outline-custom d-flex align-items-center gap-2" id="shareCompareBtn" title="Copy shareable comparison link">
+                        <i class="bi bi-share"></i>
+                        <span>Share Link</span>
+                    </button>
+
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" onclick="window.print();" title="Print or save as PDF">
+                        <i class="bi bi-printer"></i>
+                        <span class="d-none d-sm-inline">Print</span>
+                    </button>
+
+                    @if (Model.Properties.Count < Model.MaxPropertiesToCompare)
+                    {
+                        <button type="button" class="btn btn-sm btn-primary-custom d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Add Property (@Model.Properties.Count/@Model.MaxPropertiesToCompare)</span>
+                        </button>
+                    }
+
+                    <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" id="clearAllCompareBtn" title="Clear all compared properties">
+                        <i class="bi bi-trash3"></i>
+                        <span class="d-none d-sm-inline">Clear All</span>
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-primary-custom d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Select Properties to Compare</span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (Model.HasProperties)
+        {
+            <!-- Summary Insights Strip (Shown when 2+ properties compared) -->
+            @if (Model.HasMultipleProperties)
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white border-start border-4 border-success">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-lg-3 col-md-6 border-end-md">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="icon-bubble bg-emerald-light text-emerald"><i class="bi bi-tag-fill"></i></div>
+                                <div>
+                                    <span class="small text-muted d-block">Lowest Price</span>
+                                    <strong class="text-emerald fs-6">@Model.LowestPrice.ToString("C0")</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 border-end-lg">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="icon-bubble bg-primary-subtle text-primary"><i class="bi bi-calculator"></i></div>
+                                <div>
+                                    <span class="small text-muted d-block">Average Price</span>
+                                    <strong class="text-heading fs-6">@Model.AveragePrice.ToString("C0")</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 border-end-md">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="icon-bubble bg-info-subtle text-info"><i class="bi bi-bounding-box-circles"></i></div>
+                                <div>
+                                    <span class="small text-muted d-block">Average Area</span>
+                                    <strong class="text-heading fs-6">@Model.AverageSquareFeet.ToString("N0") sqft</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 text-lg-end">
+                            <span class="badge bg-emerald-light text-emerald px-3 py-2 rounded-pill fw-bold">
+                                <i class="bi bi-shield-check me-1"></i> 100% Deed Verified
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SMART BUYER DECISION GUIDE: "IF THIS, THEN THAT" -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white preference-guide-card">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div>
+                            <span class="badge bg-emerald-light text-emerald fw-bold mb-1">
+                                <i class="bi bi-lightbulb-fill me-1"></i> Buyer Decision Assistant
+                            </span>
+                            <h4 class="fw-bold mb-0 text-heading">Which Property Fits Your Priorities Best?</h4>
+                            <p class="small text-muted mb-0">Find your ideal listing based on your primary preference: Bedrooms, Bathrooms, Budget, Space, or Value.</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 flex-wrap" id="prefFilterGroup">
+                            <span class="small text-muted me-1 d-none d-md-inline">Filter:</span>
+                            <button type="button" class="btn btn-sm btn-outline-custom active filter-pref-btn" data-pref-filter="all">All</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="beds">🛏️ Bedrooms</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="baths">🛁 Bathrooms</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="budget">💰 Budget</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="space">📐 Space</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="value">📊 $/sqft</button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3" id="preferenceCardsContainer">
+                        @if (Model.MostBedroomsProperty != null)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="beds">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.MostBedroomsProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-primary-subtle text-primary fw-bold py-1 px-2">
+                                            <i class="bi bi-door-open-fill me-1"></i> IF PREFERENCE IS: Most Bedrooms
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.MostBedroomsProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.MostBedroomsProperty.Title">@Model.MostBedroomsProperty.Title</h6>
+                                            <span class="badge bg-emerald-light text-emerald small">@Model.MostBedroomsProperty.Bedrooms Beds &bull; @Model.MostBedroomsProperty.Bathrooms Baths</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if you have a growing family or need dedicated private bedrooms and remote work offices. Offers the highest bedroom count.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.MostBedroomsProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.MostBathroomsProperty != null && Model.MostBathroomsProperty.Bathrooms > 0)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="baths">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.MostBathroomsProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-info-subtle text-info fw-bold py-1 px-2">
+                                            <i class="bi bi-water me-1"></i> IF PREFERENCE IS: Most Bathrooms
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.MostBathroomsProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.MostBathroomsProperty.Title">@Model.MostBathroomsProperty.Title</h6>
+                                            <span class="badge bg-info-subtle text-info small">@Model.MostBathroomsProperty.Bathrooms Bathrooms</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if en-suite master convenience and eliminating morning bathroom rush is your priority. Highest bathroom count in this group.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.MostBathroomsProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.LowestPriceProperty != null)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="budget">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.LowestPriceProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-success-subtle text-success fw-bold py-1 px-2">
+                                            <i class="bi bi-tag-fill me-1"></i> IF PREFERENCE IS: Lowest Upfront Price
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.LowestPriceProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.LowestPriceProperty.Title">@Model.LowestPriceProperty.Title</h6>
+                                            <span class="badge bg-success-subtle text-success small">@Model.LowestPriceProperty.FormattedPrice</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if minimizing upfront purchase capital and mortgage monthly payments is key. Offers the lowest entry price tag.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.LowestPriceProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.LargestSquareFeetProperty != null && Model.LargestSquareFeetProperty.SquareFeet > 0)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="space">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.LargestSquareFeetProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-warning-subtle text-dark fw-bold py-1 px-2">
+                                            <i class="bi bi-bounding-box-circles me-1"></i> IF PREFERENCE IS: Largest Living Space
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.LargestSquareFeetProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.LargestSquareFeetProperty.Title">@Model.LargestSquareFeetProperty.Title</h6>
+                                            <span class="badge bg-warning-subtle text-dark small">@Model.LargestSquareFeetProperty.SquareFeet.ToString("N0") sqft</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if open floorplans and expansive interior square footage matter most. Features the largest total square feet.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.LargestSquareFeetProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.BestPricePerSqFtProperty != null && Model.BestPricePerSqFtProperty.PricePerSquareFoot > 0)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="value">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.BestPricePerSqFtProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-emerald-light text-emerald fw-bold py-1 px-2">
+                                            <i class="bi bi-stars me-1"></i> IF PREFERENCE IS: Best Value ($/sqft)
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.BestPricePerSqFtProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.BestPricePerSqFtProperty.Title">@Model.BestPricePerSqFtProperty.Title</h6>
+                                            <span class="badge bg-emerald-light text-emerald small">@Model.BestPricePerSqFtProperty.FormattedPricePerSquareFoot</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> for maximum real estate space per dollar invested. Delivers the lowest price-per-square-foot in this set.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.BestPricePerSqFtProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Comparison Matrix Table -->
+            <div class="comparison-matrix-wrapper card border-0 shadow-sm rounded-4 overflow-hidden mb-5 bg-white">
+                <div class="table-responsive">
+                    <table class="table comparison-matrix-table align-middle mb-0" id="compareMatrixTable">
+                        <thead>
+                            <tr class="header-property-cards">
+                                <th class="col-feature-label bg-light" style="width: 220px; min-width: 200px;">
+                                    <div class="p-3">
+                                        <span class="text-muted small fw-bold text-uppercase d-block mb-1">Comparing</span>
+                                        <h5 class="fw-bold mb-0 text-dark">@Model.Properties.Count Property@(Model.Properties.Count > 1 ? "ies" : "")</h5>
+                                        <span class="small text-muted">Up to @Model.MaxPropertiesToCompare side-by-side</span>
+                                    </div>
+                                </th>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <th class="col-property-item position-relative text-center p-3" data-prop-col-id="@prop.Id" style="min-width: 280px; max-width: 340px;">
+                                        <div class="property-compare-card-header text-start">
+                                            <!-- Top Image & Remove Action -->
+                                            <div class="position-relative mb-2 rounded-3 overflow-hidden" style="height: 180px;">
+                                                <img src="@prop.ImageUrl" alt="@prop.Title" class="w-100 h-100 object-fit-cover" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                                <button type="button" class="btn-remove-compare position-absolute top-0 end-0 m-2 btn btn-sm btn-dark rounded-circle shadow" data-property-id="@prop.Id" title="Remove from comparison">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                                <div class="position-absolute bottom-0 start-0 m-2">
+                                                    <span class="badge badge-verified">
+                                                        <i class="bi bi-patch-check-fill me-1"></i> Verified
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Title & Address -->
+                                            <h6 class="fw-bold text-truncate mb-1" title="@prop.Title">
+                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@prop.Id" class="text-dark text-decoration-none">
+                                                    @prop.Title
+                                                </a>
+                                            </h6>
+                                            <div class="small text-muted text-truncate mb-2">
+                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>@prop.City, @prop.State
+                                            </div>
+
+                                            <!-- Price & Highlight Badges -->
+                                            <div class="d-flex align-items-baseline gap-2 mb-2">
+                                                <span class="fs-4 fw-bolder text-primary">@prop.FormattedPrice</span>
+                                                @if (prop.SquareFeet > 0)
+                                                {
+                                                    <span class="small text-muted">(@prop.FormattedPricePerSquareFoot)</span>
+                                                }
+                                            </div>
+
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @if (prop.IsLowestPrice && Model.HasMultipleProperties)
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-arrow-down-circle-fill me-1"></i>Lowest Price</span>
+                                                }
+                                                @if (prop.IsBestPricePerSqFt && Model.HasMultipleProperties)
+                                                {
+                                                    <span class="badge bg-emerald-light text-emerald border border-emerald-subtle"><i class="bi bi-stars me-1"></i>Best $/sqft</span>
+                                                }
+                                                @if (prop.IsLargestSquareFeet && Model.HasMultipleProperties)
+                                                {
+                                                    <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-aspect-ratio-fill me-1"></i>Largest Space</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </th>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare)
+                                {
+                                    <th class="col-property-add text-center p-3 bg-light-subtle" style="min-width: 220px;">
+                                        <div class="add-property-slot-card h-100 d-flex flex-column align-items-center justify-content-center p-4 border border-2 border-dashed rounded-4">
+                                            <div class="icon-circle bg-emerald-light text-emerald fs-3 mb-2">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-1">Add Another</h6>
+                                            <p class="small text-muted mb-3 text-center">Compare up to @Model.MaxPropertiesToCompare approved listings</p>
+                                            <button type="button" class="btn btn-sm btn-outline-primary-custom" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                                                <i class="bi bi-search me-1"></i> Browse Catalog
+                                            </button>
+                                        </div>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <!-- SECTION: FINANCIALS & VALUE -->
+                            <tr class="section-row bg-light">
+                                <td colspan="@(colCount + (Model.Properties.Count < Model.MaxPropertiesToCompare ? 2 : 1))" class="fw-bold text-uppercase small text-muted px-3 py-2">
+                                    <i class="bi bi-currency-dollar me-1 text-emerald"></i> Financial & Value Metrics
+                                </td>
+                            </tr>
+                            <tr class="compare-row" data-row-key="price">
+                                <td class="feature-title"><i class="bi bi-tag text-emerald me-2"></i>Listing Price</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <div class="fw-bold fs-6 text-primary">@prop.FormattedPrice</div>
+                                        @if (Model.HasMultipleProperties && !prop.IsLowestPrice && prop.PriceDifferenceFromLowest > 0)
+                                        {
+                                            <span class="badge bg-light text-muted border small mt-1">+@prop.PriceDifferenceFromLowest.ToString("C0") (+@prop.PriceDifferencePercentFromLowest.ToString("0.#")%)</span>
+                                        }
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+                            <tr class="compare-row" data-row-key="price-sqft">
+                                <td class="feature-title"><i class="bi bi-calculator text-emerald me-2"></i>Price per Sq. Ft.</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <span class="fw-semibold">@prop.FormattedPricePerSquareFoot</span>
+                                        @if (prop.IsBestPricePerSqFt && Model.HasMultipleProperties)
+                                        {
+                                            <span class="badge bg-emerald-light text-emerald ms-1">Best Value</span>
+                                        }
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+
+                            <!-- SECTION: KEY SPECIFICATIONS -->
+                            <tr class="section-row bg-light">
+                                <td colspan="@(colCount + (Model.Properties.Count < Model.MaxPropertiesToCompare ? 2 : 1))" class="fw-bold text-uppercase small text-muted px-3 py-2">
+                                    <i class="bi bi-sliders me-1 text-emerald"></i> Property Specifications
+                                </td>
+                            </tr>
+                            <tr class="compare-row" data-row-key="type">
+                                <td class="feature-title"><i class="bi bi-building text-emerald me-2"></i>Property Type</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <span class="badge bg-light text-dark border px-3 py-2 fs-7">@prop.PropertyType</span>
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+                            <tr class="compare-row" data-row-key="bedrooms">
+                                <td class="feature-title"><i class="bi bi-door-open text-emerald me-2"></i>Bedrooms</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <span class="fw-bold fs-6">@prop.Bedrooms</span> Beds
+                                        @if (prop.IsMostBedrooms && Model.HasMultipleProperties && prop.Bedrooms > 0)
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary ms-1">Most Beds</span>
+                                        }
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+                            <tr class="compare-row" data-row-key="bathrooms">
+                                <td class="feature-title"><i class="bi bi-water text-emerald me-2"></i>Bathrooms</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <span class="fw-bold fs-6">@prop.Bathrooms</span> Baths
+                                        @if (prop.IsMostBathrooms && Model.HasMultipleProperties && prop.Bathrooms > 0)
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary ms-1">Most Baths</span>
+                                        }
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+                            <tr class="compare-row" data-row-key="sqft">
+                                <td class="feature-title"><i class="bi bi-bounding-box-circles text-emerald me-2"></i>Living Area (SqFt)</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <span class="fw-bold fs-6">@prop.SquareFeet.ToString("N0")</span> sqft
+                                        @if (prop.IsLargestSquareFeet && Model.HasMultipleProperties)
+                                        {
+                                            <span class="badge bg-info-subtle text-info ms-1">Largest</span>
+                                        }
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+
+                            <!-- SECTION: LOCATION -->
+                            <tr class="section-row bg-light">
+                                <td colspan="@(colCount + (Model.Properties.Count < Model.MaxPropertiesToCompare ? 2 : 1))" class="fw-bold text-uppercase small text-muted px-3 py-2">
+                                    <i class="bi bi-geo-alt me-1 text-emerald"></i> Location & Address
+                                </td>
+                            </tr>
+                            <tr class="compare-row" data-row-key="city">
+                                <td class="feature-title"><i class="bi bi-pin-map text-emerald me-2"></i>City & State</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center fw-semibold">
+                                        @prop.City, @prop.State
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+                            <tr class="compare-row" data-row-key="address">
+                                <td class="feature-title"><i class="bi bi-signpost-2 text-emerald me-2"></i>Street Address</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center text-muted small">
+                                        @prop.Address
+                                        @if (!string.IsNullOrEmpty(prop.ZipCode))
+                                        {
+                                            <span class="d-block text-muted">@prop.ZipCode</span>
+                                        }
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+
+                            <!-- SECTION: LEGAL VERIFICATION & DOCUMENTS -->
+                            <tr class="section-row bg-light">
+                                <td colspan="@(colCount + (Model.Properties.Count < Model.MaxPropertiesToCompare ? 2 : 1))" class="fw-bold text-uppercase small text-muted px-3 py-2">
+                                    <i class="bi bi-shield-check me-1 text-emerald"></i> Legal Verification & Trust
+                                </td>
+                            </tr>
+                            <tr class="compare-row" data-row-key="verification">
+                                <td class="feature-title"><i class="bi bi-patch-check-fill text-emerald me-2"></i>Deed Status</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <span class="badge bg-emerald-light text-emerald border border-emerald-subtle py-2 px-3">
+                                            <i class="bi bi-shield-lock-fill me-1"></i> 100% Deed Audited
+                                        </span>
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+                            <tr class="compare-row" data-row-key="documents">
+                                <td class="feature-title"><i class="bi bi-file-earmark-check text-emerald me-2"></i>Audited Documents</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <div class="d-flex flex-wrap justify-content-center gap-1">
+                                            @if (prop.VerifiedDocumentTypes.Any())
+                                            {
+                                                @foreach (var doc in prop.VerifiedDocumentTypes)
+                                                {
+                                                    <span class="badge bg-light text-dark border small"><i class="bi bi-check2 text-success me-1"></i>@doc</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-muted border small"><i class="bi bi-check2 text-success me-1"></i>Title Deed & NID</span>
+                                            }
+                                        </div>
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+
+                            <!-- SECTION: SELLER PROFILE -->
+                            <tr class="section-row bg-light">
+                                <td colspan="@(colCount + (Model.Properties.Count < Model.MaxPropertiesToCompare ? 2 : 1))" class="fw-bold text-uppercase small text-muted px-3 py-2">
+                                    <i class="bi bi-person-badge me-1 text-emerald"></i> Verified Seller Profile
+                                </td>
+                            </tr>
+                            <tr class="compare-row" data-row-key="seller">
+                                <td class="feature-title"><i class="bi bi-person-check text-emerald me-2"></i>Seller</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="compare-val text-center">
+                                        <div class="fw-bold text-dark">@prop.SellerName</div>
+                                        <span class="small text-muted">Verified Owner Since @prop.SellerMemberSince.ToString("yyyy")</span>
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare) { <td></td> }
+                            </tr>
+
+                            <!-- SECTION: DIRECT ACTIONS -->
+                            <tr class="compare-row-actions">
+                                <td class="feature-title bg-light fw-bold text-dark">Actions</td>
+                                @foreach (var prop in Model.Properties)
+                                {
+                                    <td class="text-center p-3">
+                                        <div class="d-grid gap-2">
+                                            <a asp-controller="Property" asp-action="Details" asp-route-id="@prop.Id" class="btn btn-primary-custom btn-sm py-2">
+                                                <i class="bi bi-eye me-1"></i> View Full Details
+                                            </a>
+                                            <a asp-controller="Property" asp-action="Details" asp-route-id="@prop.Id" class="btn btn-outline-custom btn-sm py-2">
+                                                <i class="bi bi-chat-text me-1"></i> Inquire Seller
+                                            </a>
+                                        </div>
+                                    </td>
+                                }
+                                @if (Model.Properties.Count < Model.MaxPropertiesToCompare)
+                                {
+                                    <td class="text-center p-3">
+                                        <button type="button" class="btn btn-outline-primary-custom btn-sm w-100" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                                            <i class="bi bi-plus-lg me-1"></i> Add Property
+                                        </button>
+                                    </td>
+                                }
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- EMPTY COMPARATOR STATE -->
+            <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 mb-5 bg-white">
+                <div class="empty-state-icon mx-auto text-emerald mb-3" style="font-size: 4rem;">
+                    <i class="bi bi-columns-gap"></i>
+                </div>
+                <h3 class="fw-bold mb-2">Your Comparison Matrix is Empty</h3>
+                <p class="text-muted max-w-600 mx-auto mb-4">
+                    Select 2 or more verified properties from our catalog to compare pricing, square footage, room counts, and legal documentation side-by-side.
+                </p>
+                <div class="d-flex flex-wrap justify-content-center gap-3">
+                    <button type="button" class="btn btn-primary-custom px-4 py-2 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Select Properties from Catalog</span>
+                    </button>
+                    <a asp-controller="Property" asp-action="Index" class="btn btn-outline-custom px-4 py-2">
+                        <i class="bi bi-grid-3x3-gap me-1"></i> Browse All Properties
+                    </a>
+                </div>
+            </div>
+        }
+
+        <!-- RECOMMENDED APPROVED PROPERTIES FOR QUICK ADD -->
+        @if (Model.AvailableApprovedProperties.Any())
+        {
+            <div class="mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1">Available Approved Properties</h4>
+                        <p class="text-muted small mb-0">Click "+ Compare" to instantly include any listing into your comparison table.</p>
+                    </div>
+                    <a asp-controller="Property" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                        View All Listings &rarr;
+                    </a>
+                </div>
+
+                <div class="row g-4">
+                    @foreach (var property in Model.AvailableApprovedProperties.Take(3))
+                    {
+                        var isAlreadyCompared = Model.Properties.Any(p => p.Id == property.Id);
+                        <div class="col-lg-4 col-md-6">
+                            <div class="property-card h-100 position-relative d-flex flex-column">
+                                <div class="property-image-wrapper">
+                                    <img src="@property.ImageUrl" alt="@property.Title" class="property-img" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                    
+                                    <div class="property-badges">
+                                        <span class="badge badge-verified">
+                                            <i class="bi bi-patch-check-fill me-1"></i> Verified
+                                        </span>
+                                        <span class="badge badge-type ms-1">@property.PropertyType</span>
+                                    </div>
+
+                                    <div class="property-price-tag">
+                                        @property.FormattedPrice
+                                    </div>
+                                </div>
+
+                                <div class="property-body d-flex flex-column flex-grow-1 p-3">
+                                    <div class="property-location text-muted small mb-1">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>@property.City, @property.State
+                                    </div>
+                                    <h3 class="property-title h6 fw-bold mb-2">
+                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@property.Id" class="text-dark text-decoration-none">
+                                            @property.Title
+                                        </a>
+                                    </h3>
+
+                                    <div class="property-specs d-flex justify-content-between py-2 border-top border-bottom small text-muted mb-3">
+                                        <span><i class="bi bi-door-open me-1 text-primary"></i>@property.Bedrooms Beds</span>
+                                        <span><i class="bi bi-water me-1 text-primary"></i>@property.Bathrooms Baths</span>
+                                        <span><i class="bi bi-bounding-box-circles me-1 text-primary"></i>@property.SquareFeet.ToString("N0") sqft</span>
+                                    </div>
+
+                                    <div class="property-footer d-flex justify-content-between align-items-center gap-2 mt-auto">
+                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@property.Id" class="btn btn-sm btn-outline-secondary flex-grow-1">
+                                            View Details
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm @(isAlreadyCompared ? "btn-success" : "btn-primary-custom") btn-compare-toggle flex-grow-1"
+                                                data-property-id="@property.Id"
+                                                data-property-title="@property.Title"
+                                                data-property-price="@property.FormattedPrice"
+                                                data-property-img="@property.ImageUrl">
+                                            <i class="bi @(isAlreadyCompared ? "bi-check2-circle" : "bi-plus-circle") me-1"></i>
+                                            <span>@(isAlreadyCompared ? "In Comparison" : "+ Compare")</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- QUICK-ADD PROPERTY MODAL -->
+<div class="modal fade" id="addPropertyModal" tabindex="-1" aria-labelledby="addPropertyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold" id="addPropertyModalLabel">
+                        <i class="bi bi-plus-circle-fill text-emerald me-2"></i>Add Property to Compare
+                    </h5>
+                    <p class="text-muted small mb-0">Browse or search verified listings to add into your comparison table.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body py-3">
+                <!-- Search & Filters -->
+                <div class="row g-2 mb-3">
+                    <div class="col-md-7">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="modalSearchQuery" class="form-control form-control-custom border-start-0" placeholder="Search by title, address, or city..." />
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <select id="modalTypeFilter" class="form-select form-control-custom">
+                            <option value="">All Types</option>
+                            @foreach (PropLink.Domain.Enums.PropertyType type in Enum.GetValues(typeof(PropLink.Domain.Enums.PropertyType)))
+                            {
+                                <option value="@type">@type</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Live Results List -->
+                <div id="modalPropertiesContainer" class="d-flex flex-column gap-2" style="min-height: 250px;">
+                    <div class="text-center py-5 text-muted">
+                        <div class="spinner-border text-emerald spinner-border-sm mb-2" role="status"></div>
+                        <p class="small mb-0">Loading approved listings...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <a asp-controller="Property" asp-action="Index" class="btn btn-outline-custom">
+                    Open Catalog &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,19 +1,35 @@
 @model PropLink.Web.Models.ProfileViewModel
 @{
-    ViewData["Title"] = "My Profile & Activity Dashboard";
+    ViewData["Title"] = "Account & Activity Dashboard";
 }
 
 <div class="profile-dashboard-page py-5">
     <div class="container py-3">
-        <!-- Submission / Toast Feedback -->
+        <!-- Breadcrumb & Header Title -->
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small mb-2">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+                    <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Account Dashboard</li>
+                </ol>
+            </nav>
+            <h1 class="h2 fw-bold mb-1">
+                My Account & <span class="gradient-text">Portfolio Dashboard</span>
+            </h1>
+            <p class="text-muted mb-0">
+                Manage your verified real estate listings, track administrative title audits, and view purchase agreements.
+            </p>
+        </div>
+
+        <!-- Feedback Alert Messages -->
         @if (TempData["SubmissionSuccess"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show rounded-4 p-4 shadow-sm mb-4" role="alert">
+            <div class="alert alert-success alert-dismissible fade show rounded-4 p-4 shadow-sm mb-4 border-0 bg-success-subtle border-start border-4 border-success" role="alert">
                 <div class="d-flex align-items-center gap-3">
-                    <i class="bi bi-clock-history fs-2 text-success"></i>
+                    <i class="bi bi-check-circle-fill fs-2 text-success"></i>
                     <div>
-                        <h5 class="alert-heading fw-bold mb-1">Property Submission Received!</h5>
-                        <p class="mb-0">@TempData["SubmissionSuccess"]</p>
+                        <h5 class="alert-heading fw-bold mb-1">Submission Update</h5>
+                        <p class="mb-0 text-dark">@TempData["SubmissionSuccess"]</p>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -22,90 +38,130 @@
 
         @if (TempData["ToastMessage"] != null)
         {
-            <div class="alert alert-info alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i> @TempData["ToastMessage"]
+            <div class="alert alert-info alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4 border-0 bg-info-subtle border-start border-4 border-info" role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-info fs-5"></i>
+                    <span class="text-dark">@TempData["ToastMessage"]</span>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
 
-        <!-- User Profile Header Card -->
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
-            <div class="row align-items-center g-4">
-                <div class="col-auto">
-                    <div class="seller-avatar bg-primary text-white fs-1 fw-bold rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 80px;">
-                        @(string.IsNullOrEmpty(Model.FullName) ? "U" : Model.FullName.Substring(0, 1))
+        <!-- EXECUTIVE PROFILE IDENTITY HERO CARD -->
+        <div class="profile-hero-card card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+            <div class="profile-hero-banner"></div>
+            <div class="p-4 p-md-5 pt-0 position-relative">
+                <div class="row align-items-end g-4">
+                    <div class="col-auto">
+                        <div class="profile-avatar-wrapper position-relative">
+                            <div class="profile-avatar bg-emerald text-white fs-1 fw-bold rounded-circle d-flex align-items-center justify-content-center shadow">
+                                @(string.IsNullOrEmpty(Model.FullName) ? "U" : Model.FullName.Substring(0, 1))
+                            </div>
+                            <span class="position-absolute bottom-0 end-0 badge rounded-circle p-1 bg-success border border-2 border-white" title="Identity Verified">
+                                <i class="bi bi-patch-check-fill text-white fs-6"></i>
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <div class="col">
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                        <h2 class="h3 fw-bold mb-0">@Model.FullName</h2>
-                        <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-primary-subtle text-primary border border-primary-subtle")">
-                            @Model.Role Account
-                        </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle">
-                            <i class="bi bi-shield-check me-1"></i> Authenticated User
-                        </span>
+                    <div class="col">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                            <h2 class="h3 fw-bold mb-0 text-heading">@Model.FullName</h2>
+                            <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-emerald-light text-emerald border border-emerald-subtle")">
+                                @(Model.Role == "Admin" ? "Administrator" : "Verified Member")
+                            </span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <i class="bi bi-shield-check me-1"></i> Account Verified
+                            </span>
+                        </div>
+                        <div class="text-muted small d-flex flex-wrap gap-3 mt-2">
+                            <span><i class="bi bi-envelope me-1 text-emerald"></i>@Model.Email</span>
+                            @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                            {
+                                <span><i class="bi bi-telephone me-1 text-emerald"></i>@Model.PhoneNumber</span>
+                            }
+                            <span><i class="bi bi-calendar3 me-1 text-emerald"></i>Member since @Model.MemberSince.ToString("MMMM yyyy")</span>
+                        </div>
                     </div>
-                    <div class="text-muted small d-flex flex-wrap gap-3">
-                        <span><i class="bi bi-envelope me-1 text-primary"></i>@Model.Email</span>
-                        <span><i class="bi bi-telephone me-1 text-primary"></i>@Model.PhoneNumber</span>
-                        <span><i class="bi bi-card-heading me-1 text-primary"></i>NID: @(string.IsNullOrEmpty(Model.NidNumber) ? "Not Provided" : Model.NidNumber)</span>
-                        <span><i class="bi bi-calendar3 me-1 text-primary"></i>Member since @Model.MemberSince.ToString("MMMM yyyy")</span>
-                    </div>
-                </div>
-                <div class="col-12 col-md-auto d-flex flex-wrap gap-2">
-                    <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        <i class="bi bi-pencil-square"></i>
-                        <span>Edit Profile</span>
-                    </button>
-                    <a asp-controller="Property" asp-action="Sell" class="btn btn-primary-custom d-flex align-items-center gap-2">
-                        <i class="bi bi-plus-circle"></i>
-                        <span>Sell a Property</span>
-                    </a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="col-12 col-md-auto d-flex gap-2">
+                            <a asp-controller="Admin" asp-action="Verifications" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1">
+                                <i class="bi bi-shield-lock-fill"></i>
+                                <span>Admin Verifications Queue</span>
+                            </a>
+                        </div>
+                    }
                 </div>
             </div>
 
-            <!-- Stats Overview Bar -->
-            <div class="row g-3 mt-4 pt-3 border-top text-center">
-                <div class="col-md-2 col-4">
-                    <span class="h4 fw-bold text-dark d-block mb-0">@Model.TotalListedProperties</span>
-                    <span class="small text-muted">Total Listed</span>
-                </div>
-                <div class="col-md-2 col-4">
-                    <span class="h4 fw-bold text-success d-block mb-0">@Model.VerifiedListingsCount</span>
-                    <span class="small text-muted">Approved & Live</span>
-                </div>
-                <div class="col-md-2 col-4">
-                    <span class="h4 fw-bold text-warning d-block mb-0">@Model.PendingListingsCount</span>
-                    <span class="small text-muted">Under Review</span>
-                </div>
-                <div class="col-md-2 col-4">
-                    <span class="h4 fw-bold text-danger d-block mb-0">@Model.RejectedListingsCount</span>
-                    <span class="small text-muted">Action Needed</span>
-                </div>
-                <div class="col-md-4 col-8 text-md-end">
-                    <span class="h4 fw-bold text-primary d-block mb-0">@Model.TotalPurchasesCount</span>
-                    <span class="small text-muted">Purchases & Agreements</span>
+            <!-- KPI METRICS GRID -->
+            <div class="profile-stats-section px-4 px-md-5 pb-4 border-top">
+                <div class="row g-3 pt-3">
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center">
+                            <span class="profile-stat-icon text-muted mb-1 d-block"><i class="bi bi-houses"></i></span>
+                            <span class="h4 fw-bold text-heading d-block mb-0">@Model.TotalListedProperties</span>
+                            <span class="small text-muted">Total Properties</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center border-success-subtle bg-success-subtle-glow">
+                            <span class="profile-stat-icon text-emerald mb-1 d-block"><i class="bi bi-patch-check-fill"></i></span>
+                            <span class="h4 fw-bold text-emerald d-block mb-0">@Model.VerifiedListingsCount</span>
+                            <span class="small text-muted">Approved & Live</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center border-warning-subtle bg-warning-subtle-glow">
+                            <span class="profile-stat-icon text-warning mb-1 d-block"><i class="bi bi-hourglass-split"></i></span>
+                            <span class="h4 fw-bold text-warning d-block mb-0">@Model.PendingListingsCount</span>
+                            <span class="small text-muted">Under Review</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center border-danger-subtle bg-danger-subtle-glow">
+                            <span class="profile-stat-icon text-danger mb-1 d-block"><i class="bi bi-exclamation-octagon-fill"></i></span>
+                            <span class="h4 fw-bold text-danger d-block mb-0">@Model.RejectedListingsCount</span>
+                            <span class="small text-muted">Action Needed</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-12">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center border-info-subtle bg-info-subtle-glow">
+                            <span class="profile-stat-icon text-info mb-1 d-block"><i class="bi bi-bag-check-fill"></i></span>
+                            <span class="h4 fw-bold text-info d-block mb-0">@Model.TotalPurchasesCount</span>
+                            <span class="small text-muted">Agreements</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Dashboard Tabs: Selling History vs. Buying History -->
-        <ul class="nav nav-pills custom-nav-pills mb-4 gap-2" id="profileTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active rounded-pill px-4 py-2 fw-semibold" id="selling-tab" data-bs-toggle="pill" data-bs-target="#sellingHistory" type="button" role="tab" aria-controls="sellingHistory" aria-selected="true">
-                    <i class="bi bi-building me-2"></i> Selling & Listing History (@Model.SellingHistory.Count)
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link rounded-pill px-4 py-2 fw-semibold" id="buying-tab" data-bs-toggle="pill" data-bs-target="#buyingHistory" type="button" role="tab" aria-controls="buyingHistory" aria-selected="false">
-                    <i class="bi bi-bag-check me-2"></i> Buying History & Agreements (@Model.BuyingHistory.Count)
-                </button>
-            </li>
-        </ul>
+        <!-- DASHBOARD TABS -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <ul class="nav nav-pills custom-segmented-pills gap-2" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2" id="selling-tab" data-bs-toggle="pill" data-bs-target="#sellingHistory" type="button" role="tab" aria-controls="sellingHistory" aria-selected="true">
+                        <i class="bi bi-building"></i>
+                        <span>My Listed Properties</span>
+                        <span class="badge rounded-pill bg-white text-dark ms-1">@Model.SellingHistory.Count</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2" id="buying-tab" data-bs-toggle="pill" data-bs-target="#buyingHistory" type="button" role="tab" aria-controls="buyingHistory" aria-selected="false">
+                        <i class="bi bi-bag-check"></i>
+                        <span>Purchase Agreements</span>
+                        <span class="badge rounded-pill bg-white text-dark ms-1">@Model.BuyingHistory.Count</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="d-none d-md-flex align-items-center gap-2 text-muted small">
+                <i class="bi bi-shield-lock-fill text-emerald"></i>
+                <span>Protected by PropLink Deed Audit Guarantee</span>
+            </div>
+        </div>
 
         <div class="tab-content" id="profileTabsContent">
-            <!-- TAB 1: SELLING / LISTING HISTORY -->
+            <!-- TAB 1: MY LISTED PROPERTIES -->
             <div class="tab-pane fade show active" id="sellingHistory" role="tabpanel" aria-labelledby="selling-tab">
                 @if (Model.SellingHistory.Any())
                 {
@@ -113,68 +169,124 @@
                         @foreach (var item in Model.SellingHistory)
                         {
                             <div class="col-lg-6">
-                                <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
+                                <div class="profile-property-card card border-0 shadow-sm rounded-4 overflow-hidden h-100 position-relative d-flex flex-column">
                                     <div class="row g-0 h-100">
+                                        <!-- Image Container -->
                                         <div class="col-sm-5 position-relative">
-                                            <img src="@item.MainImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 180px;" alt="@item.Title" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                            <span class="badge position-absolute top-0 start-0 m-2 @(item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved ? "bg-success" : (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Pending ? "bg-warning text-dark" : "bg-danger"))">
-                                                <i class="bi @(item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved ? "bi-patch-check-fill" : "bi-clock-history") me-1"></i>
-                                                @item.VerificationStatus
-                                            </span>
+                                            <img src="@item.MainImageUrl" class="w-100 h-100 object-fit-cover" style="min-height: 220px;" alt="@item.Title" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                            
+                                            <!-- Verification Status Badge -->
+                                            <div class="position-absolute top-0 start-0 m-2">
+                                                @if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved)
+                                                {
+                                                    <span class="badge bg-success shadow-sm">
+                                                        <i class="bi bi-patch-check-fill me-1"></i> Approved & Live
+                                                    </span>
+                                                }
+                                                else if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Pending)
+                                                {
+                                                    <span class="badge bg-warning text-dark shadow-sm">
+                                                        <i class="bi bi-hourglass-split me-1"></i> Under Review
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger shadow-sm">
+                                                        <i class="bi bi-x-octagon-fill me-1"></i> Action Needed
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <div class="position-absolute bottom-0 start-0 m-2">
+                                                <span class="badge bg-dark bg-opacity-75 text-white">
+                                                    @item.PropertyType
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div class="col-sm-7 p-3 d-flex flex-column justify-content-between">
+
+                                        <!-- Card Body -->
+                                        <div class="col-sm-7 p-3 p-md-4 d-flex flex-column justify-content-between">
                                             <div>
-                                                <div class="d-flex justify-content-between align-items-start mb-1">
-                                                    <span class="badge bg-light text-dark border">@item.PropertyType</span>
-                                                    <span class="badge bg-secondary-subtle text-secondary small">Tx: @item.TransactionStatus</span>
+                                                <div class="d-flex justify-content-between align-items-center text-muted small mb-1">
+                                                    <span><i class="bi bi-calendar3 me-1"></i>@item.FormattedDate</span>
+                                                    <span class="badge bg-light text-dark border">@item.TransactionStatus</span>
                                                 </div>
-                                                <h5 class="h6 fw-bold mb-1">
+
+                                                <h5 class="h6 fw-bold mb-1 text-truncate" title="@item.Title">
                                                     @if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved)
                                                     {
-                                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="text-dark text-decoration-none">
+                                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="text-heading text-decoration-none">
                                                             @item.Title
                                                         </a>
                                                     }
                                                     else
                                                     {
-                                                        <span class="text-dark">@item.Title</span>
+                                                        <span class="text-heading">@item.Title</span>
                                                     }
                                                 </h5>
-                                                <div class="small text-muted mb-2">
+
+                                                <div class="small text-muted mb-2 text-truncate">
                                                     <i class="bi bi-geo-alt me-1 text-danger"></i>@item.Location
                                                 </div>
-                                                <div class="fw-bold text-primary mb-2">
-                                                    @item.Price.ToString("C0")
+
+                                                <div class="d-flex align-items-baseline gap-2 mb-2">
+                                                    <span class="fs-5 fw-bold text-primary">@item.FormattedPrice</span>
+                                                </div>
+
+                                                <div class="d-flex gap-2 text-muted small mb-3 py-1 border-top border-bottom">
+                                                    @if (item.Bedrooms > 0)
+                                                    {
+                                                        <span><i class="bi bi-door-open me-1 text-emerald"></i>@item.Bedrooms Beds</span>
+                                                    }
+                                                    <span><i class="bi bi-water me-1 text-emerald"></i>@item.Bathrooms Baths</span>
+                                                    @if (item.SquareFeet > 0)
+                                                    {
+                                                        <span><i class="bi bi-bounding-box-circles me-1 text-emerald"></i>@item.SquareFeet.ToString("N0") sqft</span>
+                                                    }
                                                 </div>
                                             </div>
 
-                                            @if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Rejected)
-                                            {
-                                                <div class="alert alert-danger p-2 small mb-2 rounded-3">
-                                                    <div class="fw-bold"><i class="bi bi-x-circle-fill me-1"></i> Rejection Reason:</div>
-                                                    <div>@(string.IsNullOrEmpty(item.RejectionReason) ? "Documentation needs review." : item.RejectionReason)</div>
-                                                </div>
-                                                <div>
-                                                    <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger w-100">
-                                                        <i class="bi bi-arrow-repeat me-1"></i> Edit & Resubmit to Pending
+                                            <!-- Status Message & Actions -->
+                                            <div class="mt-auto">
+                                                @if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Rejected)
+                                                {
+                                                    <div class="alert alert-danger p-2 small mb-2 rounded-3">
+                                                        <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Administrator Feedback:</div>
+                                                        <div class="text-truncate">@(string.IsNullOrEmpty(item.RejectionReason) ? "Deed documents need corrections." : item.RejectionReason)</div>
+                                                    </div>
+                                                    <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-danger w-100 d-flex align-items-center justify-content-center gap-1">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                        <span>Fix Documents & Resubmit</span>
                                                     </a>
-                                                </div>
-                                            }
-                                            else if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Pending)
-                                            {
-                                                <div class="alert alert-warning p-2 small mb-0 rounded-3">
-                                                    <i class="bi bi-hourglass-split me-1"></i> Waiting for Admin document audit.
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <div class="d-flex justify-content-between align-items-center pt-2 border-top small">
-                                                    <span class="text-success"><i class="bi bi-check-circle me-1"></i> Publicly Visible</span>
-                                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                                                        View Details
+                                                }
+                                                else if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Pending)
+                                                {
+                                                    <div class="alert alert-warning p-2 small mb-2 rounded-3 d-flex align-items-center gap-2">
+                                                        <i class="bi bi-hourglass-split fs-6"></i>
+                                                        <span>Compliance team auditing deed & NID proofs.</span>
+                                                    </div>
+                                                    <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1">
+                                                        <i class="bi bi-pencil"></i>
+                                                        <span>Edit Listing Details</span>
                                                     </a>
-                                                </div>
-                                            }
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex align-items-center justify-content-between gap-2 pt-2 border-top">
+                                                        <span class="small text-success fw-semibold">
+                                                            <i class="bi bi-broadcast me-1"></i> Live in Marketplace
+                                                        </span>
+                                                        <div class="d-flex gap-1">
+                                                            <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Edit Listing">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </a>
+                                                            <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary-custom" title="View Details">
+                                                                <span>View</span>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -184,22 +296,26 @@
                 }
                 else
                 {
+                    <!-- Empty State for Selling -->
                     <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
-                        <i class="bi bi-building-add fs-1 text-muted mb-2"></i>
-                        <h5 class="fw-bold">You Have No Property Listings Yet</h5>
-                        <p class="text-muted small max-w-500 mx-auto mb-3">
-                            Ready to sell? Create a verified property listing by uploading photos and legal title documents.
+                        <div class="empty-state-icon mx-auto text-emerald mb-3" style="font-size: 3.5rem;">
+                            <i class="bi bi-building-add"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">No Property Listings Yet</h4>
+                        <p class="text-muted max-w-500 mx-auto mb-4">
+                            Ready to sell? Create a verified property listing by uploading property specifications and government legal title documents.
                         </p>
                         <div>
-                            <a asp-controller="Property" asp-action="Sell" class="btn btn-primary-custom px-4 py-2">
-                                <i class="bi bi-plus-circle me-1"></i> List Your First Property
+                            <a asp-controller="Property" asp-action="Sell" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-plus-circle"></i>
+                                <span>List Your First Property</span>
                             </a>
                         </div>
                     </div>
                 }
             </div>
 
-            <!-- TAB 2: BUYING HISTORY -->
+            <!-- TAB 2: PURCHASE AGREEMENTS & BUYING HISTORY -->
             <div class="tab-pane fade" id="buyingHistory" role="tabpanel" aria-labelledby="buying-tab">
                 @if (Model.BuyingHistory.Any())
                 {
@@ -207,41 +323,55 @@
                         @foreach (var purchase in Model.BuyingHistory)
                         {
                             <div class="col-lg-6">
-                                <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
+                                <div class="profile-property-card card border-0 shadow-sm rounded-4 overflow-hidden h-100 position-relative d-flex flex-column">
                                     <div class="row g-0 h-100">
                                         <div class="col-sm-5 position-relative">
-                                            <img src="@purchase.PropertyImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 180px;" alt="@purchase.PropertyTitle" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                            <span class="badge position-absolute top-0 start-0 m-2 bg-success">
-                                                <i class="bi bi-shield-check me-1"></i> Verified
-                                            </span>
+                                            <img src="@purchase.PropertyImageUrl" class="w-100 h-100 object-fit-cover" style="min-height: 200px;" alt="@purchase.PropertyTitle" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                            <div class="position-absolute top-0 start-0 m-2">
+                                                <span class="badge bg-success shadow-sm">
+                                                    <i class="bi bi-shield-check me-1"></i> Deed Verified
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div class="col-sm-7 p-3 d-flex flex-column justify-content-between">
+
+                                        <div class="col-sm-7 p-3 p-md-4 d-flex flex-column justify-content-between">
                                             <div>
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">@purchase.TransactionStatus</span>
-                                                    <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>@purchase.TransactionDate.ToString("MMM dd, yyyy")</span>
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                        @purchase.TransactionStatus
+                                                    </span>
+                                                    <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>@purchase.FormattedDate</span>
                                                 </div>
-                                                <h5 class="h6 fw-bold mb-1">
-                                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@purchase.PropertyId" class="text-dark text-decoration-none">
+
+                                                <h5 class="h6 fw-bold mb-1 text-truncate" title="@purchase.PropertyTitle">
+                                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@purchase.PropertyId" class="text-heading text-decoration-none">
                                                         @purchase.PropertyTitle
                                                     </a>
                                                 </h5>
-                                                <div class="small text-muted mb-2">
+
+                                                <div class="small text-muted mb-2 text-truncate">
                                                     <i class="bi bi-geo-alt me-1 text-danger"></i>@purchase.Location
                                                 </div>
-                                                <div class="fw-bold text-success mb-2">
-                                                    Agreed: @purchase.AgreedPrice.ToString("C0")
+
+                                                <div class="d-flex align-items-baseline gap-2 mb-2">
+                                                    <span class="small text-muted">Agreed Price:</span>
+                                                    <span class="fs-5 fw-bold text-emerald">@purchase.FormattedAgreedPrice</span>
                                                 </div>
+
                                                 @if (!string.IsNullOrEmpty(purchase.Notes))
                                                 {
-                                                    <p class="small text-muted mb-0 fst-italic">"@purchase.Notes"</p>
+                                                    <div class="p-2 rounded-3 bg-light border small text-muted mb-2 fst-italic text-truncate">
+                                                        <i class="bi bi-quote me-1"></i>@purchase.Notes
+                                                    </div>
                                                 }
                                             </div>
 
-                                            <div class="pt-2 border-top mt-3 d-flex justify-content-between align-items-center">
-                                                <span class="small text-success fw-semibold"><i class="bi bi-check2-all me-1"></i> Agreement On Record</span>
+                                            <div class="pt-2 border-top mt-2 d-flex justify-content-between align-items-center">
+                                                <span class="small text-success fw-semibold">
+                                                    <i class="bi bi-check2-all me-1"></i> Formal Agreement
+                                                </span>
                                                 <a asp-controller="Property" asp-action="Details" asp-route-id="@purchase.PropertyId" class="btn btn-sm btn-outline-custom">
-                                                    View Property
+                                                    View Details &rarr;
                                                 </a>
                                             </div>
                                         </div>
@@ -253,15 +383,19 @@
                 }
                 else
                 {
+                    <!-- Empty State for Buying -->
                     <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
-                        <i class="bi bi-bag fs-1 text-muted mb-2"></i>
-                        <h5 class="fw-bold">No Buying History Recorded</h5>
-                        <p class="text-muted small max-w-500 mx-auto mb-3">
-                            Explore verified listings across prime metropolitan areas and initiate direct purchase agreements with verified owners.
+                        <div class="empty-state-icon mx-auto text-emerald mb-3" style="font-size: 3.5rem;">
+                            <i class="bi bi-bag"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">No Purchase Agreements Recorded</h4>
+                        <p class="text-muted max-w-500 mx-auto mb-4">
+                            Explore verified properties with guaranteed legal title clearance and initiate direct purchase agreements with verified sellers.
                         </p>
                         <div>
-                            <a asp-controller="Property" asp-action="Index" class="btn btn-outline-custom px-4 py-2">
-                                <i class="bi bi-search me-1"></i> Explore Verified Properties
+                            <a asp-controller="Property" asp-action="Index" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-search"></i>
+                                <span>Explore Verified Listings</span>
                             </a>
                         </div>
                     </div>

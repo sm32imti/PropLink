@@ -10,6 +10,19 @@
                 </span>
                 <span class="badge-type">@Model.PropertyType</span>
             </div>
+            <button type="button" 
+                    class="btn-compare-card-floating btn-compare-toggle" 
+                    data-property-id="@Model.Id"
+                    data-property-title="@Model.Title"
+                    data-property-price="@Model.FormattedPrice"
+                    data-property-img="@Model.ImageUrl"
+                    data-property-type="@Model.PropertyType"
+                    data-property-city="@Model.City"
+                    data-default-class="btn-compare-card-floating"
+                    title="Add to Compare">
+                <i class="bi bi-plus-circle"></i>
+                <span class="d-none">Compare</span>
+            </button>
             <div class="property-price-tag">
                 @Model.FormattedPrice
             </div>
@@ -46,7 +59,7 @@
                 </div>
             </div>
 
-            <div class="property-footer d-flex align-items-center justify-content-between pt-3 border-top">
+            <div class="property-footer d-flex align-items-center justify-content-between gap-2 pt-3 border-top">
                 <div class="seller-info d-flex align-items-center gap-2">
                     <div class="seller-avatar">
                         @(string.IsNullOrEmpty(Model.SellerName) ? "P" : Model.SellerName.Substring(0, 1))
@@ -56,9 +69,24 @@
                         <div class="time-ago">@Model.TimeAgo</div>
                     </div>
                 </div>
-                <a asp-controller="Property" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary-custom">
-                    View Details
-                </a>
+                <div class="d-flex align-items-center gap-1">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-custom btn-compare-toggle"
+                            data-property-id="@Model.Id"
+                            data-property-title="@Model.Title"
+                            data-property-price="@Model.FormattedPrice"
+                            data-property-img="@Model.ImageUrl"
+                            data-property-type="@Model.PropertyType"
+                            data-property-city="@Model.City"
+                            data-default-class="btn-outline-custom"
+                            title="Compare this property">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        <span>+ Compare</span>
+                    </button>
+                    <a asp-controller="Property" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary-custom">
+                        Details
+                    </a>
+                </div>
             </div>
         </div>
     </div>

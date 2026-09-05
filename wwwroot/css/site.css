@@ -1034,3 +1034,417 @@ h1, h2, h3, h4, h5, h6, .heading-text {
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
 }
+
+/* ==========================================================================
+   Property Comparator & Floating Comparison Dock Styles
+   ========================================================================== */
+.btn-compare-card-floating {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--text-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+.btn-compare-card-floating:hover {
+    transform: scale(1.1);
+    background: #ffffff;
+    color: var(--primary);
+    border-color: var(--primary-border);
+}
+
+.btn-compare-card-floating.active,
+.btn-compare-card-floating.btn-success {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+/* Floating Bottom Dock */
+.compare-floating-dock {
+    position: fixed;
+    bottom: 24px;
+    left: 0;
+    right: 0;
+    z-index: 1060;
+    pointer-events: none;
+    animation: dockSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.compare-dock-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color-emerald);
+    pointer-events: auto;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: var(--transition-smooth);
+    box-shadow: 0 20px 40px -8px rgba(6, 36, 25, 0.22);
+}
+
+.compare-dock-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--emerald-light);
+    border: 1px solid var(--border-color-emerald);
+}
+
+.compare-dock-chip {
+    font-size: 0.8rem;
+    transition: var(--transition-smooth);
+}
+
+.compare-dock-chip:hover {
+    border-color: var(--primary-border) !important;
+}
+
+.btn-dock-remove {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.btn-dock-remove:hover {
+    opacity: 1;
+    color: #ef4444 !important;
+}
+
+@keyframes dockSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Comparison Matrix Table */
+.comparison-matrix-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.comparison-matrix-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.comparison-matrix-table th,
+.comparison-matrix-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.comparison-matrix-table th:last-child,
+.comparison-matrix-table td:last-child {
+    border-right: none;
+}
+
+.col-feature-label {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: var(--bg-card) !important;
+}
+
+.comparison-matrix-table tbody tr:hover td {
+    background-color: var(--bg-subtle);
+}
+
+.feature-title {
+    font-weight: 600;
+    color: var(--text-heading);
+    font-size: 0.9rem;
+    position: sticky;
+    left: 0;
+    background: var(--bg-card);
+    z-index: 5;
+}
+
+.section-row td {
+    background-color: var(--bg-subtle) !important;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.btn-remove-compare {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    opacity: 0.85;
+    transition: var(--transition-smooth);
+}
+
+.btn-remove-compare:hover {
+    opacity: 1;
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+.add-property-slot-card {
+    min-height: 260px;
+    border-color: var(--border-color-emerald) !important;
+    background: var(--bg-subtle);
+    transition: var(--transition-smooth);
+}
+
+.add-property-slot-card:hover {
+    background: var(--emerald-light);
+}
+
+/* Difference Highlighting Mode */
+.highlight-diffs-active .row-different td.compare-val {
+    background-color: rgba(245, 158, 11, 0.08) !important;
+    border-top: 1px dashed rgba(245, 158, 11, 0.3);
+    border-bottom: 1px dashed rgba(245, 158, 11, 0.3);
+}
+
+.highlight-diffs-active .row-identical td.compare-val {
+    opacity: 0.55;
+}
+
+/* Dark Mode Overrides for Comparator */
+[data-theme="dark"] .btn-compare-card-floating {
+    background: rgba(17, 30, 24, 0.92);
+    border-color: var(--border-color);
+    color: var(--text-heading);
+}
+
+[data-theme="dark"] .compare-dock-card {
+    background: rgba(17, 30, 24, 0.95);
+    border-color: var(--brand-dark-border);
+}
+
+[data-theme="dark"] .col-feature-label,
+[data-theme="dark"] .feature-title {
+    background: var(--bg-card) !important;
+    color: var(--text-heading);
+}
+
+[data-theme="dark"] .section-row td {
+    background-color: var(--bg-subtle) !important;
+    color: var(--emerald-accent);
+}
+
+[data-theme="dark"] .add-property-slot-card {
+    background: var(--bg-subtle);
+    border-color: var(--border-color-emerald) !important;
+}
+
+[data-theme="dark"] .compare-dock-chip {
+    background-color: var(--bg-subtle) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-heading);
+}
+
+/* Print Optimization for Comparator */
+@media print {
+    .proplink-navbar,
+    .compare-floating-dock,
+    .btn-remove-compare,
+    .col-property-add,
+    .btn,
+    footer {
+        display: none !important;
+    }
+
+    .property-comparator-page {
+        padding: 0 !important;
+    }
+
+    .comparison-matrix-wrapper {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}
+
+/* ==========================================================================
+   Preference Matcher & Smart Decision Guide Styles
+   ========================================================================== */
+.preference-guide-card {
+    border-left: 4px solid var(--primary) !important;
+    background: var(--bg-card);
+}
+
+.preference-match-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-smooth);
+}
+
+.preference-match-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-border);
+    box-shadow: var(--shadow-md);
+}
+
+/* Highlighted winning property column in table */
+.prop-column-highlighted {
+    background-color: var(--primary-light) !important;
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 0 20px var(--primary-glow);
+    animation: pulseHighlight 1.5s ease;
+}
+
+@keyframes pulseHighlight {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+[data-theme="dark"] .preference-match-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .preference-match-card:hover {
+    border-color: var(--emerald-accent);
+}
+
+[data-theme="dark"] .prop-column-highlighted {
+    background-color: rgba(16, 185, 129, 0.18) !important;
+    outline-color: var(--emerald-accent);
+}
+
+/* ==========================================================================
+   Executive Profile & Portfolio Dashboard Styles
+   ========================================================================== */
+.profile-dashboard-page {
+    background-color: var(--bg-page);
+    min-height: 80vh;
+}
+
+.profile-hero-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.profile-hero-banner {
+    height: 90px;
+    background: var(--emerald-gradient);
+    opacity: 0.9;
+}
+
+.profile-avatar-wrapper {
+    margin-top: -45px;
+}
+
+.profile-avatar {
+    width: 86px;
+    height: 86px;
+    background: var(--emerald-gradient) !important;
+    border: 4px solid var(--bg-card);
+}
+
+.profile-stat-box {
+    background: var(--bg-subtle);
+    border-color: var(--border-color) !important;
+    transition: var(--transition-smooth);
+}
+
+.profile-stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-stat-icon {
+    font-size: 1.3rem;
+}
+
+.bg-success-subtle-glow {
+    background: rgba(16, 185, 129, 0.08) !important;
+}
+
+.bg-warning-subtle-glow {
+    background: rgba(245, 158, 11, 0.08) !important;
+}
+
+.bg-danger-subtle-glow {
+    background: rgba(239, 68, 68, 0.08) !important;
+}
+
+.bg-info-subtle-glow {
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
+.custom-segmented-pills .nav-link {
+    background: var(--bg-card);
+    color: var(--text-body);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-smooth);
+}
+
+.custom-segmented-pills .nav-link:hover {
+    color: var(--primary);
+    border-color: var(--primary-border);
+}
+
+.custom-segmented-pills .nav-link.active {
+    background: var(--emerald-gradient) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+.custom-segmented-pills .nav-link.active .badge {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+.profile-property-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-smooth);
+}
+
+.profile-property-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-border);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .profile-hero-banner {
+    background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+    opacity: 1;
+}
+
+[data-theme="dark"] .profile-property-card,
+[data-theme="dark"] .profile-hero-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .custom-segmented-pills .nav-link {
+    background: var(--bg-card);
+    color: var(--text-body);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .custom-segmented-pills .nav-link.active {
+    color: #ffffff !important;
+}
