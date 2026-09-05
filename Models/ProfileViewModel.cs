@@ -31,13 +31,18 @@ public class MyPropertyListingViewModel
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public decimal Price { get; set; }
+    public string FormattedPrice => Price.ToString("C0");
     public PropertyType PropertyType { get; set; }
     public string Location { get; set; } = string.Empty;
+    public int Bedrooms { get; set; }
+    public int Bathrooms { get; set; }
+    public double SquareFeet { get; set; }
     public string MainImageUrl { get; set; } = string.Empty;
     public VerificationStatus VerificationStatus { get; set; }
     public TransactionStatus TransactionStatus { get; set; }
     public string? RejectionReason { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string FormattedDate => CreatedAt.ToString("MMM dd, yyyy");
 }
 
 public class PropertyTransactionViewModel
@@ -47,8 +52,10 @@ public class PropertyTransactionViewModel
     public string PropertyTitle { get; set; } = string.Empty;
     public string PropertyImageUrl { get; set; } = string.Empty;
     public decimal AgreedPrice { get; set; }
+    public string FormattedAgreedPrice => AgreedPrice.ToString("C0");
     public string Location { get; set; } = string.Empty;
     public TransactionStatus TransactionStatus { get; set; }
     public string? Notes { get; set; }
     public DateTime TransactionDate { get; set; }
+    public string FormattedDate => TransactionDate.ToString("MMM dd, yyyy");
 }
