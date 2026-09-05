@@ -111,17 +111,17 @@
                         </div>
                     </div>
                     <div class="col-lg col-md-4 col-6">
-                        <div class="profile-stat-box p-3 rounded-4 border text-center border-warning-subtle bg-warning-subtle-glow">
-                            <span class="profile-stat-icon text-warning mb-1 d-block"><i class="bi bi-hourglass-split"></i></span>
-                            <span class="h4 fw-bold text-warning d-block mb-0">@Model.PendingListingsCount</span>
-                            <span class="small text-muted">Under Review</span>
+                        <div class="profile-stat-box p-3 rounded-4 border text-center border-danger-subtle bg-danger-subtle-glow">
+                            <span class="profile-stat-icon text-danger mb-1 d-block"><i class="bi bi-lightning-charge-fill"></i></span>
+                            <span class="h4 fw-bold text-danger d-block mb-0">@Model.ActiveAuctionsCount</span>
+                            <span class="small text-muted">Live Auctions</span>
                         </div>
                     </div>
                     <div class="col-lg col-md-4 col-6">
-                        <div class="profile-stat-box p-3 rounded-4 border text-center border-danger-subtle bg-danger-subtle-glow">
-                            <span class="profile-stat-icon text-danger mb-1 d-block"><i class="bi bi-exclamation-octagon-fill"></i></span>
-                            <span class="h4 fw-bold text-danger d-block mb-0">@Model.RejectedListingsCount</span>
-                            <span class="small text-muted">Action Needed</span>
+                        <div class="profile-stat-box p-3 rounded-4 border text-center border-primary-subtle bg-primary-subtle-glow">
+                            <span class="profile-stat-icon text-primary mb-1 d-block"><i class="bi bi-hammer"></i></span>
+                            <span class="h4 fw-bold text-primary d-block mb-0">@Model.MyBidsCount</span>
+                            <span class="small text-muted">Active Bids</span>
                         </div>
                     </div>
                     <div class="col-lg col-md-4 col-12">
@@ -143,6 +143,20 @@
                         <i class="bi bi-building"></i>
                         <span>My Listed Properties</span>
                         <span class="badge rounded-pill bg-white text-dark ms-1">@Model.SellingHistory.Count</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2" id="auctions-tab" data-bs-toggle="pill" data-bs-target="#sellerAuctions" type="button" role="tab" aria-controls="sellerAuctions" aria-selected="false">
+                        <i class="bi bi-lightning-charge-fill text-danger"></i>
+                        <span>My Auctions</span>
+                        <span class="badge rounded-pill bg-white text-dark ms-1">@Model.SellerAuctions.Count</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2" id="mybids-tab" data-bs-toggle="pill" data-bs-target="#buyerBids" type="button" role="tab" aria-controls="buyerBids" aria-selected="false">
+                        <i class="bi bi-hammer text-primary"></i>
+                        <span>My Bids</span>
+                        <span class="badge rounded-pill bg-white text-dark ms-1">@Model.BuyerBids.Count</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -175,9 +189,21 @@
                                         <div class="col-sm-5 position-relative">
                                             <img src="@item.MainImageUrl" class="w-100 h-100 object-fit-cover" style="min-height: 220px;" alt="@item.Title" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                                             
-                                            <!-- Verification Status Badge -->
-                                            <div class="position-absolute top-0 start-0 m-2">
-                                                @if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved)
+                                            <!-- Verification & Auction Status Badges -->
+                                            <div class="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1">
+                                                @if (item.HasActiveAuction)
+                                                {
+                                                    <span class="badge bg-danger shadow-sm d-flex align-items-center gap-1">
+                                                        <i class="bi bi-lightning-charge-fill"></i> Auction Live
+                                                    </span>
+                                                }
+                                                else if (item.HasPendingBiddingRequest)
+                                                {
+                                                    <span class="badge bg-warning text-dark shadow-sm">
+                                                        <i class="bi bi-hourglass-split me-1"></i> Bidding Requested
+                                                    </span>
+                                                }
+                                                else if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved)
                                                 {
                                                     <span class="badge bg-success shadow-sm">
                                                         <i class="bi bi-patch-check-fill me-1"></i> Approved & Live
@@ -213,16 +239,9 @@
                                                 </div>
 
                                                 <h5 class="h6 fw-bold mb-1 text-truncate" title="@item.Title">
-                                                    @if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Approved)
-                                                    {
-                                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="text-heading text-decoration-none">
-                                                            @item.Title
-                                                        </a>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-heading">@item.Title</span>
-                                                    }
+                                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="text-heading text-decoration-none">
+                                                        @item.Title
+                                                    </a>
                                                 </h5>
 
                                                 <div class="small text-muted mb-2 text-truncate">
@@ -231,6 +250,12 @@
 
                                                 <div class="d-flex align-items-baseline gap-2 mb-2">
                                                     <span class="fs-5 fw-bold text-primary">@item.FormattedPrice</span>
+                                                    @if (item.HasActiveAuction && item.CurrentHighestBid.HasValue)
+                                                    {
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">
+                                                            High Bid: @item.FormattedHighestBid
+                                                        </span>
+                                                    }
                                                 </div>
 
                                                 <div class="d-flex gap-2 text-muted small mb-3 py-1 border-top border-bottom">
@@ -254,7 +279,7 @@
                                                         <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Administrator Feedback:</div>
                                                         <div class="text-truncate">@(string.IsNullOrEmpty(item.RejectionReason) ? "Deed documents need corrections." : item.RejectionReason)</div>
                                                     </div>
-                                                    <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-danger w-100 d-flex align-items-center justify-content-center gap-1">
+                                                    <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-danger w-100 d-flex align-items-center justify-content-center gap-1 rounded-pill">
                                                         <i class="bi bi-pencil-square"></i>
                                                         <span>Fix Documents & Resubmit</span>
                                                     </a>
@@ -265,24 +290,51 @@
                                                         <i class="bi bi-hourglass-split fs-6"></i>
                                                         <span>Compliance team auditing deed & NID proofs.</span>
                                                     </div>
-                                                    <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1">
+                                                    <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1 rounded-pill">
                                                         <i class="bi bi-pencil"></i>
                                                         <span>Edit Listing Details</span>
                                                     </a>
                                                 }
                                                 else
                                                 {
-                                                    <div class="d-flex align-items-center justify-content-between gap-2 pt-2 border-top">
-                                                        <span class="small text-success fw-semibold">
-                                                            <i class="bi bi-broadcast me-1"></i> Live in Marketplace
-                                                        </span>
-                                                        <div class="d-flex gap-1">
-                                                            <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Edit Listing">
-                                                                <i class="bi bi-pencil"></i>
+                                                    <div class="d-flex flex-column gap-2 pt-2 border-top">
+                                                        @if (item.CanRequestBidding)
+                                                        {
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-1 rounded-pill btn-open-bidding-modal"
+                                                                    data-property-id="@item.Id"
+                                                                    data-property-title="@item.Title"
+                                                                    data-property-price="@item.Price">
+                                                                <i class="bi bi-lightning-charge-fill"></i>
+                                                                <span>Enable Live Bidding</span>
+                                                            </button>
+                                                        }
+                                                        else if (item.HasPendingBiddingRequest)
+                                                        {
+                                                            <span class="small text-warning fw-semibold text-center">
+                                                                <i class="bi bi-hourglass-split me-1"></i> Bidding Request Pending Review
+                                                            </span>
+                                                        }
+                                                        else if (item.HasActiveAuction)
+                                                        {
+                                                            <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-danger w-100 rounded-pill d-flex align-items-center justify-content-center gap-1">
+                                                                <i class="bi bi-broadcast"></i>
+                                                                <span>View Live Auction</span>
                                                             </a>
-                                                            <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary-custom" title="View Details">
-                                                                <span>View</span>
-                                                            </a>
+                                                        }
+
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span class="small text-success fw-semibold">
+                                                                <i class="bi bi-check-circle-fill me-1"></i> Verified
+                                                            </span>
+                                                            <div class="d-flex gap-1">
+                                                                <a asp-controller="Property" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary rounded-pill" title="Edit Listing">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </a>
+                                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary-custom rounded-pill" title="View Details">
+                                                                    <span>View</span>
+                                                                </a>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 }
@@ -306,7 +358,7 @@
                             Ready to sell? Create a verified property listing by uploading property specifications and government legal title documents.
                         </p>
                         <div>
-                            <a asp-controller="Property" asp-action="Sell" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2">
+                            <a asp-controller="Property" asp-action="Sell" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2 rounded-pill">
                                 <i class="bi bi-plus-circle"></i>
                                 <span>List Your First Property</span>
                             </a>
@@ -315,7 +367,268 @@
                 }
             </div>
 
-            <!-- TAB 2: PURCHASE AGREEMENTS & BUYING HISTORY -->
+            <!-- TAB 2: MY AUCTIONS (SELLER DASHBOARD) -->
+            <div class="tab-pane fade" id="sellerAuctions" role="tabpanel" aria-labelledby="auctions-tab">
+                @if (Model.SellerAuctions.Any())
+                {
+                    <div class="row g-4">
+                        @foreach (var auction in Model.SellerAuctions)
+                        {
+                            <div class="col-lg-6">
+                                <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 position-relative d-flex flex-column bg-white">
+                                    <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-light">
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (auction.Status == PropLink.Domain.Enums.AuctionStatus.Active)
+                                            {
+                                                <span class="badge bg-danger rounded-pill px-3 py-1 d-flex align-items-center gap-1">
+                                                    <span class="spinner-grow spinner-grow-sm text-white" style="width: 6px; height: 6px;"></span>
+                                                    <span>Active Auction</span>
+                                                </span>
+                                            }
+                                            else if (auction.Status == PropLink.Domain.Enums.AuctionStatus.AwaitingSellerConfirmation)
+                                            {
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
+                                                    <i class="bi bi-hourglass-split me-1"></i> Awaiting Your Confirmation
+                                                </span>
+                                            }
+                                            else if (auction.Status == PropLink.Domain.Enums.AuctionStatus.Sold)
+                                            {
+                                                <span class="badge bg-success rounded-pill px-3 py-1">
+                                                    <i class="bi bi-check-all me-1"></i> Sold via Auction
+                                                </span>
+                                            }
+                                            else if (auction.Status == PropLink.Domain.Enums.AuctionStatus.Cancelled)
+                                            {
+                                                <span class="badge bg-secondary rounded-pill px-3 py-1">
+                                                    Auction Unsold / Cancelled
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary rounded-pill px-3 py-1">
+                                                    Auction Expired
+                                                </span>
+                                            }
+                                        </div>
+                                        <span class="small text-muted fw-semibold">
+                                            <i class="bi bi-people me-1"></i>@auction.TotalBids Bids Placed
+                                        </span>
+                                    </div>
+
+                                    <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                                        <div>
+                                            <div class="d-flex gap-3 mb-3">
+                                                <img src="@auction.PropertyImageUrl" class="rounded-3 object-fit-cover" style="width: 90px; height: 75px;" alt="@auction.PropertyTitle" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                                <div class="overflow-hidden">
+                                                    <h5 class="h6 fw-bold mb-1 text-truncate" title="@auction.PropertyTitle">
+                                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@auction.PropertyId" class="text-heading text-decoration-none">
+                                                            @auction.PropertyTitle
+                                                        </a>
+                                                    </h5>
+                                                    <div class="small text-muted mb-1 text-truncate"><i class="bi bi-geo-alt me-1 text-danger"></i>@auction.Location</div>
+                                                    <div class="small text-muted">Floor Price: <strong>@auction.FormattedStartPrice</strong></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-3 rounded-4 bg-light mb-3">
+                                                <div class="d-flex justify-content-between align-items-baseline">
+                                                    <span class="small text-muted">@(auction.Status == PropLink.Domain.Enums.AuctionStatus.Sold ? "Final Sold Price:" : "Current Leading Bid:")</span>
+                                                    <span class="h4 fw-bold text-danger mb-0">@auction.FormattedCurrentHighestBid</span>
+                                                </div>
+
+                                                @if (auction.Status == PropLink.Domain.Enums.AuctionStatus.Active)
+                                                {
+                                                    <div class="small text-muted mt-2 pt-2 border-top d-flex justify-content-between">
+                                                        <span><i class="bi bi-clock me-1 text-warning"></i> Ends:</span>
+                                                        <span class="fw-semibold">@auction.EndTime.ToString("MMM dd, yyyy HH:mm") UTC</span>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <!-- Awaiting Confirmation Details & Decision Call to Action -->
+                                            @if (auction.Status == PropLink.Domain.Enums.AuctionStatus.AwaitingSellerConfirmation && auction.WinningBidAmount.HasValue)
+                                            {
+                                                <div class="card border-warning p-3 rounded-4 bg-warning-subtle mb-3">
+                                                    <div class="d-flex align-items-center gap-2 mb-2 text-warning">
+                                                        <i class="bi bi-trophy-fill fs-5"></i>
+                                                        <strong class="text-dark">Winning Bid Ready for Review</strong>
+                                                    </div>
+                                                    <ul class="list-unstyled small mb-3 text-dark">
+                                                        <li><strong>Buyer Name:</strong> @auction.WinningBuyerName</li>
+                                                        <li><strong>Contact Email:</strong> @auction.WinningBuyerEmail</li>
+                                                        @if (!string.IsNullOrEmpty(auction.WinningBuyerPhone))
+                                                        {
+                                                            <li><strong>Phone:</strong> @auction.WinningBuyerPhone</li>
+                                                        }
+                                                        <li><strong>Offered Amount:</strong> <span class="fs-6 fw-bold text-success">@auction.FormattedWinningBidAmount</span></li>
+                                                    </ul>
+
+                                                    <div class="d-flex gap-2">
+                                                        <!-- Confirm Form -->
+                                                        <form asp-controller="Profile" asp-action="ConfirmAuctionSale" asp-route-id="@auction.AuctionId" method="post" class="flex-fill" onsubmit="return confirm('Confirming this winning bid will finalize a formal Purchase Agreement for @auction.FormattedWinningBidAmount. Proceed?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold btn-sm py-2">
+                                                                <i class="bi bi-check2-circle me-1"></i> Confirm Sale
+                                                            </button>
+                                                        </form>
+
+                                                        <!-- Reject Form -->
+                                                        <form asp-controller="Profile" asp-action="RejectAuctionWinningBid" asp-route-id="@auction.AuctionId" method="post" class="flex-fill" onsubmit="return confirm('Declining this winning bid will cancel the auction and return the property to standard catalog listings. Continue?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-outline-danger w-100 rounded-pill fw-bold btn-sm py-2">
+                                                                <i class="bi bi-x-circle me-1"></i> Decline Bid
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                            <span class="small text-muted">Launched: @auction.StartTime.ToString("MMM dd, yyyy")</span>
+                                            <a asp-controller="Property" asp-action="Details" asp-route-id="@auction.PropertyId" class="btn btn-sm btn-outline-custom rounded-pill">
+                                                <span>View Auction Page &rarr;</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
+                        <div class="empty-state-icon mx-auto text-danger mb-3" style="font-size: 3.5rem;">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">No Auctions Created Yet</h4>
+                        <p class="text-muted max-w-500 mx-auto mb-4">
+                            You can enable live competitive auctions on any of your verified, approved property listings.
+                        </p>
+                        <div>
+                            <button type="button" class="btn btn-danger px-4 py-2 d-inline-flex align-items-center gap-2 rounded-pill" onclick="document.getElementById('selling-tab').click();">
+                                <i class="bi bi-houses"></i>
+                                <span>Go to My Listed Properties</span>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- TAB 3: MY BIDS (BUYER DASHBOARD) -->
+            <div class="tab-pane fade" id="buyerBids" role="tabpanel" aria-labelledby="mybids-tab">
+                @if (Model.BuyerBids.Any())
+                {
+                    <div class="row g-4">
+                        @foreach (var bid in Model.BuyerBids)
+                        {
+                            <div class="col-lg-6">
+                                <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 position-relative d-flex flex-column bg-white">
+                                    <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-light">
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (bid.BidPosition == "Winning")
+                                            {
+                                                <span class="badge bg-success rounded-pill px-3 py-1 shadow-sm d-flex align-items-center gap-1">
+                                                    <i class="bi bi-trophy-fill"></i> Currently Winning
+                                                </span>
+                                            }
+                                            else if (bid.BidPosition == "Outbid")
+                                            {
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 shadow-sm d-flex align-items-center gap-1">
+                                                    <i class="bi bi-arrow-up-circle-fill"></i> Outbid
+                                                </span>
+                                            }
+                                            else if (bid.BidPosition == "Won")
+                                            {
+                                                <span class="badge bg-success rounded-pill px-3 py-1 shadow-sm d-flex align-items-center gap-1">
+                                                    <i class="bi bi-check-circle-fill"></i> Auction Won
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary rounded-pill px-3 py-1">
+                                                    Auction Ended / Lost
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <span class="small text-muted">
+                                            Bid Placed: @bid.FormattedPlacedAt
+                                        </span>
+                                    </div>
+
+                                    <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                                        <div>
+                                            <div class="d-flex gap-3 mb-3">
+                                                <img src="@bid.PropertyImageUrl" class="rounded-3 object-fit-cover" style="width: 90px; height: 75px;" alt="@bid.PropertyTitle" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                                <div class="overflow-hidden">
+                                                    <h5 class="h6 fw-bold mb-1 text-truncate" title="@bid.PropertyTitle">
+                                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@bid.PropertyId" class="text-heading text-decoration-none">
+                                                            @bid.PropertyTitle
+                                                        </a>
+                                                    </h5>
+                                                    <div class="small text-muted mb-1 text-truncate"><i class="bi bi-geo-alt me-1 text-danger"></i>@bid.Location</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-3 rounded-4 bg-light mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="small text-muted">Your Highest Bid:</span>
+                                                    <span class="fs-5 fw-bold text-primary">@bid.FormattedYourLatestBid</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                                    <span class="small text-muted">Current Leading Bid:</span>
+                                                    <span class="fs-5 fw-bold text-danger">@bid.FormattedCurrentHighestBid</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                            @if (bid.AuctionStatus == PropLink.Domain.Enums.AuctionStatus.Active && DateTime.UtcNow < bid.EndTime)
+                                            {
+                                                <span class="small text-danger fw-semibold">
+                                                    <i class="bi bi-broadcast me-1"></i> Auction Live
+                                                </span>
+                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@bid.PropertyId" class="btn btn-sm btn-danger rounded-pill px-3">
+                                                    @(bid.BidPosition == "Outbid" ? "Increase Bid" : "View Auction") &rarr;
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="small text-muted">Auction Concluded</span>
+                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@bid.PropertyId" class="btn btn-sm btn-outline-custom rounded-pill">
+                                                    View Details &rarr;
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
+                        <div class="empty-state-icon mx-auto text-primary mb-3" style="font-size: 3.5rem;">
+                            <i class="bi bi-hammer"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">No Bids Placed Yet</h4>
+                        <p class="text-muted max-w-500 mx-auto mb-4">
+                            Participate in live competitive bidding on verified real estate properties with fixed auction deadlines.
+                        </p>
+                        <div>
+                            <a asp-controller="Property" asp-action="Index" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2 rounded-pill">
+                                <i class="bi bi-search"></i>
+                                <span>Browse Verified Listings</span>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- TAB 4: PURCHASE AGREEMENTS & BUYING HISTORY -->
             <div class="tab-pane fade" id="buyingHistory" role="tabpanel" aria-labelledby="buying-tab">
                 @if (Model.BuyingHistory.Any())
                 {
@@ -370,7 +683,7 @@
                                                 <span class="small text-success fw-semibold">
                                                     <i class="bi bi-check2-all me-1"></i> Formal Agreement
                                                 </span>
-                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@purchase.PropertyId" class="btn btn-sm btn-outline-custom">
+                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@purchase.PropertyId" class="btn btn-sm btn-outline-custom rounded-pill">
                                                     View Details &rarr;
                                                 </a>
                                             </div>
@@ -393,7 +706,7 @@
                             Explore verified properties with guaranteed legal title clearance and initiate direct purchase agreements with verified sellers.
                         </p>
                         <div>
-                            <a asp-controller="Property" asp-action="Index" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2">
+                            <a asp-controller="Property" asp-action="Index" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2 rounded-pill">
                                 <i class="bi bi-search"></i>
                                 <span>Explore Verified Listings</span>
                             </a>
@@ -401,6 +714,60 @@
                     </div>
                 }
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODALS -->
+<!-- ========================================== -->
+
+<!-- ENABLE BIDDING MODAL (SHARED FOR SELLER LISTINGS) -->
+<div class="modal fade" id="enableBiddingProfileModal" tabindex="-1" aria-labelledby="enableBiddingProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="enableBiddingProfileModalLabel">
+                    <i class="bi bi-lightning-charge-fill text-danger me-2"></i>Enable Live Bidding / Auction
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="profileBiddingForm" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PropertyId" id="profileBiddingPropertyId" value="" />
+                <div class="modal-body py-3">
+                    <p class="small text-muted mb-3">
+                        Request administrative permission to auction <strong id="profileBiddingTitle">your property</strong>.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Starting Floor Price ($ USD)</label>
+                        <input type="number" name="StartPrice" id="profileBiddingStartPrice" class="form-control form-control-custom fw-bold text-danger" min="1000" step="100" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Minimum Bid Increment ($ USD)</label>
+                        <input type="number" name="MinIncrement" class="form-control form-control-custom" value="1000" min="100" step="100" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Fixed Auction Duration</label>
+                        <select name="DurationHours" class="form-select form-control-custom">
+                            <option value="6">6 Hours (Flash Auction)</option>
+                            <option value="12">12 Hours (Half-Day)</option>
+                            <option value="24" selected>24 Hours (1 Day)</option>
+                            <option value="48">48 Hours (2 Days)</option>
+                            <option value="72">72 Hours (3 Days)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                        <i class="bi bi-send me-1"></i> Submit Request
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -455,4 +822,26 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Setup Enable Bidding modal for property listings
+            document.querySelectorAll('.btn-open-bidding-modal').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const propId = this.getAttribute('data-property-id');
+                    const propTitle = this.getAttribute('data-property-title');
+                    const propPrice = this.getAttribute('data-property-price');
+
+                    document.getElementById('profileBiddingPropertyId').value = propId;
+                    document.getElementById('profileBiddingTitle').textContent = propTitle;
+                    document.getElementById('profileBiddingStartPrice').value = propPrice;
+
+                    const form = document.getElementById('profileBiddingForm');
+                    form.action = '/properties/' + propId + '/request-bidding';
+
+                    const modal = new bootstrap.Modal(document.getElementById('enableBiddingProfileModal'));
+                    modal.show();
+                });
+            });
+        });
+    </script>
 }

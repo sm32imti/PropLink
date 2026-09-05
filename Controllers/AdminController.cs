@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PropLink.Application.Common.Interfaces;
+using PropLink.Domain.Entities;
 using PropLink.Domain.Enums;
 using PropLink.Infrastructure.Data;
 using PropLink.Web.Models;
@@ -27,11 +28,12 @@ public class AdminController : Controller
     }
 
     // ==========================================
-    // 1. ADMIN VERIFICATION DASHBOARD
+    // 1. ADMIN VERIFICATION DASHBOARD (Properties & Bidding Requests)
     // ==========================================
     [HttpGet]
     [Route("admin/verifications")]
-    public async Task<IActionResult> Verifications()
+    [Route("admin/bidding-requests")]
+    public async Task<IActionResult> Verifications(string? tab = "properties")
     {
         var pendingProperties = await _context.Properties
             .Include(p => p.Seller)
@@ -45,11 +47,28 @@ public class AdminController : Controller
         var totalApproved = await _context.Properties.CountAsync(p => p.VerificationStatus == VerificationStatus.Approved);
         var totalRejected = await _context.Properties.CountAsync(p => p.VerificationStatus == VerificationStatus.Rejected);
 
+        // Fetch Bidding Requests
+        var pendingBiddingRequests = await _context.BiddingRequests
+            .Include(b => b.Property)
+                .ThenInclude(p => p!.Images)
+            .Include(b => b.Seller)
+            .Where(b => b.Status == BiddingRequestStatus.Pending)
+            .OrderByDescending(b => b.RequestedAt)
+            .ToListAsync();
+
+        var totalBiddingPending = pendingBiddingRequests.Count;
+        var totalBiddingApproved = await _context.BiddingRequests.CountAsync(b => b.Status == BiddingRequestStatus.Approved);
+        var totalBiddingRejected = await _context.BiddingRequests.CountAsync(b => b.Status == BiddingRequestStatus.Rejected);
+
         var viewModel = new AdminVerificationDashboardViewModel
         {
             TotalPendingCount = totalPending,
             TotalApprovedCount = totalApproved,
             TotalRejectedCount = totalRejected,
+            TotalBiddingPendingCount = totalBiddingPending,
+            TotalBiddingApprovedCount = totalBiddingApproved,
+            TotalBiddingRejectedCount = totalBiddingRejected,
+            ActiveTab = string.Equals(tab, "bidding", StringComparison.OrdinalIgnoreCase) ? "bidding" : "properties",
             PendingProperties = pendingProperties.Select(p => new AdminPendingPropertyItemViewModel
             {
                 Id = p.Id,
@@ -82,6 +101,27 @@ public class AdminController : Controller
                     FileSizeBytes = d.FileSizeBytes,
                     UploadedAt = d.UploadedAt
                 }).ToList()
+            }).ToList(),
+            BiddingRequests = pendingBiddingRequests.Select(b => new AdminBiddingRequestItemViewModel
+            {
+                Id = b.Id,
+                PropertyId = b.PropertyId,
+                PropertyTitle = b.Property?.Title ?? "Unknown Property",
+                PropertyImageUrl = b.Property?.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl 
+                    ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+                PropertyType = b.Property?.PropertyType ?? PropertyType.House,
+                Location = b.Property != null ? $"{b.Property.City}, {b.Property.State}" : "Unknown Location",
+                SellerId = b.SellerId,
+                SellerName = b.Seller?.FullName ?? "Unknown Seller",
+                SellerEmail = b.Seller?.Email ?? "No email",
+                SellerPhone = b.Seller?.PhoneNumber ?? "No phone",
+                StartPrice = b.StartPrice,
+                MinIncrement = b.MinIncrement,
+                DurationHours = b.DurationHours,
+                RequestedAt = b.RequestedAt,
+                Status = b.Status,
+                AdminNote = b.AdminNote,
+                ReviewedAt = b.ReviewedAt
             }).ToList()
         };
 
@@ -165,7 +205,102 @@ public class AdminController : Controller
         await _context.SaveChangesAsync();
 
         TempData["ToastMessage"] = $"Listing \"{property.Title}\" has been marked as REJECTED. The seller can see the reason in their profile and resubmit.";
-        return RedirectToAction(nameof(Verifications));
+        return RedirectToAction(nameof(Verifications), new { tab = "properties" });
+    }
+
+    // ==========================================
+    // 3.1 APPROVE BIDDING REQUEST & LAUNCH AUCTION
+    // ==========================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Route("admin/bidding-requests/{id:guid}/approve")]
+    public async Task<IActionResult> ApproveBiddingRequest(Guid id, string? adminNotes)
+    {
+        var request = await _context.BiddingRequests
+            .Include(b => b.Property)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (request == null)
+        {
+            TempData["ErrorMessage"] = "Bidding request not found.";
+            return RedirectToAction(nameof(Verifications), new { tab = "bidding" });
+        }
+
+        if (request.Status != BiddingRequestStatus.Pending)
+        {
+            TempData["ErrorMessage"] = "This bidding request has already been processed.";
+            return RedirectToAction(nameof(Verifications), new { tab = "bidding" });
+        }
+
+        var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Guid? adminId = Guid.TryParse(adminIdStr, out var parsedAdminId) ? parsedAdminId : null;
+
+        request.Status = BiddingRequestStatus.Approved;
+        request.ReviewedAt = DateTime.UtcNow;
+        request.ReviewedByAdminId = adminId;
+        request.AdminNote = adminNotes ?? $"Approved by Admin ({User.Identity?.Name}) on {DateTime.UtcNow:g}. Auction launched.";
+
+        // Create new fixed-duration Auction
+        var durationHours = request.DurationHours > 0 ? request.DurationHours : 24;
+        var startTime = DateTime.UtcNow;
+        var endTime = startTime.AddHours(durationHours);
+
+        var auction = new Auction
+        {
+            Id = Guid.NewGuid(),
+            PropertyId = request.PropertyId,
+            BiddingRequestId = request.Id,
+            StartPrice = request.StartPrice,
+            MinIncrement = request.MinIncrement,
+            StartTime = startTime,
+            EndTime = endTime, // Fixed end time, never moves
+            Status = AuctionStatus.Active,
+            CreatedAt = startTime
+        };
+
+        _context.Auctions.Add(auction);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Bidding request approved! Live Auction launched for \"{request.Property?.Title}\" with fixed duration of {durationHours}h (Ends: {endTime:g} UTC).";
+        return RedirectToAction(nameof(Verifications), new { tab = "bidding" });
+    }
+
+    // ==========================================
+    // 3.2 REJECT BIDDING REQUEST
+    // ==========================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Route("admin/bidding-requests/{id:guid}/reject")]
+    public async Task<IActionResult> RejectBiddingRequest(RejectBiddingRequestModel model)
+    {
+        if (string.IsNullOrWhiteSpace(model.AdminNote) || model.AdminNote.Trim().Length < 5)
+        {
+            TempData["ErrorMessage"] = "Rejection requires an explanatory note (at least 5 characters) for the seller.";
+            return RedirectToAction(nameof(Verifications), new { tab = "bidding" });
+        }
+
+        var request = await _context.BiddingRequests
+            .Include(b => b.Property)
+            .FirstOrDefaultAsync(b => b.Id == model.RequestId);
+
+        if (request == null)
+        {
+            TempData["ErrorMessage"] = "Bidding request not found.";
+            return RedirectToAction(nameof(Verifications), new { tab = "bidding" });
+        }
+
+        var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Guid? adminId = Guid.TryParse(adminIdStr, out var parsedAdminId) ? parsedAdminId : null;
+
+        request.Status = BiddingRequestStatus.Rejected;
+        request.AdminNote = model.AdminNote.Trim();
+        request.ReviewedAt = DateTime.UtcNow;
+        request.ReviewedByAdminId = adminId;
+
+        await _context.SaveChangesAsync();
+
+        TempData["ToastMessage"] = $"Bidding request for \"{request.Property?.Title}\" has been REJECTED. The seller can see the reason in their profile.";
+        return RedirectToAction(nameof(Verifications), new { tab = "bidding" });
     }
 
     // ==========================================

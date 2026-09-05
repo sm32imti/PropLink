@@ -54,6 +54,9 @@ public class PropertyController : Controller
         var query = _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Seller)
+            .Include(p => p.Auctions)
+                .ThenInclude(a => a.Bids)
+            .Include(p => p.BiddingRequests)
             .Where(p => p.VerificationStatus == VerificationStatus.Approved)
             .AsNoTracking();
 
@@ -109,25 +112,35 @@ public class PropertyController : Controller
             .Take(pageSize)
             .ToListAsync();
 
-        var propertyCards = pagedList.Select(p => new PropertyCardViewModel
-        {
-            Id = p.Id,
-            Title = p.Title,
-            Description = p.Description,
-            Price = p.Price,
-            PropertyType = p.PropertyType,
-            Address = p.Address,
-            City = p.City,
-            State = p.State,
-            Bedrooms = p.Bedrooms,
-            Bathrooms = p.Bathrooms,
-            SquareFeet = p.SquareFeet,
-            ImageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl
-                       ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
-            VerificationStatus = p.VerificationStatus,
-            TransactionStatus = p.TransactionStatus,
-            SellerName = p.Seller?.FullName ?? "Verified Seller",
-            TimeAgo = GetTimeAgo(p.CreatedAt)
+        var now = DateTime.UtcNow;
+        var propertyCards = pagedList.Select(p => {
+            var activeAuction = p.Auctions.FirstOrDefault(a => a.Status == AuctionStatus.Active && a.EndTime > now);
+            var highestBid = activeAuction?.Bids.OrderByDescending(b => b.Amount).FirstOrDefault()?.Amount;
+
+            return new PropertyCardViewModel
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description,
+                Price = p.Price,
+                PropertyType = p.PropertyType,
+                Address = p.Address,
+                City = p.City,
+                State = p.State,
+                Bedrooms = p.Bedrooms,
+                Bathrooms = p.Bathrooms,
+                SquareFeet = p.SquareFeet,
+                ImageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl
+                           ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+                VerificationStatus = p.VerificationStatus,
+                TransactionStatus = p.TransactionStatus,
+                SellerName = p.Seller?.FullName ?? "Verified Seller",
+                TimeAgo = GetTimeAgo(p.CreatedAt),
+                HasActiveAuction = activeAuction != null,
+                CurrentHighestBid = highestBid ?? (activeAuction != null ? activeAuction.StartPrice : null),
+                AuctionEndTime = activeAuction?.EndTime,
+                HasPendingBiddingRequest = p.BiddingRequests.Any(r => r.Status == BiddingRequestStatus.Pending)
+            };
         }).ToList();
 
         var viewModel = new PropertiesIndexViewModel
@@ -157,6 +170,10 @@ public class PropertyController : Controller
         var property = await _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Seller)
+            .Include(p => p.BiddingRequests)
+            .Include(p => p.Auctions)
+                .ThenInclude(a => a.Bids)
+                    .ThenInclude(b => b.Buyer)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null)
@@ -175,6 +192,78 @@ public class PropertyController : Controller
 
         var sellerTotalProperties = await _context.Properties
             .CountAsync(p => p.SellerId == property.SellerId && p.VerificationStatus == VerificationStatus.Approved);
+
+        // Check for active or awaiting-confirmation auction
+        var relevantAuction = property.Auctions
+            .OrderByDescending(a => a.CreatedAt)
+            .FirstOrDefault(a => a.Status == AuctionStatus.Active || a.Status == AuctionStatus.AwaitingSellerConfirmation);
+
+        AuctionDetailViewModel? auctionVm = null;
+        if (relevantAuction != null)
+        {
+            var orderedBids = relevantAuction.Bids.OrderByDescending(b => b.PlacedAt).ToList();
+            var highestBid = orderedBids.OrderByDescending(b => b.Amount).FirstOrDefault();
+
+            // Anonymize bidder names for general public
+            var bidderMap = new Dictionary<Guid, string>();
+            int bidderCounter = 1;
+            foreach (var b in orderedBids.OrderBy(b => b.PlacedAt))
+            {
+                if (!bidderMap.ContainsKey(b.BuyerId))
+                {
+                    bidderMap[b.BuyerId] = $"Bidder #{bidderCounter++}";
+                }
+            }
+
+            var bidHistoryList = orderedBids.Select(b => {
+                var isThisViewer = CurrentUserId.HasValue && b.BuyerId == CurrentUserId.Value;
+                string displayName;
+
+                if (isOwner || isAdmin)
+                {
+                    displayName = $"{b.Buyer?.FullName ?? "Buyer"} ({bidderMap.GetValueOrDefault(b.BuyerId, "Bidder")})";
+                }
+                else if (isThisViewer)
+                {
+                    displayName = $"{b.Buyer?.FullName ?? "You"} (You)";
+                }
+                else
+                {
+                    displayName = bidderMap.GetValueOrDefault(b.BuyerId, "Anonymous Bidder");
+                }
+
+                return new BidHistoryItemViewModel
+                {
+                    BidId = b.Id,
+                    BidderDisplay = displayName,
+                    Amount = b.Amount,
+                    PlacedAt = b.PlacedAt,
+                    IsFromDirectOffer = b.IsFromDirectOffer,
+                    IsViewer = isThisViewer
+                };
+            }).ToList();
+
+            var isViewerHighest = CurrentUserId.HasValue && highestBid != null && highestBid.BuyerId == CurrentUserId.Value;
+
+            auctionVm = new AuctionDetailViewModel
+            {
+                AuctionId = relevantAuction.Id,
+                PropertyId = property.Id,
+                StartPrice = relevantAuction.StartPrice,
+                MinIncrement = relevantAuction.MinIncrement,
+                CurrentHighestBid = highestBid?.Amount,
+                HighestBidderId = highestBid?.BuyerId,
+                HighestBidderName = highestBid?.Buyer?.FullName,
+                IsViewerHighestBidder = isViewerHighest,
+                StartTime = relevantAuction.StartTime,
+                EndTime = relevantAuction.EndTime,
+                Status = relevantAuction.Status,
+                TotalBidsCount = orderedBids.Count,
+                BidHistory = bidHistoryList
+            };
+        }
+
+        var hasPendingRequest = property.BiddingRequests.Any(r => r.Status == BiddingRequestStatus.Pending);
 
         var viewModel = new PropertyDetailViewModel
         {
@@ -200,7 +289,9 @@ public class PropertyController : Controller
             SellerPhone = property.Seller?.PhoneNumber ?? "",
             SellerMemberSince = property.Seller?.CreatedAt ?? DateTime.UtcNow,
             SellerTotalProperties = sellerTotalProperties,
-            IsOwner = isOwner
+            IsOwner = isOwner,
+            ActiveAuction = auctionVm,
+            HasPendingBiddingRequest = hasPendingRequest
         };
 
         if (!viewModel.ImageUrls.Any())
@@ -927,7 +1018,11 @@ public class PropertyController : Controller
         var userId = CurrentUserId;
         if (!userId.HasValue) return Challenge();
 
-        var property = await _context.Properties.FindAsync(id);
+        var property = await _context.Properties
+            .Include(p => p.Auctions)
+                .ThenInclude(a => a.Bids)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
         if (property == null || property.VerificationStatus != VerificationStatus.Approved)
         {
             return NotFound();
@@ -936,6 +1031,40 @@ public class PropertyController : Controller
         if (property.SellerId == userId.Value)
         {
             TempData["ErrorMessage"] = "You cannot purchase your own property listing.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // Check if there is an Active Auction running on this property
+        var activeAuction = property.Auctions
+            .FirstOrDefault(a => a.Status == AuctionStatus.Active && a.EndTime > DateTime.UtcNow);
+
+        if (activeAuction != null)
+        {
+            // Convert offer into a live Bid
+            var highestBid = activeAuction.Bids.OrderByDescending(b => b.Amount).FirstOrDefault();
+            var minRequired = (highestBid != null ? highestBid.Amount + activeAuction.MinIncrement : activeAuction.StartPrice);
+            var bidAmount = offerPrice ?? property.Price;
+
+            if (bidAmount < minRequired)
+            {
+                TempData["ErrorMessage"] = $"This property is currently on live auction. Your offer (${bidAmount:N0}) is below the minimum required bid (${minRequired:N0}). Please submit a qualifying bid.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var directBid = new Bid
+            {
+                Id = Guid.NewGuid(),
+                AuctionId = activeAuction.Id,
+                BuyerId = userId.Value,
+                Amount = bidAmount,
+                PlacedAt = DateTime.UtcNow,
+                IsFromDirectOffer = true
+            };
+
+            _context.Bids.Add(directBid);
+            await _context.SaveChangesAsync();
+
+            TempData["ToastMessage"] = $"Your direct offer of ${bidAmount:N0} was automatically converted into a leading bid in the live auction!";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -958,6 +1087,237 @@ public class PropertyController : Controller
 
         TempData["ToastMessage"] = "Congratulations! Your purchase agreement has been registered in your Buying History.";
         return RedirectToAction("Index", "Profile");
+    }
+
+    // ==========================================
+    // 6. REQUEST BIDDING / AUCTION PERMISSION
+    // ==========================================
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    [Route("properties/{id:guid}/request-bidding")]
+    public async Task<IActionResult> RequestBidding(Guid id, RequestBiddingInputModel model)
+    {
+        var userId = CurrentUserId;
+        if (!userId.HasValue) return Challenge();
+
+        var property = await _context.Properties
+            .Include(p => p.BiddingRequests)
+            .Include(p => p.Auctions)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (property == null || property.VerificationStatus != VerificationStatus.Approved)
+        {
+            TempData["ErrorMessage"] = "Only verified, approved properties are eligible for live auctions.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (property.SellerId != userId.Value && !User.IsInRole("Admin"))
+        {
+            TempData["ErrorMessage"] = "You can only request auction permission for your own verified property listings.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // Ensure no active auction exists
+        var hasActiveAuction = property.Auctions.Any(a => 
+            a.Status == AuctionStatus.Active || a.Status == AuctionStatus.AwaitingSellerConfirmation);
+
+        if (hasActiveAuction)
+        {
+            TempData["ErrorMessage"] = "An active or pending-confirmation auction is already running on this property.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // Ensure no pending bidding request exists
+        var hasPendingRequest = property.BiddingRequests.Any(r => r.Status == BiddingRequestStatus.Pending);
+        if (hasPendingRequest)
+        {
+            TempData["ErrorMessage"] = "A bidding permission request is already pending administrator review.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (model.StartPrice <= 0)
+        {
+            model.StartPrice = property.Price;
+        }
+
+        if (model.MinIncrement <= 0)
+        {
+            model.MinIncrement = 1000;
+        }
+
+        if (model.DurationHours <= 0)
+        {
+            model.DurationHours = 24;
+        }
+
+        var biddingRequest = new BiddingRequest
+        {
+            Id = Guid.NewGuid(),
+            PropertyId = id,
+            SellerId = userId.Value,
+            StartPrice = model.StartPrice,
+            MinIncrement = model.MinIncrement,
+            DurationHours = model.DurationHours,
+            RequestedAt = DateTime.UtcNow,
+            Status = BiddingRequestStatus.Pending
+        };
+
+        _context.BiddingRequests.Add(biddingRequest);
+        await _context.SaveChangesAsync();
+
+        TempData["ToastMessage"] = "Bidding request submitted successfully! An administrator will review and activate your auction.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // ==========================================
+    // 7. PLACE BID ON ACTIVE AUCTION
+    // ==========================================
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    [Route("properties/{id:guid}/place-bid")]
+    public async Task<IActionResult> PlaceBid(Guid id, PlaceBidInputModel model)
+    {
+        var userId = CurrentUserId;
+        if (!userId.HasValue) return Challenge();
+
+        var property = await _context.Properties
+            .Include(p => p.Auctions)
+                .ThenInclude(a => a.Bids)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (property == null)
+        {
+            return NotFound();
+        }
+
+        if (property.SellerId == userId.Value)
+        {
+            TempData["ErrorMessage"] = "You cannot place bids on your own property auction.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var auction = property.Auctions.FirstOrDefault(a => a.Id == model.AuctionId);
+        if (auction == null || auction.Status != AuctionStatus.Active)
+        {
+            TempData["ErrorMessage"] = "This auction is no longer active.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (DateTime.UtcNow >= auction.EndTime)
+        {
+            TempData["ErrorMessage"] = "This auction has ended. No further bids can be accepted.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var highestBid = auction.Bids.OrderByDescending(b => b.Amount).FirstOrDefault();
+        var minRequired = highestBid != null ? highestBid.Amount + auction.MinIncrement : auction.StartPrice;
+
+        if (model.Amount < minRequired)
+        {
+            TempData["ErrorMessage"] = $"Your bid of ${model.Amount:N0} must be at least ${minRequired:N0} (${auction.MinIncrement:N0} over current highest bid).";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var bid = new Bid
+        {
+            Id = Guid.NewGuid(),
+            AuctionId = auction.Id,
+            BuyerId = userId.Value,
+            Amount = model.Amount,
+            PlacedAt = DateTime.UtcNow,
+            IsFromDirectOffer = false
+        };
+
+        _context.Bids.Add(bid);
+        await _context.SaveChangesAsync();
+
+        TempData["ToastMessage"] = $"Success! Your bid of ${model.Amount:N0} has been placed. You are now the highest bidder!";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // ==========================================
+    // 8. GET LIVE BID HISTORY JSON API
+    // ==========================================
+    [HttpGet]
+    [Route("properties/{id:guid}/bids")]
+    public async Task<IActionResult> GetBidHistory(Guid id)
+    {
+        var auction = await _context.Auctions
+            .Include(a => a.Bids)
+                .ThenInclude(b => b.Buyer)
+            .Include(a => a.Property)
+            .Where(a => a.PropertyId == id && (a.Status == AuctionStatus.Active || a.Status == AuctionStatus.AwaitingSellerConfirmation))
+            .OrderByDescending(a => a.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (auction == null)
+        {
+            return NotFound(new { error = "No active auction found for this property." });
+        }
+
+        var orderedBids = auction.Bids.OrderByDescending(b => b.PlacedAt).ToList();
+        var highestBid = orderedBids.OrderByDescending(b => b.Amount).FirstOrDefault();
+        var isOwner = CurrentUserId.HasValue && auction.Property?.SellerId == CurrentUserId.Value;
+        var isAdmin = User.IsInRole("Admin");
+
+        var bidderMap = new Dictionary<Guid, string>();
+        int bidderCounter = 1;
+        foreach (var b in orderedBids.OrderBy(b => b.PlacedAt))
+        {
+            if (!bidderMap.ContainsKey(b.BuyerId))
+            {
+                bidderMap[b.BuyerId] = $"Bidder #{bidderCounter++}";
+            }
+        }
+
+        var bidsList = orderedBids.Select(b => {
+            var isThisViewer = CurrentUserId.HasValue && b.BuyerId == CurrentUserId.Value;
+            string displayName;
+            if (isOwner || isAdmin)
+            {
+                displayName = $"{b.Buyer?.FullName ?? "Buyer"} ({bidderMap.GetValueOrDefault(b.BuyerId, "Bidder")})";
+            }
+            else if (isThisViewer)
+            {
+                displayName = $"{b.Buyer?.FullName ?? "You"} (You)";
+            }
+            else
+            {
+                displayName = bidderMap.GetValueOrDefault(b.BuyerId, "Anonymous Bidder");
+            }
+
+            return new
+            {
+                id = b.Id,
+                bidder = displayName,
+                amount = b.Amount,
+                formattedAmount = b.Amount.ToString("C0"),
+                placedAt = b.PlacedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                isViewer = isThisViewer,
+                isDirectOffer = b.IsFromDirectOffer
+            };
+        });
+
+        var secondsRemaining = Math.Max(0, (int)(auction.EndTime - DateTime.UtcNow).TotalSeconds);
+
+        return Json(new
+        {
+            auctionId = auction.Id,
+            status = auction.Status.ToString(),
+            startPrice = auction.StartPrice,
+            minIncrement = auction.MinIncrement,
+            currentHighestBid = highestBid?.Amount ?? auction.StartPrice,
+            formattedHighestBid = (highestBid?.Amount ?? auction.StartPrice).ToString("C0"),
+            nextMinBid = (highestBid?.Amount ?? auction.StartPrice) + (highestBid != null ? auction.MinIncrement : 0),
+            formattedNextMinBid = ((highestBid?.Amount ?? auction.StartPrice) + (highestBid != null ? auction.MinIncrement : 0)).ToString("C0"),
+            totalBids = orderedBids.Count,
+            secondsRemaining,
+            endTime = auction.EndTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            isEnded = secondsRemaining <= 0,
+            bids = bidsList
+        });
     }
 
     private static string GetTimeAgo(DateTime dateTime)

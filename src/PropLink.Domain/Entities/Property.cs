@@ -40,4 +40,6 @@ public class Property
     public ICollection<PropertyDocument> Documents { get; set; } = new List<PropertyDocument>();
     public ICollection<Inquiry> Inquiries { get; set; } = new List<Inquiry>();
     public ICollection<PropertyTransaction> Transactions { get; set; } = new List<PropertyTransaction>();
+    public ICollection<BiddingRequest> BiddingRequests { get; set; } = new List<BiddingRequest>();
+    public ICollection<Auction> Auctions { get; set; } = new List<Auction>();
 }
