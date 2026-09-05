@@ -45,7 +45,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
           cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          cache-dependency-path: '**/*.csproj'
 
       - name: Restore NuGet Dependencies
         run: dotnet restore PropLink.csproj
