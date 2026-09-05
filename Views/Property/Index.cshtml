@@ -17,7 +17,12 @@
                 <h1 class="h2 fw-bold mb-1">Browse <span class="gradient-text">Verified Listings</span></h1>
                 <p class="text-muted mb-0">Every property shown here has passed legal document and title verification.</p>
             </div>
-            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 d-flex flex-wrap justify-content-lg-end gap-2">
+                <a asp-controller="Property" asp-action="Compare" class="btn btn-outline-custom d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-intersect text-emerald"></i>
+                    <span>Comparator</span>
+                    <span class="badge rounded-pill bg-emerald-light text-emerald border border-emerald-subtle nav-compare-count d-none" style="font-size: 0.75rem;">0</span>
+                </a>
                 <a asp-controller="Property" asp-action="Sell" class="btn btn-primary-custom d-inline-flex align-items-center gap-2">
                     <i class="bi bi-plus-circle"></i>
                     <span>Sell Your Property</span>
@@ -100,6 +105,20 @@
                                     <span class="badge badge-type ms-1">@property.PropertyType</span>
                                 </div>
 
+                                <button type="button" 
+                                        class="btn-compare-card-floating btn-compare-toggle" 
+                                        data-property-id="@property.Id"
+                                        data-property-title="@property.Title"
+                                        data-property-price="@property.FormattedPrice"
+                                        data-property-img="@property.ImageUrl"
+                                        data-property-type="@property.PropertyType"
+                                        data-property-city="@property.City"
+                                        data-default-class="btn-compare-card-floating"
+                                        title="Add to Compare">
+                                    <i class="bi bi-plus-circle"></i>
+                                    <span class="d-none">Compare</span>
+                                </button>
+
                                 <div class="property-price-tag">
                                     @property.FormattedPrice
                                 </div>
@@ -110,7 +129,7 @@
                                     <i class="bi bi-geo-alt-fill text-danger me-1"></i>@property.City, @property.State
                                 </div>
                                 <h3 class="property-title h6 fw-bold mb-2">
-                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@property.Id" class="text-dark text-decoration-none stretched-link">
+                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@property.Id" class="text-dark text-decoration-none">
                                         @property.Title
                                     </a>
                                 </h3>
@@ -124,12 +143,29 @@
                                     <span><i class="bi bi-bounding-box-circles me-1 text-primary"></i>@property.SquareFeet.ToString("N0") sqft</span>
                                 </div>
 
-                                <div class="property-footer d-flex justify-content-between align-items-center small">
-                                    <div class="seller-info d-flex align-items-center gap-1 text-muted">
+                                <div class="property-footer d-flex justify-content-between align-items-center gap-2 pt-2 mt-auto">
+                                    <div class="seller-info d-flex align-items-center gap-1 text-muted text-truncate" style="max-width: 130px;">
                                         <i class="bi bi-person-check-fill text-success"></i>
-                                        <span>@property.SellerName</span>
+                                        <span class="text-truncate">@property.SellerName</span>
                                     </div>
-                                    <span class="text-muted">@property.TimeAgo</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-custom btn-compare-toggle"
+                                                data-property-id="@property.Id"
+                                                data-property-title="@property.Title"
+                                                data-property-price="@property.FormattedPrice"
+                                                data-property-img="@property.ImageUrl"
+                                                data-property-type="@property.PropertyType"
+                                                data-property-city="@property.City"
+                                                data-default-class="btn-outline-custom"
+                                                title="Compare this property">
+                                            <i class="bi bi-plus-circle me-1"></i>
+                                            <span>+ Compare</span>
+                                        </button>
+                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@property.Id" class="btn btn-sm btn-outline-primary-custom">
+                                            Details
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -212,6 +212,223 @@ public class PropertyController : Controller
     }
 
     // ==========================================
+    // 2.1 PROPERTY COMPARATOR (/compare & /properties/compare)
+    // ==========================================
+    [HttpGet]
+    [Route("compare")]
+    [Route("properties/compare")]
+    public async Task<IActionResult> Compare(string? ids)
+    {
+        var targetGuids = new List<Guid>();
+        if (!string.IsNullOrWhiteSpace(ids))
+        {
+            var rawTokens = ids.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var token in rawTokens)
+            {
+                if (Guid.TryParse(token, out var parsedGuid) && !targetGuids.Contains(parsedGuid))
+                {
+                    targetGuids.Add(parsedGuid);
+                }
+            }
+        }
+
+        // Limit to max 5 properties to compare
+        targetGuids = targetGuids.Take(5).ToList();
+
+        // Enforce backend verification status: ONLY APPROVED PROPERTIES
+        var comparedProperties = new List<Property>();
+        if (targetGuids.Any())
+        {
+            var matched = await _context.Properties
+                .Include(p => p.Images)
+                .Include(p => p.Documents)
+                .Include(p => p.Seller)
+                .Where(p => targetGuids.Contains(p.Id) && p.VerificationStatus == VerificationStatus.Approved)
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Maintain order as requested in IDs
+            foreach (var id in targetGuids)
+            {
+                var item = matched.FirstOrDefault(p => p.Id == id);
+                if (item != null)
+                {
+                    comparedProperties.Add(item);
+                }
+            }
+        }
+
+        // Fetch all available approved properties for the quick-add selector
+        var availableApprovedEntities = await _context.Properties
+            .Include(p => p.Images)
+            .Include(p => p.Seller)
+            .Where(p => p.VerificationStatus == VerificationStatus.Approved)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(30)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var availableApprovedCards = availableApprovedEntities.Select(p => new PropertyCardViewModel
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Description = p.Description,
+            Price = p.Price,
+            PropertyType = p.PropertyType,
+            Address = p.Address,
+            City = p.City,
+            State = p.State,
+            Bedrooms = p.Bedrooms,
+            Bathrooms = p.Bathrooms,
+            SquareFeet = p.SquareFeet,
+            ImageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl
+                       ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+            VerificationStatus = p.VerificationStatus,
+            TransactionStatus = p.TransactionStatus,
+            SellerName = p.Seller?.FullName ?? "Verified Seller",
+            TimeAgo = GetTimeAgo(p.CreatedAt)
+        }).ToList();
+
+        // Map compared items
+        var compareItems = comparedProperties.Select(p => new PropertyCompareItemViewModel
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Description = p.Description,
+            Price = p.Price,
+            PropertyType = p.PropertyType,
+            Address = p.Address,
+            City = p.City,
+            State = p.State,
+            ZipCode = p.ZipCode,
+            Bedrooms = p.Bedrooms,
+            Bathrooms = p.Bathrooms,
+            SquareFeet = p.SquareFeet,
+            VerificationStatus = p.VerificationStatus,
+            TransactionStatus = p.TransactionStatus,
+            CreatedAt = p.CreatedAt,
+            ImageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl
+                       ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+            ImageUrls = p.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList(),
+            SellerId = p.SellerId,
+            SellerName = p.Seller?.FullName ?? "Verified Seller",
+            SellerEmail = p.Seller?.Email ?? "",
+            SellerPhone = p.Seller?.PhoneNumber ?? "",
+            SellerMemberSince = p.Seller?.CreatedAt ?? DateTime.UtcNow,
+            VerifiedDocumentTypes = p.Documents
+                .Where(d => d.Status == VerificationStatus.Approved)
+                .Select(d => d.DocumentType)
+                .Distinct()
+                .ToList()
+        }).ToList();
+
+        // Ensure default image if empty
+        foreach (var item in compareItems)
+        {
+            if (!item.ImageUrls.Any())
+            {
+                item.ImageUrls.Add(item.ImageUrl);
+            }
+        }
+
+        // Calculate Smart Comparison Highlights if 2 or more properties
+        if (compareItems.Count >= 2)
+        {
+            var minPrice = compareItems.Min(p => p.Price);
+            var maxPrice = compareItems.Max(p => p.Price);
+            var maxSqFt = compareItems.Max(p => p.SquareFeet);
+            var maxBeds = compareItems.Max(p => p.Bedrooms);
+            var maxBaths = compareItems.Max(p => p.Bathrooms);
+
+            var validSqFtItems = compareItems.Where(p => p.SquareFeet > 0).ToList();
+            var minPricePerSqFt = validSqFtItems.Any() ? validSqFtItems.Min(p => p.PricePerSquareFoot) : 0;
+
+            foreach (var item in compareItems)
+            {
+                item.IsLowestPrice = item.Price == minPrice;
+                item.IsHighestPrice = item.Price == maxPrice;
+                item.IsBestPricePerSqFt = minPricePerSqFt > 0 && item.PricePerSquareFoot == minPricePerSqFt;
+                item.IsLargestSquareFeet = maxSqFt > 0 && item.SquareFeet == maxSqFt;
+                item.IsMostBedrooms = maxBeds > 0 && item.Bedrooms == maxBeds;
+                item.IsMostBathrooms = maxBaths > 0 && item.Bathrooms == maxBaths;
+
+                item.PriceDifferenceFromLowest = item.Price - minPrice;
+                item.PriceDifferencePercentFromLowest = minPrice > 0 ? (double)((item.Price - minPrice) / minPrice * 100) : 0;
+            }
+        }
+
+        var viewModel = new PropertyCompareViewModel
+        {
+            Properties = compareItems,
+            AvailableApprovedProperties = availableApprovedCards,
+            MaxPropertiesToCompare = 5
+        };
+
+        return View("Compare", viewModel);
+    }
+
+    // ==========================================
+    // 2.2 APPROVED PROPERTIES SEARCH API (/api/properties/approved-search)
+    // ==========================================
+    [HttpGet]
+    [Route("api/properties/approved-search")]
+    public async Task<IActionResult> ApprovedSearch(string? q, PropertyType? type, decimal? maxPrice, int limit = 12)
+    {
+        var query = _context.Properties
+            .Include(p => p.Images)
+            .Include(p => p.Seller)
+            .Where(p => p.VerificationStatus == VerificationStatus.Approved)
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var cleanQ = q.Trim().ToLower();
+            query = query.Where(p =>
+                p.Title.ToLower().Contains(cleanQ) ||
+                p.City.ToLower().Contains(cleanQ) ||
+                p.Address.ToLower().Contains(cleanQ) ||
+                p.State.ToLower().Contains(cleanQ));
+        }
+
+        if (type.HasValue)
+        {
+            query = query.Where(p => p.PropertyType == type.Value);
+        }
+
+        if (maxPrice.HasValue && maxPrice.Value > 0)
+        {
+            query = query.Where(p => p.Price <= maxPrice.Value);
+        }
+
+        limit = Math.Clamp(limit, 1, 30);
+
+        var list = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(limit)
+            .Select(p => new
+            {
+                id = p.Id,
+                title = p.Title,
+                price = p.Price,
+                formattedPrice = p.Price.ToString("C0"),
+                propertyType = p.PropertyType.ToString(),
+                city = p.City,
+                state = p.State,
+                address = p.Address,
+                bedrooms = p.Bedrooms,
+                bathrooms = p.Bathrooms,
+                squareFeet = p.SquareFeet,
+                imageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault() != null 
+                    ? p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()!.ImageUrl 
+                    : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+                sellerName = p.Seller != null ? p.Seller.FullName : "Verified Seller"
+            })
+            .ToListAsync();
+
+        return Json(list);
+    }
+
+    // ==========================================
     // ==========================================
     // 3. SELL PROPERTY (/sell-property)
     // ==========================================
