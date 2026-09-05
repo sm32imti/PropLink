@@ -1,14 +1,27 @@
 <nav class="navbar navbar-expand-lg proplink-navbar sticky-top">
     <div class="container">
-        <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
-            <div class="brand-logo-icon">
-                <i class="bi bi-shield-check"></i>
-            </div>
-            <span class="brand-name">Prop<span>Link</span></span>
-            <span class="badge badge-trust ms-1 d-none d-sm-inline-flex">
-                <i class="bi bi-patch-check-fill text-emerald me-1"></i>Verified
-            </span>
-        </a>
+        <div class="d-flex align-items-center gap-2">
+            <!-- Hamburger Sliding Menu Button ☰ -->
+            <button class="btn btn-hamburger-nav d-flex align-items-center justify-content-center me-1" 
+                    type="button" 
+                    data-bs-toggle="offcanvas" 
+                    data-bs-target="#proplinkSidebarMenu" 
+                    aria-controls="proplinkSidebarMenu" 
+                    title="Open Navigation Menu" 
+                    aria-label="Toggle Navigation Menu">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+
+            <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                <div class="brand-logo-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <span class="brand-name">Prop<span>Link</span></span>
+                <span class="badge badge-trust ms-1 d-none d-sm-inline-flex">
+                    <i class="bi bi-patch-check-fill text-emerald me-1"></i>Verified
+                </span>
+            </a>
+        </div>
 
         <!-- Dark Mode Toggle Button (Mobile) -->
         <div class="d-flex align-items-center gap-2 d-lg-none ms-auto me-2">

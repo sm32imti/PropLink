@@ -107,160 +107,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- SMART BUYER DECISION GUIDE: "IF THIS, THEN THAT" -->
-                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white preference-guide-card">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                        <div>
-                            <span class="badge bg-emerald-light text-emerald fw-bold mb-1">
-                                <i class="bi bi-lightbulb-fill me-1"></i> Buyer Decision Assistant
-                            </span>
-                            <h4 class="fw-bold mb-0 text-heading">Which Property Fits Your Priorities Best?</h4>
-                            <p class="small text-muted mb-0">Find your ideal listing based on your primary preference: Bedrooms, Bathrooms, Budget, Space, or Value.</p>
-                        </div>
-                        <div class="d-flex align-items-center gap-1 flex-wrap" id="prefFilterGroup">
-                            <span class="small text-muted me-1 d-none d-md-inline">Filter:</span>
-                            <button type="button" class="btn btn-sm btn-outline-custom active filter-pref-btn" data-pref-filter="all">All</button>
-                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="beds">🛏️ Bedrooms</button>
-                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="baths">🛁 Bathrooms</button>
-                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="budget">💰 Budget</button>
-                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="space">📐 Space</button>
-                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="value">📊 $/sqft</button>
-                        </div>
-                    </div>
-
-                    <div class="row g-3" id="preferenceCardsContainer">
-                        @if (Model.MostBedroomsProperty != null)
-                        {
-                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="beds">
-                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.MostBedroomsProperty.Id">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="badge bg-primary-subtle text-primary fw-bold py-1 px-2">
-                                            <i class="bi bi-door-open-fill me-1"></i> IF PREFERENCE IS: Most Bedrooms
-                                        </span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-3 mb-2">
-                                        <img src="@Model.MostBedroomsProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                        <div class="overflow-hidden">
-                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.MostBedroomsProperty.Title">@Model.MostBedroomsProperty.Title</h6>
-                                            <span class="badge bg-emerald-light text-emerald small">@Model.MostBedroomsProperty.Bedrooms Beds &bull; @Model.MostBedroomsProperty.Bathrooms Baths</span>
-                                        </div>
-                                    </div>
-                                    <p class="small text-muted mb-3 flex-grow-1">
-                                        <strong>Choose this listing</strong> if you have a growing family or need dedicated private bedrooms and remote work offices. Offers the highest bedroom count.
-                                    </p>
-                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.MostBedroomsProperty.Id">
-                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
-                                    </button>
-                                </div>
-                            </div>
-                        }
-
-                        @if (Model.MostBathroomsProperty != null && Model.MostBathroomsProperty.Bathrooms > 0)
-                        {
-                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="baths">
-                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.MostBathroomsProperty.Id">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="badge bg-info-subtle text-info fw-bold py-1 px-2">
-                                            <i class="bi bi-water me-1"></i> IF PREFERENCE IS: Most Bathrooms
-                                        </span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-3 mb-2">
-                                        <img src="@Model.MostBathroomsProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                        <div class="overflow-hidden">
-                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.MostBathroomsProperty.Title">@Model.MostBathroomsProperty.Title</h6>
-                                            <span class="badge bg-info-subtle text-info small">@Model.MostBathroomsProperty.Bathrooms Bathrooms</span>
-                                        </div>
-                                    </div>
-                                    <p class="small text-muted mb-3 flex-grow-1">
-                                        <strong>Choose this listing</strong> if en-suite master convenience and eliminating morning bathroom rush is your priority. Highest bathroom count in this group.
-                                    </p>
-                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.MostBathroomsProperty.Id">
-                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
-                                    </button>
-                                </div>
-                            </div>
-                        }
-
-                        @if (Model.LowestPriceProperty != null)
-                        {
-                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="budget">
-                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.LowestPriceProperty.Id">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="badge bg-success-subtle text-success fw-bold py-1 px-2">
-                                            <i class="bi bi-tag-fill me-1"></i> IF PREFERENCE IS: Lowest Upfront Price
-                                        </span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-3 mb-2">
-                                        <img src="@Model.LowestPriceProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                        <div class="overflow-hidden">
-                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.LowestPriceProperty.Title">@Model.LowestPriceProperty.Title</h6>
-                                            <span class="badge bg-success-subtle text-success small">@Model.LowestPriceProperty.FormattedPrice</span>
-                                        </div>
-                                    </div>
-                                    <p class="small text-muted mb-3 flex-grow-1">
-                                        <strong>Choose this listing</strong> if minimizing upfront purchase capital and mortgage monthly payments is key. Offers the lowest entry price tag.
-                                    </p>
-                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.LowestPriceProperty.Id">
-                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
-                                    </button>
-                                </div>
-                            </div>
-                        }
-
-                        @if (Model.LargestSquareFeetProperty != null && Model.LargestSquareFeetProperty.SquareFeet > 0)
-                        {
-                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="space">
-                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.LargestSquareFeetProperty.Id">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="badge bg-warning-subtle text-dark fw-bold py-1 px-2">
-                                            <i class="bi bi-bounding-box-circles me-1"></i> IF PREFERENCE IS: Largest Living Space
-                                        </span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-3 mb-2">
-                                        <img src="@Model.LargestSquareFeetProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                        <div class="overflow-hidden">
-                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.LargestSquareFeetProperty.Title">@Model.LargestSquareFeetProperty.Title</h6>
-                                            <span class="badge bg-warning-subtle text-dark small">@Model.LargestSquareFeetProperty.SquareFeet.ToString("N0") sqft</span>
-                                        </div>
-                                    </div>
-                                    <p class="small text-muted mb-3 flex-grow-1">
-                                        <strong>Choose this listing</strong> if open floorplans and expansive interior square footage matter most. Features the largest total square feet.
-                                    </p>
-                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.LargestSquareFeetProperty.Id">
-                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
-                                    </button>
-                                </div>
-                            </div>
-                        }
-
-                        @if (Model.BestPricePerSqFtProperty != null && Model.BestPricePerSqFtProperty.PricePerSquareFoot > 0)
-                        {
-                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="value">
-                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.BestPricePerSqFtProperty.Id">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="badge bg-emerald-light text-emerald fw-bold py-1 px-2">
-                                            <i class="bi bi-stars me-1"></i> IF PREFERENCE IS: Best Value ($/sqft)
-                                        </span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-3 mb-2">
-                                        <img src="@Model.BestPricePerSqFtProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                        <div class="overflow-hidden">
-                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.BestPricePerSqFtProperty.Title">@Model.BestPricePerSqFtProperty.Title</h6>
-                                            <span class="badge bg-emerald-light text-emerald small">@Model.BestPricePerSqFtProperty.FormattedPricePerSquareFoot</span>
-                                        </div>
-                                    </div>
-                                    <p class="small text-muted mb-3 flex-grow-1">
-                                        <strong>Choose this listing</strong> for maximum real estate space per dollar invested. Delivers the lowest price-per-square-foot in this set.
-                                    </p>
-                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.BestPricePerSqFtProperty.Id">
-                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
-                                    </button>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
             }
 
             <!-- Comparison Matrix Table -->
@@ -561,6 +407,163 @@
                     </table>
                 </div>
             </div>
+
+            <!-- SMART BUYER DECISION GUIDE: "IF THIS, THEN THAT" (After Matrix Table) -->
+            @if (Model.HasMultipleProperties)
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-5 bg-white preference-guide-card" id="buyerDecisionAssistant">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div>
+                            <span class="badge bg-emerald-light text-emerald fw-bold mb-1">
+                                <i class="bi bi-lightbulb-fill me-1"></i> Buyer Decision Assistant
+                            </span>
+                            <h4 class="fw-bold mb-0 text-heading">Which Property Fits Your Priorities Best?</h4>
+                            <p class="small text-muted mb-0">Find your ideal listing based on your primary preference: Bedrooms, Bathrooms, Budget, Space, or Value.</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 flex-wrap" id="prefFilterGroup">
+                            <span class="small text-muted me-1 d-none d-md-inline">Filter:</span>
+                            <button type="button" class="btn btn-sm btn-outline-custom active filter-pref-btn" data-pref-filter="all">All</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="beds">🛏️ Bedrooms</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="baths">🛁 Bathrooms</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="budget">💰 Budget</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="space">📐 Space</button>
+                            <button type="button" class="btn btn-sm btn-outline-custom filter-pref-btn" data-pref-filter="value">📊 $/sqft</button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3" id="preferenceCardsContainer">
+                        @if (Model.MostBedroomsProperty != null)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="beds">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.MostBedroomsProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-primary-subtle text-primary fw-bold py-1 px-2">
+                                            <i class="bi bi-door-open-fill me-1"></i> IF PREFERENCE IS: Most Bedrooms
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.MostBedroomsProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.MostBedroomsProperty.Title">@Model.MostBedroomsProperty.Title</h6>
+                                            <span class="badge bg-emerald-light text-emerald small">@Model.MostBedroomsProperty.Bedrooms Beds &bull; @Model.MostBedroomsProperty.Bathrooms Baths</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if you have a growing family or need dedicated private bedrooms and remote work offices. Offers the highest bedroom count.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.MostBedroomsProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.MostBathroomsProperty != null && Model.MostBathroomsProperty.Bathrooms > 0)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="baths">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.MostBathroomsProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-info-subtle text-info fw-bold py-1 px-2">
+                                            <i class="bi bi-water me-1"></i> IF PREFERENCE IS: Most Bathrooms
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.MostBathroomsProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.MostBathroomsProperty.Title">@Model.MostBathroomsProperty.Title</h6>
+                                            <span class="badge bg-info-subtle text-info small">@Model.MostBathroomsProperty.Bathrooms Bathrooms</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if en-suite master convenience and eliminating morning bathroom rush is your priority. Highest bathroom count in this group.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.MostBathroomsProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.LowestPriceProperty != null)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="budget">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.LowestPriceProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-success-subtle text-success fw-bold py-1 px-2">
+                                            <i class="bi bi-tag-fill me-1"></i> IF PREFERENCE IS: Lowest Upfront Price
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.LowestPriceProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.LowestPriceProperty.Title">@Model.LowestPriceProperty.Title</h6>
+                                            <span class="badge bg-success-subtle text-success small">@Model.LowestPriceProperty.FormattedPrice</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if minimizing upfront purchase capital and mortgage monthly payments is key. Offers the lowest entry price tag.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.LowestPriceProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.LargestSquareFeetProperty != null && Model.LargestSquareFeetProperty.SquareFeet > 0)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="space">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.LargestSquareFeetProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-warning-subtle text-dark fw-bold py-1 px-2">
+                                            <i class="bi bi-bounding-box-circles me-1"></i> IF PREFERENCE IS: Largest Living Space
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.LargestSquareFeetProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.LargestSquareFeetProperty.Title">@Model.LargestSquareFeetProperty.Title</h6>
+                                            <span class="badge bg-warning-subtle text-dark small">@Model.LargestSquareFeetProperty.SquareFeet.ToString("N0") sqft</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> if open floorplans and expansive interior square footage matter most. Features the largest total square feet.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.LargestSquareFeetProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.BestPricePerSqFtProperty != null && Model.BestPricePerSqFtProperty.PricePerSquareFoot > 0)
+                        {
+                            <div class="col-lg-4 col-md-6 pref-card-item" data-pref-type="value">
+                                <div class="preference-match-card h-100 p-3 rounded-4 border position-relative d-flex flex-column" data-focus-id="@Model.BestPricePerSqFtProperty.Id">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-emerald-light text-emerald fw-bold py-1 px-2">
+                                            <i class="bi bi-stars me-1"></i> IF PREFERENCE IS: Best Value ($/sqft)
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="@Model.BestPricePerSqFtProperty.ImageUrl" class="rounded-3 object-fit-cover flex-shrink-0" style="width: 52px; height: 52px;" alt="Property" onerror="this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-truncate" title="@Model.BestPricePerSqFtProperty.Title">@Model.BestPricePerSqFtProperty.Title</h6>
+                                            <span class="badge bg-emerald-light text-emerald small">@Model.BestPricePerSqFtProperty.FormattedPricePerSquareFoot</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-3 flex-grow-1">
+                                        <strong>Choose this listing</strong> for maximum real estate space per dollar invested. Delivers the lowest price-per-square-foot in this set.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary-custom btn-focus-prop w-100 mt-auto" data-target-id="@Model.BestPricePerSqFtProperty.Id">
+                                        <i class="bi bi-cursor-fill me-1"></i> Highlight in Comparison Matrix &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         }
         else
         {
