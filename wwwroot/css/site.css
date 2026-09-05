@@ -1448,3 +1448,201 @@ h1, h2, h3, h4, h5, h6, .heading-text {
 [data-theme="dark"] .custom-segmented-pills .nav-link.active {
     color: #ffffff !important;
 }
+
+/* ==========================================================================
+   Homepage Left Sidebar Navigation Styles
+   ========================================================================== */
+.home-desktop-sidebar {
+    position: sticky;
+    top: 90px;
+    z-index: 100;
+}
+
+.home-sidebar-sticky-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-sm);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.sidebar-section-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    color: var(--text-body);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-smooth);
+}
+
+.sidebar-nav-item i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-nav-item:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    transform: translateX(3px);
+}
+
+.sidebar-nav-item.active {
+    background: var(--emerald-gradient);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.sidebar-nav-item.active i {
+    color: #ffffff !important;
+}
+
+.sidebar-nav-item.active .badge {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-user-card {
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   Hamburger Navigation Button & Sliding Offcanvas Menu Styles
+   ========================================================================== */
+.btn-hamburger-nav {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: var(--border-radius-sm);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-heading);
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+.btn-hamburger-nav:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary-border);
+    transform: scale(1.05);
+}
+
+.btn-hamburger-nav:focus {
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.proplink-offcanvas-menu {
+    width: 340px !important;
+    background-color: var(--bg-card) !important;
+    border-right: 1px solid var(--border-color) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 10px 0 30px rgba(6, 36, 25, 0.15);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.proplink-offcanvas-menu .offcanvas-header {
+    background-color: var(--bg-card);
+    border-bottom-color: var(--border-color) !important;
+}
+
+.proplink-offcanvas-menu .offcanvas-body {
+    scrollbar-width: thin;
+}
+
+.sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    color: var(--text-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-smooth);
+}
+
+.sidebar-nav-item i {
+    font-size: 1.15rem;
+    width: 22px;
+    text-align: center;
+}
+
+.sidebar-nav-item:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    transform: translateX(4px);
+}
+
+.sidebar-nav-item.active {
+    background: var(--emerald-gradient);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.sidebar-nav-item.active i {
+    color: #ffffff !important;
+}
+
+.sidebar-nav-item.active .badge {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-user-card {
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+}
+
+.sidebar-trust-box {
+    background: var(--bg-subtle);
+    border: 1px dashed var(--border-color-emerald);
+}
+
+[data-theme="dark"] .btn-hamburger-nav {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-heading);
+}
+
+[data-theme="dark"] .btn-hamburger-nav:hover {
+    background-color: var(--primary-light);
+    color: var(--emerald-accent);
+    border-color: var(--brand-dark-border);
+}
+
+[data-theme="dark"] .proplink-offcanvas-menu {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .sidebar-nav-item {
+    color: var(--text-body);
+}
+
+[data-theme="dark"] .sidebar-nav-item:hover {
+    background-color: var(--primary-light);
+    color: var(--emerald-accent);
+}
+
+[data-theme="dark"] .sidebar-trust-box {
+    background-color: var(--bg-subtle);
+    border-color: var(--brand-dark-border);
+}
