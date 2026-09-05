@@ -22,4 +22,11 @@ public class PropertyCardViewModel
     public string? RejectionReason { get; set; }
     public string SellerName { get; set; } = string.Empty;
     public string TimeAgo { get; set; } = "Recently added";
+
+    // Auction Status Flags
+    public bool HasActiveAuction { get; set; }
+    public decimal? CurrentHighestBid { get; set; }
+    public string? FormattedHighestBid => CurrentHighestBid?.ToString("C0");
+    public DateTime? AuctionEndTime { get; set; }
+    public bool HasPendingBiddingRequest { get; set; }
 }

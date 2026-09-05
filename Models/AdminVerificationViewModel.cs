@@ -9,6 +9,13 @@ public class AdminVerificationDashboardViewModel
     public int TotalPendingCount { get; set; }
     public int TotalApprovedCount { get; set; }
     public int TotalRejectedCount { get; set; }
+
+    // Bidding Requests Queue
+    public List<AdminBiddingRequestItemViewModel> BiddingRequests { get; set; } = new();
+    public int TotalBiddingPendingCount { get; set; }
+    public int TotalBiddingApprovedCount { get; set; }
+    public int TotalBiddingRejectedCount { get; set; }
+    public string ActiveTab { get; set; } = "properties"; // "properties" or "bidding"
 }
 
 public class AdminPendingPropertyItemViewModel

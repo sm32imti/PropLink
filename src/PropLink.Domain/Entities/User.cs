@@ -16,4 +16,6 @@ public class User
     public ICollection<Property> Properties { get; set; } = new List<Property>();
     public ICollection<PropertyTransaction> Purchases { get; set; } = new List<PropertyTransaction>();
     public ICollection<Inquiry> Inquiries { get; set; } = new List<Inquiry>();
+    public ICollection<BiddingRequest> BiddingRequests { get; set; } = new List<BiddingRequest>();
+    public ICollection<Bid> Bids { get; set; } = new List<Bid>();
 }

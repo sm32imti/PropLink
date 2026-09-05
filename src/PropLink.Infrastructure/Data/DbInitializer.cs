@@ -52,7 +52,43 @@ public static class DbInitializer
                         ""Notes"" character varying(2000),
                         ""TransactionDate"" timestamp with time zone NOT NULL,
                         ""CompletedDate"" timestamp with time zone
-                    );"
+                    );",
+                    @"CREATE TABLE IF NOT EXISTS ""BiddingRequests"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""PropertyId"" uuid NOT NULL REFERENCES ""Properties""(""Id"") ON DELETE CASCADE,
+                        ""SellerId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""StartPrice"" numeric(18,2) NOT NULL,
+                        ""MinIncrement"" numeric(18,2) NOT NULL,
+                        ""DurationHours"" integer NOT NULL DEFAULT 24,
+                        ""RequestedAt"" timestamp with time zone NOT NULL,
+                        ""Status"" integer NOT NULL DEFAULT 0,
+                        ""AdminNote"" character varying(2000),
+                        ""ReviewedAt"" timestamp with time zone,
+                        ""ReviewedByAdminId"" uuid REFERENCES ""Users""(""Id"") ON DELETE SET NULL
+                    );",
+                    @"CREATE TABLE IF NOT EXISTS ""Auctions"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""PropertyId"" uuid NOT NULL REFERENCES ""Properties""(""Id"") ON DELETE CASCADE,
+                        ""BiddingRequestId"" uuid REFERENCES ""BiddingRequests""(""Id"") ON DELETE SET NULL,
+                        ""StartPrice"" numeric(18,2) NOT NULL,
+                        ""MinIncrement"" numeric(18,2) NOT NULL,
+                        ""StartTime"" timestamp with time zone NOT NULL,
+                        ""EndTime"" timestamp with time zone NOT NULL,
+                        ""Status"" integer NOT NULL DEFAULT 0,
+                        ""WinningBidId"" uuid,
+                        ""CreatedAt"" timestamp with time zone NOT NULL,
+                        ""SellerDecisionAt"" timestamp with time zone,
+                        ""SellerDecisionNotes"" character varying(2000)
+                    );",
+                    @"CREATE TABLE IF NOT EXISTS ""Bids"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""AuctionId"" uuid NOT NULL REFERENCES ""Auctions""(""Id"") ON DELETE CASCADE,
+                        ""BuyerId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""Amount"" numeric(18,2) NOT NULL,
+                        ""PlacedAt"" timestamp with time zone NOT NULL,
+                        ""IsFromDirectOffer"" boolean NOT NULL DEFAULT FALSE
+                    );",
+                    @"ALTER TABLE ""Auctions"" ADD CONSTRAINT ""FK_Auctions_WinningBidId"" FOREIGN KEY (""WinningBidId"") REFERENCES ""Bids""(""Id"") ON DELETE SET NULL;"
                 };
 
                 foreach (var sql in migrationQueries)

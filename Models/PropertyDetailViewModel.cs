@@ -35,4 +35,9 @@ public class PropertyDetailViewModel
     public DateTime SellerMemberSince { get; set; }
     public int SellerTotalProperties { get; set; }
     public bool IsOwner { get; set; }
+
+    // Auction & Bidding State
+    public AuctionDetailViewModel? ActiveAuction { get; set; }
+    public bool HasPendingBiddingRequest { get; set; }
+    public bool CanRequestBidding => IsOwner && VerificationStatus == VerificationStatus.Approved && ActiveAuction == null && !HasPendingBiddingRequest;
 }
