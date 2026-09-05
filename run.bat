@@ -1,2 +1,2 @@
 @echo off
-dotnet run --project src/PropLink.Web
+dotnet run --project PropLink.csproj

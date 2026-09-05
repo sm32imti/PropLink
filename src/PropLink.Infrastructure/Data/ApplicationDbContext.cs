@@ -21,6 +21,16 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Configure User entity
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(u => u.Id);
+            entity.Property(u => u.FullName).IsRequired().HasMaxLength(100);
+            entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
+            entity.Property(u => u.PhoneNumber).HasMaxLength(30);
+            entity.Property(u => u.NidNumber).HasMaxLength(50).IsRequired(false);
+        });
+
         // Configure Property entity
         modelBuilder.Entity<Property>(entity =>
         {

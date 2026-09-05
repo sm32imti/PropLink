@@ -16,7 +16,7 @@ public class AccountController : Controller
     private readonly ApplicationDbContext _context;
 
     // In-memory persistent user fallback registry to guarantee immediate registration & login
-    private static readonly ConcurrentDictionary<string, User> _userRegistry = new(StringComparer.OrdinalIgnoreCase);
+    internal static readonly ConcurrentDictionary<string, User> _userRegistry = new(StringComparer.OrdinalIgnoreCase);
 
     static AccountController()
     {
@@ -27,6 +27,7 @@ public class AccountController : Controller
             FullName = "Tamjid (Administrator)",
             Email = "tamjid@gmail.com",
             PhoneNumber = "+1-555-0100",
+            NidNumber = "1992837482910",
             Role = "Admin",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("tamjid123"),
             CreatedAt = DateTime.UtcNow
@@ -40,6 +41,7 @@ public class AccountController : Controller
             FullName = "Marcus Sterling",
             Email = "user@proplink.com",
             PhoneNumber = "+1-555-0144",
+            NidNumber = "1234567890123",
             Role = "User",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("user123"),
             CreatedAt = DateTime.UtcNow

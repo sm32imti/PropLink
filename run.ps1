@@ -1,2 +1,2 @@
-# Run PropLink Web with hot reload support
-dotnet watch --project src/PropLink.Web
+# Run PropLink with hot reload support
+dotnet watch --project PropLink.csproj
