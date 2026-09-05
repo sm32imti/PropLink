@@ -16,6 +16,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<PropertyDocument> PropertyDocuments => Set<PropertyDocument>();
     public DbSet<Inquiry> Inquiries => Set<Inquiry>();
     public DbSet<PropertyTransaction> PropertyTransactions => Set<PropertyTransaction>();
+    public DbSet<BiddingRequest> BiddingRequests => Set<BiddingRequest>();
+    public DbSet<Auction> Auctions => Set<Auction>();
+    public DbSet<Bid> Bids => Set<Bid>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -113,6 +116,71 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(t => t.Buyer)
                 .WithMany(u => u.Purchases)
                 .HasForeignKey(t => t.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure BiddingRequest
+        modelBuilder.Entity<BiddingRequest>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.StartPrice).HasPrecision(18, 2);
+            entity.Property(b => b.MinIncrement).HasPrecision(18, 2);
+            entity.Property(b => b.AdminNote).HasMaxLength(2000);
+
+            entity.HasOne(b => b.Property)
+                .WithMany(p => p.BiddingRequests)
+                .HasForeignKey(b => b.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(b => b.Seller)
+                .WithMany(u => u.BiddingRequests)
+                .HasForeignKey(b => b.SellerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(b => b.ReviewedByAdmin)
+                .WithMany()
+                .HasForeignKey(b => b.ReviewedByAdminId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure Auction
+        modelBuilder.Entity<Auction>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.StartPrice).HasPrecision(18, 2);
+            entity.Property(a => a.MinIncrement).HasPrecision(18, 2);
+            entity.Property(a => a.SellerDecisionNotes).HasMaxLength(2000);
+
+            entity.HasOne(a => a.Property)
+                .WithMany(p => p.Auctions)
+                .HasForeignKey(a => a.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(a => a.BiddingRequest)
+                .WithMany()
+                .HasForeignKey(a => a.BiddingRequestId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(a => a.WinningBid)
+                .WithMany()
+                .HasForeignKey(a => a.WinningBidId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure Bid
+        modelBuilder.Entity<Bid>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.Amount).HasPrecision(18, 2);
+
+            entity.HasOne(b => b.Auction)
+                .WithMany(a => a.Bids)
+                .HasForeignKey(b => b.AuctionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(b => b.Buyer)
+                .WithMany(u => u.Bids)
+                .HasForeignKey(b => b.BuyerId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

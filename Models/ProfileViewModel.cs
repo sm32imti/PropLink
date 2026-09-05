@@ -23,12 +23,20 @@ public class ProfileViewModel
     public int PendingListingsCount { get; set; }
     public int RejectedListingsCount { get; set; }
     public int TotalPurchasesCount { get; set; }
+    public int ActiveAuctionsCount { get; set; }
+    public int MyBidsCount { get; set; }
 
     // Selling / Listing History (Properties created by authenticated user)
     public List<MyPropertyListingViewModel> SellingHistory { get; set; } = new();
 
     // Buying History (Transactions / purchases made by authenticated user)
     public List<PropertyTransactionViewModel> BuyingHistory { get; set; } = new();
+
+    // Seller Auctions (Auctions created on properties owned by authenticated user)
+    public List<SellerAuctionItemViewModel> SellerAuctions { get; set; } = new();
+
+    // Buyer Bids (Bids placed by authenticated user)
+    public List<BuyerBidItemViewModel> BuyerBids { get; set; } = new();
 }
 
 public class EditProfileViewModel
@@ -65,6 +73,15 @@ public class MyPropertyListingViewModel
     public string? RejectionReason { get; set; }
     public DateTime CreatedAt { get; set; }
     public string FormattedDate => CreatedAt.ToString("MMM dd, yyyy");
+
+    // Auction State
+    public bool HasActiveAuction { get; set; }
+    public AuctionStatus? AuctionStatus { get; set; }
+    public Guid? ActiveAuctionId { get; set; }
+    public decimal? CurrentHighestBid { get; set; }
+    public string? FormattedHighestBid => CurrentHighestBid?.ToString("C0");
+    public bool HasPendingBiddingRequest { get; set; }
+    public bool CanRequestBidding => VerificationStatus == VerificationStatus.Approved && !HasActiveAuction && !HasPendingBiddingRequest && TransactionStatus == TransactionStatus.Available;
 }
 
 public class PropertyTransactionViewModel

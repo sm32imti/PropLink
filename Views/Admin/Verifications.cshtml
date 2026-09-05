@@ -43,219 +43,407 @@
             </div>
         }
 
-        <!-- Metrics Overview -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-warning border-5">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-muted small fw-semibold">Pending Audit Queue</span>
-                            <h2 class="h3 fw-bold mb-0 text-warning mt-1">@Model.TotalPendingCount Submissions</h2>
-                        </div>
-                        <div class="icon-bubble bg-warning-subtle text-warning fs-3 p-3 rounded-circle">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-success border-5">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-muted small fw-semibold">Approved & Publicly Live</span>
-                            <h2 class="h3 fw-bold mb-0 text-success mt-1">@Model.TotalApprovedCount Properties</h2>
-                        </div>
-                        <div class="icon-bubble bg-success-subtle text-success fs-3 p-3 rounded-circle">
-                            <i class="bi bi-patch-check-fill"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-danger border-5">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-muted small fw-semibold">Rejected Submissions</span>
-                            <h2 class="h3 fw-bold mb-0 text-danger mt-1">@Model.TotalRejectedCount Listings</h2>
-                        </div>
-                        <div class="icon-bubble bg-danger-subtle text-danger fs-3 p-3 rounded-circle">
-                            <i class="bi bi-x-octagon-fill"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Secondary Queue Tabs -->
+        <div class="mb-4">
+            <ul class="nav nav-pills custom-segmented-pills gap-2" id="adminQueueTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a href="@Url.Action("Verifications", "Admin", new { tab = "properties" })" class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 @(Model.ActiveTab == "properties" ? "active" : "")">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>Property Deed Verifications</span>
+                        <span class="badge rounded-pill bg-white text-dark ms-1">@Model.TotalPendingCount</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a href="@Url.Action("Verifications", "Admin", new { tab = "bidding" })" class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 @(Model.ActiveTab == "bidding" ? "active text-white bg-danger" : "")">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                        <span>Bidding & Auction Requests</span>
+                        <span class="badge rounded-pill bg-white text-dark ms-1">@Model.TotalBiddingPendingCount</span>
+                    </a>
+                </li>
+            </ul>
         </div>
 
-        <!-- Pending Submissions Queue -->
-        <h4 class="h5 fw-bold mb-3 d-flex align-items-center gap-2">
-            <span>Pending Review Submissions</span>
-            <span class="badge bg-warning text-dark rounded-pill">@Model.PendingProperties.Count</span>
-        </h4>
-
-        @if (Model.PendingProperties.Any())
+        @if (Model.ActiveTab == "properties")
         {
-            <div class="d-flex flex-column gap-4 mb-5">
-                @foreach (var item in Model.PendingProperties)
-                {
-                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white position-relative">
-                        <div class="row g-4">
-                            <!-- Column 1: Property Details & Photos -->
-                            <div class="col-lg-7">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <span class="badge bg-warning text-dark me-2">Pending Audit</span>
-                                        <span class="badge bg-light text-dark border">@item.PropertyType</span>
-                                        <span class="text-muted small ms-2"><i class="bi bi-clock me-1"></i>Submitted @item.SubmittedAt.ToString("g")</span>
-                                    </div>
-                                    <h4 class="fw-bold text-primary mb-0">@item.Price.ToString("C0")</h4>
-                                </div>
-
-                                <h3 class="h5 fw-bold mb-2 text-dark">@item.Title</h3>
-                                <p class="text-muted small mb-3">
-                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>@item.Address, @item.City, @item.State
-                                </p>
-
-                                <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3 small text-muted mb-3 border">
-                                    <span><i class="bi bi-bounding-box me-1 text-primary"></i><strong>@item.SquareFeet.ToString("N0")</strong> sq ft</span>
-                                    <span><i class="bi bi-door-open me-1 text-primary"></i><strong>@item.Bedrooms</strong> Beds</span>
-                                    <span><i class="bi bi-water me-1 text-primary"></i><strong>@item.Bathrooms</strong> Baths</span>
-                                </div>
-
-                                <!-- Gallery Photos Preview -->
-                                @if (item.ImageUrls.Any())
-                                {
-                                    <label class="form-label small fw-bold text-muted mb-2">Submitted Photos:</label>
-                                    <div class="d-flex flex-wrap gap-2 mb-3">
-                                        @foreach (var img in item.ImageUrls)
-                                        {
-                                            <a href="@img" target="_blank" title="View full image">
-                                                <img src="@img" class="rounded-3 border shadow-sm" style="width: 90px; height: 65px; object-fit: cover;" alt="Photo" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
-                                            </a>
-                                        }
-                                    </div>
-                                }
+            <!-- Metrics Overview: Properties -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-warning border-5">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-semibold">Pending Deed Audits</span>
+                                <h2 class="h3 fw-bold mb-0 text-warning mt-1">@Model.TotalPendingCount Submissions</h2>
                             </div>
-
-                            <!-- Column 2: Seller Info & Confidential Documents -->
-                            <div class="col-lg-5 border-start-lg ps-lg-4">
-                                <!-- Seller Identity Box -->
-                                <div class="p-3 bg-light rounded-4 border mb-3">
-                                    <h6 class="fw-bold mb-2 d-flex align-items-center gap-2">
-                                        <i class="bi bi-person-check text-primary"></i>
-                                        <span>Seller Identity</span>
-                                    </h6>
-                                    <div class="small text-muted mb-1"><strong>Name:</strong> @item.SellerName</div>
-                                    <div class="small text-muted mb-1"><strong>Email:</strong> @item.SellerEmail</div>
-                                    <div class="small text-muted mb-0"><strong>Phone:</strong> @item.SellerPhone</div>
-                                </div>
-
-                                <!-- Confidential Documents Box -->
-                                <div class="p-3 rounded-4 border mb-4" style="background-color: #fcfcfd;">
-                                    <h6 class="fw-bold mb-2 text-danger d-flex align-items-center justify-content-between">
-                                        <span><i class="bi bi-file-earmark-lock text-danger me-1"></i> Verification Files</span>
-                                        <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">Confidential</span>
-                                    </h6>
-
-                                    @if (item.Documents.Any())
-                                    {
-                                        <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
-                                            @foreach (var doc in item.Documents)
-                                            {
-                                                <li class="d-flex flex-wrap justify-content-between align-items-center p-2 rounded-3 bg-white border gap-2">
-                                                    <div class="d-flex align-items-center gap-2 overflow-hidden flex-grow-1" style="min-width: 140px;">
-                                                        <i class="bi @(doc.DocumentType == "NID" ? "bi-person-badge text-primary" : "bi-file-earmark-text text-success") fs-4"></i>
-                                                        <div class="text-truncate">
-                                                            <strong class="d-block small text-dark">@doc.DocumentType</strong>
-                                                            <span class="small text-muted text-truncate d-block" style="max-width: 150px;" title="@doc.FileName">@doc.FileName</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-flex align-items-center gap-1">
-                                                        <!-- PREVIEW BUTTON (Opens Modal Viewer) -->
-                                                        <button type="button" class="btn btn-sm btn-primary-custom px-2 py-1 d-flex align-items-center gap-1"
-                                                                onclick="openDocumentViewer('@doc.SecureViewUrl', '@doc.SecureDownloadUrl', '@doc.DocumentType: @doc.FileName', '@doc.FileName')">
-                                                            <i class="bi bi-eye"></i> Preview
-                                                        </button>
-                                                        <!-- DOWNLOAD BUTTON -->
-                                                        <a href="@doc.SecureDownloadUrl" class="btn btn-sm btn-outline-secondary px-2 py-1 d-flex align-items-center gap-1" title="Download directly to your device">
-                                                            <i class="bi bi-download"></i> Download
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            }
-                                        </ul>
-                                    }
-                                    else
-                                    {
-                                        <p class="small text-danger mb-0">No verification documents attached.</p>
-                                    }
-                                </div>
-
-                                <!-- Approval & Rejection Action Buttons -->
-                                <div class="d-flex gap-2">
-                                    <!-- APPROVE FORM -->
-                                    <form asp-controller="Admin" asp-action="Approve" asp-route-id="@item.Id" method="post" class="flex-grow-1">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-1" onclick="return confirm('Confirm approval for listing: @item.Title?');">
-                                            <i class="bi bi-check-circle-fill"></i> APPROVE
-                                        </button>
-                                    </form>
-
-                                    <!-- REJECT BUTTON (Triggers Modal) -->
-                                    <button type="button" class="btn btn-outline-danger flex-grow-1 py-2 fw-bold d-flex align-items-center justify-content-center gap-1" data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id">
-                                        <i class="bi bi-x-circle-fill"></i> REJECT
-                                    </button>
-                                </div>
+                            <div class="icon-bubble bg-warning-subtle text-warning fs-3 p-3 rounded-circle">
+                                <i class="bi bi-hourglass-split"></i>
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-success border-5">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-semibold">Approved & Publicly Live</span>
+                                <h2 class="h3 fw-bold mb-0 text-success mt-1">@Model.TotalApprovedCount Properties</h2>
+                            </div>
+                            <div class="icon-bubble bg-success-subtle text-success fs-3 p-3 rounded-circle">
+                                <i class="bi bi-patch-check-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-danger border-5">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-semibold">Rejected Submissions</span>
+                                <h2 class="h3 fw-bold mb-0 text-danger mt-1">@Model.TotalRejectedCount Listings</h2>
+                            </div>
+                            <div class="icon-bubble bg-danger-subtle text-danger fs-3 p-3 rounded-circle">
+                                <i class="bi bi-x-octagon-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Reject Modal for this property -->
-                    <div class="modal fade" id="rejectModal-@item.Id" tabindex="-1" aria-labelledby="rejectModalLabel-@item.Id" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content rounded-4 border-0 shadow">
-                                <div class="modal-header border-0 pb-0">
-                                    <h5 class="modal-title fw-bold text-danger" id="rejectModalLabel-@item.Id">
-                                        <i class="bi bi-exclamation-octagon-fill me-2"></i>Reject Listing Application
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <form asp-controller="Admin" asp-action="Reject" asp-route-id="@item.Id" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="PropertyId" value="@item.Id" />
-                                    <div class="modal-body py-3">
-                                        <p class="small text-muted mb-3">
-                                            Provide a specific reason for rejecting <strong>@item.Title</strong>. The seller (@item.SellerName) will see this remark in their profile dashboard and can revise the listing for resubmission.
-                                        </p>
+            <!-- Pending Submissions Queue -->
+            <h4 class="h5 fw-bold mb-3 d-flex align-items-center gap-2">
+                <span>Pending Property Deed Audits</span>
+                <span class="badge bg-warning text-dark rounded-pill">@Model.PendingProperties.Count</span>
+            </h4>
 
+            @if (Model.PendingProperties.Any())
+            {
+                <div class="d-flex flex-column gap-4 mb-5">
+                    @foreach (var item in Model.PendingProperties)
+                    {
+                        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white position-relative">
+                            <div class="row g-4">
+                                <!-- Column 1: Property Details & Photos -->
+                                <div class="col-lg-7">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <span class="badge bg-warning text-dark me-2">Pending Audit</span>
+                                            <span class="badge bg-light text-dark border">@item.PropertyType</span>
+                                            <span class="text-muted small ms-2"><i class="bi bi-clock me-1"></i>Submitted @item.SubmittedAt.ToString("g")</span>
+                                        </div>
+                                        <h4 class="fw-bold text-primary mb-0">@item.Price.ToString("C0")</h4>
+                                    </div>
+
+                                    <h3 class="h5 fw-bold mb-2 text-dark">@item.Title</h3>
+                                    <p class="text-muted small mb-3">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>@item.Address, @item.City, @item.State
+                                    </p>
+
+                                    <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3 small text-muted mb-3 border">
+                                        <span><i class="bi bi-bounding-box me-1 text-primary"></i><strong>@item.SquareFeet.ToString("N0")</strong> sq ft</span>
+                                        <span><i class="bi bi-door-open me-1 text-primary"></i><strong>@item.Bedrooms</strong> Beds</span>
+                                        <span><i class="bi bi-water me-1 text-primary"></i><strong>@item.Bathrooms</strong> Baths</span>
+                                    </div>
+
+                                    <!-- Gallery Preview Strip -->
+                                    @if (item.ImageUrls.Any())
+                                    {
                                         <div class="mb-3">
-                                            <label class="form-label small fw-bold">Rejection Reason <span class="text-danger">*</span></label>
-                                            <textarea name="RejectionReason" class="form-control form-control-custom" rows="4" placeholder="e.g. The submitted Title Deed was blurry/illegible. Please upload a clear scanned copy of page 2 with official seal..." required></textarea>
+                                            <span class="small fw-semibold text-muted d-block mb-2">Gallery Photos (@item.ImageUrls.Count):</span>
+                                            <div class="d-flex gap-2 overflow-auto pb-2">
+                                                @foreach (var img in item.ImageUrls)
+                                                {
+                                                    <a href="@img" target="_blank" class="d-inline-block">
+                                                        <img src="@img" class="rounded-3 border object-fit-cover shadow-sm" style="width: 100px; height: 75px;" alt="Property photo" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Seller Information -->
+                                    <div class="p-3 rounded-3 border bg-light small">
+                                        <div class="fw-bold text-dark mb-1"><i class="bi bi-person-badge text-primary me-1"></i>Seller Identity:</div>
+                                        <div class="d-flex flex-wrap gap-3 text-muted">
+                                            <span><strong>Name:</strong> @item.SellerName</span>
+                                            <span><strong>Email:</strong> @item.SellerEmail</span>
+                                            <span><strong>Phone:</strong> @item.SellerPhone</span>
                                         </div>
                                     </div>
-                                    <div class="modal-footer border-0 pt-0">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-danger px-4 fw-bold">
-                                            Confirm Rejection
-                                        </button>
+                                </div>
+
+                                <!-- Column 2: Legal Documents & Approval Actions -->
+                                <div class="col-lg-5 d-flex flex-column justify-content-between border-start-lg ps-lg-4">
+                                    <div>
+                                        <h5 class="h6 fw-bold mb-3 d-flex align-items-center gap-2">
+                                            <i class="bi bi-file-earmark-lock-fill text-danger"></i>
+                                            <span>Confidential Legal Documents</span>
+                                        </h5>
+
+                                        @if (item.Documents.Any())
+                                        {
+                                            <div class="list-group list-group-flush mb-4 border rounded-3 overflow-hidden">
+                                                @foreach (var doc in item.Documents)
+                                                {
+                                                    <div class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                                                        <div class="overflow-hidden me-2">
+                                                            <div class="fw-semibold text-dark text-truncate">
+                                                                <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>
+                                                                @doc.DocumentType
+                                                            </div>
+                                                            <div class="small text-muted text-truncate">@doc.FileName</div>
+                                                        </div>
+                                                        <div class="d-flex gap-1 flex-shrink-0">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="openDocumentViewer('@doc.SecureViewUrl', '@doc.SecureDownloadUrl', '@doc.DocumentType: @item.Title', '@doc.FileName')">
+                                                                <i class="bi bi-eye"></i> View
+                                                            </button>
+                                                            <a href="@doc.SecureDownloadUrl" class="btn btn-sm btn-outline-secondary" download>
+                                                                <i class="bi bi-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-warning small mb-4">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i> No legal documents uploaded. Verification cannot proceed without valid deed records.
+                                            </div>
+                                        }
                                     </div>
-                                </form>
+
+                                    <!-- Compliance Decision Controls -->
+                                    <div class="pt-3 border-top">
+                                        <div class="d-flex gap-2">
+                                            <!-- Approve Form -->
+                                            <form asp-controller="Admin" asp-action="Approve" asp-route-id="@item.Id" method="post" class="flex-fill" onsubmit="return confirm('Confirm legal title approval for &quot;@item.Title&quot;? This will publish the listing publicly.');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-success w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-1 rounded-pill">
+                                                    <i class="bi bi-check-circle-fill"></i> Approve & Publish
+                                                </button>
+                                            </form>
+
+                                            <!-- Reject Modal Trigger -->
+                                            <button type="button" class="btn btn-outline-danger flex-fill py-2 fw-bold d-flex align-items-center justify-content-center gap-1 rounded-pill" data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id">
+                                                <i class="bi bi-x-circle-fill"></i> Reject Submission
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Reject Modal for Property -->
+                        <div class="modal fade" id="rejectModal-@item.Id" tabindex="-1" aria-labelledby="rejectModalLabel-@item.Id" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content rounded-4 border-0 shadow">
+                                    <div class="modal-header border-0 pb-0">
+                                        <h5 class="modal-title fw-bold text-danger" id="rejectModalLabel-@item.Id">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Reject Property Application
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form asp-controller="Admin" asp-action="Reject" asp-route-id="@item.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="PropertyId" value="@item.Id" />
+                                        <div class="modal-body py-3">
+                                            <p class="small text-muted mb-3">
+                                                Please specify why <strong>@item.Title</strong> was rejected. This explanation will be displayed to the seller so they can correct documents and resubmit.
+                                            </p>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Rejection Reason & Required Fixes</label>
+                                                <textarea name="RejectionReason" class="form-control form-control-custom" rows="4" placeholder="e.g. The uploaded deed scan is unreadable. Please upload a clear municipal deed with valid seal..." required minlength="5"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 pt-0">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                                                <i class="bi bi-x-octagon me-1"></i> Confirm Rejection
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
+                    <div class="text-success fs-1 mb-2">
+                        <i class="bi bi-shield-check"></i>
                     </div>
-                }
-            </div>
+                    <h4 class="fw-bold">Audit Queue is Clear</h4>
+                    <p class="text-muted small max-w-500 mx-auto mb-0">
+                        There are currently no pending property applications requiring compliance review. All submitted listings have been processed.
+                    </p>
+                </div>
+            }
         }
         else
         {
-            <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
-                <div class="text-success fs-1 mb-2">
-                    <i class="bi bi-shield-check"></i>
+            <!-- ========================================== -->
+            <!-- BIDDING & AUCTION REQUESTS QUEUE -->
+            <!-- ========================================== -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-danger border-5">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-semibold">Pending Bidding Requests</span>
+                                <h2 class="h3 fw-bold mb-0 text-danger mt-1">@Model.TotalBiddingPendingCount Requests</h2>
+                            </div>
+                            <div class="icon-bubble bg-danger-subtle text-danger fs-3 p-3 rounded-circle">
+                                <i class="bi bi-lightning-charge-fill"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <h4 class="fw-bold">Audit Queue is Clear</h4>
-                <p class="text-muted small max-w-500 mx-auto mb-0">
-                    There are currently no pending property applications requiring compliance review. All submitted listings have been processed.
-                </p>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-success border-5">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-semibold">Approved Live Auctions</span>
+                                <h2 class="h3 fw-bold mb-0 text-success mt-1">@Model.TotalBiddingApprovedCount Launched</h2>
+                            </div>
+                            <div class="icon-bubble bg-success-subtle text-success fs-3 p-3 rounded-circle">
+                                <i class="bi bi-patch-check-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-start border-secondary border-5">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-semibold">Declined Bidding Requests</span>
+                                <h2 class="h3 fw-bold mb-0 text-secondary mt-1">@Model.TotalBiddingRejectedCount Declined</h2>
+                            </div>
+                            <div class="icon-bubble bg-secondary-subtle text-secondary fs-3 p-3 rounded-circle">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <h4 class="h5 fw-bold mb-3 d-flex align-items-center gap-2">
+                <span>Pending Bidding & Auction Permission Requests</span>
+                <span class="badge bg-danger text-white rounded-pill">@Model.BiddingRequests.Count</span>
+            </h4>
+
+            @if (Model.BiddingRequests.Any())
+            {
+                <div class="d-flex flex-column gap-4 mb-5">
+                    @foreach (var req in Model.BiddingRequests)
+                    {
+                        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white position-relative">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-md-3">
+                                    <img src="@req.PropertyImageUrl" class="rounded-4 w-100 object-fit-cover shadow-sm" style="height: 140px;" alt="@req.PropertyTitle" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
+                                </div>
+
+                                <div class="col-md-5">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                            <i class="bi bi-lightning-charge me-1"></i> Bidding Request
+                                        </span>
+                                        <span class="small text-muted"><i class="bi bi-clock me-1"></i>@req.RequestedAt.ToString("g")</span>
+                                    </div>
+
+                                    <h5 class="fw-bold mb-1">
+                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@req.PropertyId" target="_blank" class="text-dark text-decoration-none">
+                                            @req.PropertyTitle
+                                        </a>
+                                    </h5>
+                                    <p class="small text-muted mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>@req.Location</p>
+
+                                    <div class="small text-muted">
+                                        <span><strong>Seller:</strong> @req.SellerName (@req.SellerEmail)</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded-4 mb-3 small">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="text-muted">Floor Start Price:</span>
+                                            <strong class="text-danger">@req.FormattedStartPrice</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="text-muted">Min Increment:</span>
+                                            <strong>@req.FormattedMinIncrement</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted">Fixed Duration:</span>
+                                            <strong>@req.DurationHours Hours</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <!-- Approve Bidding Request -->
+                                        <form asp-controller="Admin" asp-action="ApproveBiddingRequest" asp-route-id="@req.Id" method="post" class="flex-fill" onsubmit="return confirm('Approve bidding request and launch a @req.DurationHours-hour fixed auction for &quot;@req.PropertyTitle&quot;?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-danger w-100 rounded-pill btn-sm py-2 fw-bold d-flex align-items-center justify-content-center gap-1">
+                                                <i class="bi bi-check-circle-fill"></i> Approve & Launch
+                                            </button>
+                                        </form>
+
+                                        <!-- Reject Bidding Request Modal Trigger -->
+                                        <button type="button" class="btn btn-outline-secondary rounded-pill btn-sm py-2 fw-bold px-3" data-bs-toggle="modal" data-bs-target="#rejectBiddingModal-@req.Id">
+                                            Decline
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reject Bidding Request Modal -->
+                        <div class="modal fade" id="rejectBiddingModal-@req.Id" tabindex="-1" aria-labelledby="rejectBiddingModalLabel-@req.Id" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content rounded-4 border-0 shadow">
+                                    <div class="modal-header border-0 pb-0">
+                                        <h5 class="modal-title fw-bold text-danger" id="rejectBiddingModalLabel-@req.Id">
+                                            <i class="bi bi-x-circle me-2"></i>Decline Bidding Request
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form asp-controller="Admin" asp-action="RejectBiddingRequest" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="RequestId" value="@req.Id" />
+                                        <div class="modal-body py-3">
+                                            <p class="small text-muted mb-3">
+                                                Specify why auction permission was declined for <strong>@req.PropertyTitle</strong>.
+                                            </p>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Reason for Seller</label>
+                                                <textarea name="AdminNote" class="form-control form-control-custom" rows="3" placeholder="e.g. Floor price is outside normal market parameters or property requires additional verification..." required minlength="5"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 pt-0">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                                                <i class="bi bi-x-circle me-1"></i> Decline Request
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
+                    <div class="text-danger fs-1 mb-2">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <h4 class="fw-bold">No Pending Bidding Requests</h4>
+                    <p class="text-muted small max-w-500 mx-auto mb-0">
+                        There are currently no pending seller requests to activate live competitive bidding.
+                    </p>
+                </div>
+            }
         }
     </div>
 </div>

@@ -103,6 +103,12 @@
                                         <i class="bi bi-patch-check-fill me-1"></i> Verified
                                     </span>
                                     <span class="badge badge-type ms-1">@property.PropertyType</span>
+                                    @if (property.HasActiveAuction)
+                                    {
+                                        <span class="badge bg-danger shadow-sm ms-1">
+                                            <i class="bi bi-fire me-1"></i> Auction Live
+                                        </span>
+                                    }
                                 </div>
 
                                 <button type="button" 
@@ -120,7 +126,17 @@
                                 </button>
 
                                 <div class="property-price-tag">
-                                    @property.FormattedPrice
+                                    @if (property.HasActiveAuction && property.CurrentHighestBid.HasValue)
+                                    {
+                                        <div class="d-flex flex-column align-items-end">
+                                            <span class="badge bg-danger text-white px-2 py-1 mb-1" style="font-size: 0.7rem;">Live Highest Bid</span>
+                                            <span>$@property.CurrentHighestBid.Value.ToString("N0")</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @property.FormattedPrice
+                                    }
                                 </div>
                             </div>
 
