@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<BiddingRequest> BiddingRequests => Set<BiddingRequest>();
     public DbSet<Auction> Auctions => Set<Auction>();
     public DbSet<Bid> Bids => Set<Bid>();
+    public DbSet<UserReport> UserReports => Set<UserReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -182,6 +183,37 @@ public class ApplicationDbContext : DbContext
                 .WithMany(u => u.Bids)
                 .HasForeignKey(b => b.BuyerId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure UserReport
+        modelBuilder.Entity<UserReport>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Category).IsRequired().HasMaxLength(100);
+            entity.Property(r => r.Description).IsRequired().HasMaxLength(4000);
+            entity.Property(r => r.ProofFileName).HasMaxLength(255);
+            entity.Property(r => r.ProofContentType).HasMaxLength(100);
+            entity.Property(r => r.AdminDecisionNotes).HasMaxLength(2000);
+
+            entity.HasOne(r => r.Reporter)
+                .WithMany(u => u.ReportsSubmitted)
+                .HasForeignKey(r => r.ReporterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.ReportedUser)
+                .WithMany(u => u.ReportsReceived)
+                .HasForeignKey(r => r.ReportedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.RelatedProperty)
+                .WithMany()
+                .HasForeignKey(r => r.RelatedPropertyId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(r => r.ReviewedByAdmin)
+                .WithMany()
+                .HasForeignKey(r => r.ReviewedByAdminId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

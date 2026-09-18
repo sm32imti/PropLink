@@ -13,9 +13,16 @@ public class User
     public string Role { get; set; } = "User"; // "User" or "Admin"
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Fraud Ban Status
+    public bool IsBanned { get; set; } = false;
+    public DateTime? BannedAt { get; set; }
+    public string? BanReason { get; set; }
+
     public ICollection<Property> Properties { get; set; } = new List<Property>();
     public ICollection<PropertyTransaction> Purchases { get; set; } = new List<PropertyTransaction>();
     public ICollection<Inquiry> Inquiries { get; set; } = new List<Inquiry>();
     public ICollection<BiddingRequest> BiddingRequests { get; set; } = new List<BiddingRequest>();
     public ICollection<Bid> Bids { get; set; } = new List<Bid>();
+    public ICollection<UserReport> ReportsSubmitted { get; set; } = new List<UserReport>();
+    public ICollection<UserReport> ReportsReceived { get; set; } = new List<UserReport>();
 }

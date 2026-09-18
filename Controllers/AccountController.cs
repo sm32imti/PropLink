@@ -109,6 +109,15 @@ public class AccountController : Controller
             return View(model);
         }
 
+        // Direct Ban Enforcement: Check if user has been banned by Administrator
+        if (user.IsBanned)
+        {
+            var banDate = user.BannedAt.HasValue ? user.BannedAt.Value.ToString("MMM dd, yyyy") : "Recently";
+            var banReason = !string.IsNullOrWhiteSpace(user.BanReason) ? user.BanReason : "Violation of platform trust, fraud prevention, and document compliance policies.";
+            ModelState.AddModelError(string.Empty, $"⛔ ACCESS DENIED: Your account was permanently banned on {banDate}. Reason: {banReason}");
+            return View(model);
+        }
+
         // Create authentication claims
         var claims = new List<Claim>
         {

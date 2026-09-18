@@ -481,4 +481,160 @@ public class ProfileController : Controller
         TempData["ToastMessage"] = "The auction has been closed as unsold. Your listing remains active in the verified marketplace for direct offers or future bidding requests.";
         return RedirectToAction(nameof(Index));
     }
+
+    // ==========================================
+    // 5. PUBLIC MEMBER PROFILE (/user/{id} & /profile/member/{id})
+    // ==========================================
+    [AllowAnonymous]
+    [HttpGet]
+    [Route("user/{id:guid}")]
+    [Route("profile/member/{id:guid}")]
+    public async Task<IActionResult> Member(Guid id)
+    {
+        var targetUser = await _context.Users
+            .Include(u => u.Properties)
+                .ThenInclude(p => p.Images)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (targetUser == null)
+        {
+            // Check in-memory fallback registry if applicable
+            targetUser = AccountController._userRegistry.Values.FirstOrDefault(u => u.Id == id);
+        }
+
+        if (targetUser == null)
+        {
+            TempData["ErrorMessage"] = "User profile not found.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        var propertiesQuery = _context.Properties
+            .Include(p => p.Images)
+            .Where(p => p.SellerId == id && p.VerificationStatus == VerificationStatus.Approved);
+
+        var propertyEntities = await propertiesQuery.OrderByDescending(p => p.CreatedAt).ToListAsync();
+
+        var propertyCards = propertyEntities.Select(p => new PropertyCardViewModel
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Description = p.Description,
+            Price = p.Price,
+            PropertyType = p.PropertyType,
+            Address = p.Address,
+            City = p.City,
+            State = p.State,
+            Bedrooms = p.Bedrooms,
+            Bathrooms = p.Bathrooms,
+            SquareFeet = p.SquareFeet,
+            ImageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl 
+                ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+            VerificationStatus = p.VerificationStatus,
+            TransactionStatus = p.TransactionStatus,
+            SellerName = targetUser.FullName,
+            TimeAgo = p.CreatedAt.ToString("MMM yyyy")
+        }).ToList();
+
+        var totalVerified = await _context.Properties.CountAsync(p => p.SellerId == id && p.VerificationStatus == VerificationStatus.Approved);
+        var totalAuctions = await _context.Auctions.CountAsync(a => a.Property != null && a.Property.SellerId == id);
+
+        var viewModel = new PublicUserProfileViewModel
+        {
+            UserId = targetUser.Id,
+            FullName = targetUser.FullName,
+            Email = targetUser.Email,
+            PhoneNumber = targetUser.PhoneNumber,
+            NidNumber = targetUser.NidNumber,
+            MemberSince = targetUser.CreatedAt,
+            Role = targetUser.Role,
+            IsBanned = targetUser.IsBanned,
+            BannedAt = targetUser.BannedAt,
+            BanReason = targetUser.BanReason,
+            TotalPropertiesListed = targetUser.Properties?.Count ?? propertyEntities.Count,
+            TotalVerifiedProperties = totalVerified,
+            TotalAuctionsHosted = totalAuctions,
+            ActiveProperties = propertyCards
+        };
+
+        return View("PublicProfile", viewModel);
+    }
+
+    // ==========================================
+    // 6. SUBMIT FRAUD REPORT TO ADMIN
+    // ==========================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Route("profile/report-fraud")]
+    public async Task<IActionResult> SubmitReport(SubmitUserReportViewModel model)
+    {
+        var reporterId = CurrentUserId;
+        if (!reporterId.HasValue)
+        {
+            TempData["ErrorMessage"] = "You must be signed in to submit a fraud report.";
+            return RedirectToAction("Login", "Account");
+        }
+
+        if (reporterId.Value == model.ReportedUserId)
+        {
+            TempData["ErrorMessage"] = "You cannot file a fraud report against your own account.";
+            return Redirect(model.ReturnUrl ?? Url.Action("Index", "Home") ?? "/");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "Please provide all required details (including a descriptive incident explanation).";
+            return Redirect(model.ReturnUrl ?? Url.Action("Index", "Home") ?? "/");
+        }
+
+        var reportedUser = await _context.Users.FindAsync(model.ReportedUserId);
+        if (reportedUser == null)
+        {
+            reportedUser = AccountController._userRegistry.Values.FirstOrDefault(u => u.Id == model.ReportedUserId);
+        }
+
+        if (reportedUser == null)
+        {
+            TempData["ErrorMessage"] = "Target user could not be identified.";
+            return Redirect(model.ReturnUrl ?? Url.Action("Index", "Home") ?? "/");
+        }
+
+        // Process proof file attachment (Images, PDF, Receipts, Screenshots)
+        string? proofFileName = null;
+        string? proofContentType = null;
+        byte[]? proofFileData = null;
+        long proofFileSize = 0;
+
+        if (model.ProofFile != null && model.ProofFile.Length > 0)
+        {
+            proofFileName = Path.GetFileName(model.ProofFile.FileName);
+            proofContentType = model.ProofFile.ContentType;
+            proofFileSize = model.ProofFile.Length;
+
+            using var memoryStream = new MemoryStream();
+            await model.ProofFile.CopyToAsync(memoryStream);
+            proofFileData = memoryStream.ToArray();
+        }
+
+        var report = new UserReport
+        {
+            Id = Guid.NewGuid(),
+            ReporterId = reporterId.Value,
+            ReportedUserId = model.ReportedUserId,
+            RelatedPropertyId = model.RelatedPropertyId,
+            Category = model.Category.Trim(),
+            Description = model.Description.Trim(),
+            ProofFileName = proofFileName,
+            ProofContentType = proofContentType,
+            ProofFileData = proofFileData,
+            ProofFileSizeBytes = proofFileSize,
+            Status = ReportStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.UserReports.Add(report);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Fraud report against '{reportedUser.FullName}' submitted successfully to Admin. Our Trust & Safety team will review the evidence and take direct action.";
+        return Redirect(model.ReturnUrl ?? Url.Action("Index", "Home") ?? "/");
+    }
 }
