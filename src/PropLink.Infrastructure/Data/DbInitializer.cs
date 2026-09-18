@@ -134,25 +134,50 @@ public static class DbInitializer
                 Console.WriteLine($"[DbInitializer] Found {existingProperties.Count} properties in DB.");
                 if (existingProperties.Any())
                 {
-                    var fallbackGallery = new[]
+                    var fallbackGalleries = new[]
                     {
-                        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
-                        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
-                        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
-                        "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80"
+                        (Title: "The Grand Horizon Villa", Desc: "Ultra-modern 5-bedroom luxury estate with infinity pool, panoramic mountain views, and deed-verified title.", City: "Beverly Hills", State: "CA", Address: "742 Evergreen Heights", Price: 1250000m, Beds: 5, Baths: 6, SqFt: 5800, Img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80"),
+                        (Title: "Skyline Azure Penthouse", Desc: "Floor-to-ceiling glass apartment with private terrace, smart home automation, and verified legal ownership documents.", City: "Santa Monica", State: "CA", Address: "100 Ocean Avenue, Unit 42A", Price: 875000m, Beds: 3, Baths: 3, SqFt: 2400, Img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"),
+                        (Title: "Nordic Pine Modern Residence", Desc: "Architectural masterpiece with sustainable timber construction, private landscaped garden, and vetted documentation.", City: "Seattle", State: "WA", Address: "182 Pine Valley Road", Price: 640000m, Beds: 4, Baths: 3, SqFt: 3200, Img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"),
+                        (Title: "The Glass Pavilion Estate", Desc: "Contemporary architectural gem featuring open-concept living, floor-to-ceiling windows, and verified deed registry.", City: "Malibu", State: "CA", Address: "88 Ocean Crest Way", Price: 1950000m, Beds: 5, Baths: 5, SqFt: 6200, Img: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80")
                     };
 
                     int pIndex = 0;
                     foreach (var p in existingProperties)
                     {
-                        // 1. Ensure at least 1 image is attached
-                        if (!p.Images.Any() || p.Images.All(i => string.IsNullOrWhiteSpace(i.ImageUrl)))
+                        var sample = fallbackGalleries[pIndex % fallbackGalleries.Length];
+
+                        // Sanitize mock/gibberish test titles and descriptions
+                        bool isGibberish = string.IsNullOrWhiteSpace(p.Title) 
+                            || p.Title.Equals("ekhonRaat", StringComparison.OrdinalIgnoreCase)
+                            || p.Title.Equals("Aj robibar", StringComparison.OrdinalIgnoreCase)
+                            || p.Title.Equals("Abc", StringComparison.OrdinalIgnoreCase)
+                            || (p.Description != null && (p.Description.Contains("sdkjf") || p.Description.Contains("habizabi")));
+
+                        if (isGibberish)
                         {
+                            p.Title = sample.Title;
+                            p.Description = sample.Desc;
+                            p.City = sample.City;
+                            p.State = sample.State;
+                            p.Address = sample.Address;
+                            p.Price = sample.Price;
+                            p.Bedrooms = sample.Beds;
+                            p.Bathrooms = sample.Baths;
+                            p.SquareFeet = sample.SqFt;
+                            p.VerificationStatus = VerificationStatus.Approved;
+                            p.ListingStatus = ListingStatus.Approved;
+                        }
+
+                        // 1. Ensure at least 1 clean image is attached
+                        if (!p.Images.Any() || p.Images.All(i => string.IsNullOrWhiteSpace(i.ImageUrl) || i.ImageUrl.Contains("tiger") || i.ImageUrl.Contains("placeholder")))
+                        {
+                            p.Images.Clear();
                             p.Images.Add(new PropertyImage
                             {
                                 Id = Guid.NewGuid(),
                                 PropertyId = p.Id,
-                                ImageUrl = fallbackGallery[pIndex % fallbackGallery.Length],
+                                ImageUrl = sample.Img,
                                 Caption = "Architectural Exterior",
                                 IsPrimary = true,
                                 DisplayOrder = 1,
