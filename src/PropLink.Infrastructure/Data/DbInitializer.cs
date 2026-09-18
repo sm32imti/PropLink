@@ -31,6 +31,9 @@ public static class DbInitializer
                 string[] migrationQueries = new[]
                 {
                     @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""NidNumber"" character varying(50);",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""IsBanned"" boolean NOT NULL DEFAULT FALSE;",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""BannedAt"" timestamp with time zone;",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""BanReason"" character varying(1000);",
                     @"ALTER TABLE ""Properties"" ADD COLUMN IF NOT EXISTS ""RejectionReason"" character varying(2000);",
                     @"ALTER TABLE ""Properties"" ADD COLUMN IF NOT EXISTS ""TransactionStatus"" integer DEFAULT 0;",
                     @"ALTER TABLE ""PropertyDocuments"" ADD COLUMN IF NOT EXISTS ""StorageReference"" text DEFAULT '';",
@@ -87,6 +90,24 @@ public static class DbInitializer
                         ""Amount"" numeric(18,2) NOT NULL,
                         ""PlacedAt"" timestamp with time zone NOT NULL,
                         ""IsFromDirectOffer"" boolean NOT NULL DEFAULT FALSE
+                    );",
+                    @"CREATE TABLE IF NOT EXISTS ""UserReports"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""ReporterId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""ReportedUserId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""RelatedPropertyId"" uuid REFERENCES ""Properties""(""Id"") ON DELETE SET NULL,
+                        ""Category"" character varying(100) NOT NULL,
+                        ""Description"" character varying(4000) NOT NULL,
+                        ""ProofFileName"" character varying(255),
+                        ""ProofContentType"" character varying(100),
+                        ""ProofFileData"" bytea,
+                        ""ProofFileSizeBytes"" bigint NOT NULL DEFAULT 0,
+                        ""ProofStorageReference"" text,
+                        ""Status"" integer NOT NULL DEFAULT 0,
+                        ""CreatedAt"" timestamp with time zone NOT NULL,
+                        ""ReviewedAt"" timestamp with time zone,
+                        ""ReviewedByAdminId"" uuid REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                        ""AdminDecisionNotes"" character varying(2000)
                     );",
                     @"ALTER TABLE ""Auctions"" ADD CONSTRAINT ""FK_Auctions_WinningBidId"" FOREIGN KEY (""WinningBidId"") REFERENCES ""Bids""(""Id"") ON DELETE SET NULL;"
                 };
@@ -341,6 +362,46 @@ public static class DbInitializer
                     TransactionDate = DateTime.UtcNow.AddDays(-1)
                 };
                 context.PropertyTransactions.Add(transaction);
+                context.SaveChanges();
+            }
+
+            // Seed a sample suspect user and pending fraud report if none exist
+            if (!context.UserReports.Any())
+            {
+                var suspectUser = context.Users.FirstOrDefault(u => u.Email == "suspect@fakeholdings.com");
+                if (suspectUser == null)
+                {
+                    suspectUser = new User
+                    {
+                        Id = Guid.NewGuid(),
+                        FullName = "Devon Croft (Apex Real Estate)",
+                        Email = "suspect@fakeholdings.com",
+                        PhoneNumber = "+1-555-0988",
+                        NidNumber = "9988776655443",
+                        Role = "User",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("fraud123"),
+                        CreatedAt = DateTime.UtcNow.AddDays(-15)
+                    };
+                    context.Users.Add(suspectUser);
+                    context.SaveChanges();
+                }
+
+                var sampleReport = new UserReport
+                {
+                    Id = Guid.NewGuid(),
+                    ReporterId = defaultUser.Id,
+                    ReportedUserId = suspectUser.Id,
+                    RelatedPropertyId = prop1.Id,
+                    Category = "Fake Title Deed & Financial Advance Scam",
+                    Description = "The user attempted to solicit an off-platform cash deposit of $15,000 for deed reservation. When cross-checked, the deed identification numbers provided in private messages were completely forged and mismatched the public land registry.",
+                    ProofFileName = "wire_scam_solicitation_evidence.pdf",
+                    ProofContentType = "application/pdf",
+                    ProofFileSizeBytes = 1048576,
+                    Status = ReportStatus.Pending,
+                    CreatedAt = DateTime.UtcNow.AddHours(-3)
+                };
+
+                context.UserReports.Add(sampleReport);
                 context.SaveChanges();
             }
         }

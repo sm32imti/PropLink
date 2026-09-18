@@ -77,10 +77,22 @@
                     <div class="nav flex-column sidebar-nav-list gap-1">
                         @if (User.IsInRole("Admin"))
                         {
-                            <a asp-controller="Admin" asp-action="Verifications" class="sidebar-nav-item text-danger fw-bold">
-                                <i class="bi bi-shield-lock-fill text-danger"></i>
-                                <span>Admin Verifications Queue</span>
-                            </a>
+                            <div class="p-2 rounded-3 bg-danger-subtle border border-danger-subtle mb-2">
+                                <div class="text-uppercase small text-danger fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">
+                                    <i class="bi bi-shield-shaded me-1"></i> Admin Slide Controls
+                                </div>
+                                <div class="d-flex flex-column gap-1">
+                                    <a asp-controller="Admin" asp-action="Verifications" class="sidebar-nav-item text-danger fw-bold py-1 px-2">
+                                        <i class="bi bi-shield-lock-fill text-danger"></i>
+                                        <span>Verifications Queue</span>
+                                    </a>
+                                    <a asp-controller="Admin" asp-action="Reports" class="sidebar-nav-item text-danger fw-bold py-1 px-2">
+                                        <i class="bi bi-exclamation-octagon-fill text-danger"></i>
+                                        <span>Fraud Reports & Bans</span>
+                                        <span class="badge bg-danger text-white ms-auto">Review</span>
+                                    </a>
+                                </div>
+                            </div>
                         }
                         <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
                             <i class="bi bi-person-circle text-emerald"></i>
