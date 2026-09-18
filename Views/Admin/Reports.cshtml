@@ -1,0 +1,393 @@
+@model PropLink.Web.Models.AdminReportDashboardViewModel
+@{
+    ViewData["Title"] = "Fraud Reports & Ban Controls - Admin Slide";
+}
+
+<div class="container py-4">
+    <!-- Header Banner -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="p-3 bg-danger text-white rounded-4 shadow-sm">
+                    <i class="bi bi-shield-slash-fill fs-2"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h3 class="fw-bold mb-0 text-heading">Fraud Reports & Enforcement</h3>
+                        <span class="badge bg-danger">Zero Tolerance Policy</span>
+                    </div>
+                    <p class="text-muted small mb-0">Investigate user fraud allegations, inspect submitted evidence, and execute direct account bans without warning.</p>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="Admin" asp-action="Verifications" class="btn btn-outline-custom d-flex align-items-center gap-2">
+                    <i class="bi bi-patch-check-fill text-emerald"></i>
+                    <span>Title Verifications Queue</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Notifications -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <div>@TempData["SuccessMessage"]</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ToastMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle-fill fs-5"></i>
+                <div>@TempData["ToastMessage"]</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                <div>@TempData["ErrorMessage"]</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Statistics Counter Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white @(Model.TotalPendingReports > 0 ? "border-start border-danger border-4" : "")">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted fw-bold text-uppercase">Pending Fraud Reports</div>
+                        <h2 class="fw-bold mb-0 text-danger">@Model.TotalPendingReports</h2>
+                        <div class="small text-muted mt-1">Awaiting admin investigation</div>
+                    </div>
+                    <div class="p-3 bg-danger-subtle text-danger rounded-4">
+                        <i class="bi bi-exclamation-octagon-fill fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted fw-bold text-uppercase">Directly Banned Users</div>
+                        <h2 class="fw-bold mb-0 text-dark">@Model.TotalBannedUsers</h2>
+                        <div class="small text-muted mt-1">Permanently terminated accounts</div>
+                    </div>
+                    <div class="p-3 bg-dark-subtle text-dark rounded-4">
+                        <i class="bi bi-slash-circle-fill fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted fw-bold text-uppercase">Dismissed Reports</div>
+                        <h2 class="fw-bold mb-0 text-secondary">@Model.TotalDismissedReports</h2>
+                        <div class="small text-muted mt-1">Cleared / Insufficient evidence</div>
+                    </div>
+                    <div class="p-3 bg-light text-secondary rounded-4">
+                        <i class="bi bi-check-all fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills custom-admin-pills mb-4 p-1 bg-white rounded-4 shadow-sm">
+        <li class="nav-item flex-fill">
+            <a class="nav-link text-center py-2 fw-bold @(Model.ActiveTab == "pending" ? "active bg-danger text-white" : "text-muted")" 
+               asp-controller="Admin" asp-action="Reports" asp-route-tab="pending">
+                <i class="bi bi-clock-history me-1"></i> Pending Reports (@Model.TotalPendingReports)
+            </a>
+        </li>
+        <li class="nav-item flex-fill">
+            <a class="nav-link text-center py-2 fw-bold @(Model.ActiveTab == "banned" ? "active bg-dark text-white" : "text-muted")" 
+               asp-controller="Admin" asp-action="Reports" asp-route-tab="banned">
+                <i class="bi bi-slash-circle me-1"></i> Banned / Action Taken
+            </a>
+        </li>
+        <li class="nav-item flex-fill">
+            <a class="nav-link text-center py-2 fw-bold @(Model.ActiveTab == "dismissed" ? "active bg-secondary text-white" : "text-muted")" 
+               asp-controller="Admin" asp-action="Reports" asp-route-tab="dismissed">
+                <i class="bi bi-check-circle me-1"></i> Dismissed Archive (@Model.TotalDismissedReports)
+            </a>
+        </li>
+    </ul>
+
+    <!-- Report Items -->
+    @if (Model.Reports.Any())
+    {
+        <div class="d-flex flex-column gap-4">
+            @foreach (var report in Model.Reports)
+            {
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <!-- Report Header -->
+                    <div class="p-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3 @(report.Status == PropLink.Domain.Enums.ReportStatus.Pending ? "bg-danger-subtle bg-opacity-25" : "bg-light")">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge @(report.Status == PropLink.Domain.Enums.ReportStatus.Pending ? "bg-danger text-white" : (report.Status == PropLink.Domain.Enums.ReportStatus.ResolvedBanned ? "bg-dark text-white" : "bg-secondary text-white")) px-3 py-2 rounded-pill fw-bold">
+                                @(report.Status == PropLink.Domain.Enums.ReportStatus.Pending ? "PENDING REVIEW" : (report.Status == PropLink.Domain.Enums.ReportStatus.ResolvedBanned ? "USER BANNED" : "DISMISSED"))
+                            </span>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-heading">@report.Category</h6>
+                                <span class="small text-muted">Report ID: #@report.ReportId.ToString()[..8] &bull; Filed @report.CreatedAt.ToString("MMM dd, yyyy HH:mm") UTC</span>
+                            </div>
+                        </div>
+
+                        <div class="small text-muted">
+                            <i class="bi bi-person-fill me-1 text-primary"></i>Reporter: <strong>@report.ReporterName</strong> (@report.ReporterEmail)
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <!-- Left: Suspect Profile Details -->
+                            <div class="col-lg-5">
+                                <div class="p-3 rounded-4 bg-light border h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <div class="small text-muted text-uppercase fw-bold">
+                                                <i class="bi bi-person-badge text-danger me-1"></i> Reported Suspect Profile
+                                            </div>
+                                            @if (report.ReportedUserIsBanned)
+                                            {
+                                                <span class="badge bg-danger"><i class="bi bi-slash-circle me-1"></i>Banned Account</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success-subtle text-success">Active Member</span>
+                                            }
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-3 mb-3">
+                                            <div class="seller-avatar @(report.ReportedUserIsBanned ? "bg-danger" : "bg-primary") text-white fs-4 fw-bold shadow-sm" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                @(string.IsNullOrEmpty(report.ReportedUserName) ? "S" : report.ReportedUserName.Substring(0, 1))
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-0 text-heading">@report.ReportedUserName</h6>
+                                                <div class="small text-muted">@report.ReportedUserEmail</div>
+                                                <div class="small text-muted">Phone: @report.ReportedUserPhone</div>
+                                            </div>
+                                        </div>
+
+                                        <ul class="list-unstyled small text-muted border-top pt-2 mb-3">
+                                            <li class="mb-1 d-flex justify-content-between">
+                                                <span>National ID (NID):</span>
+                                                <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(report.ReportedUserNid) ? "Not Provided" : report.ReportedUserNid)</span>
+                                            </li>
+                                            <li class="mb-1 d-flex justify-content-between">
+                                                <span>Member Since:</span>
+                                                <span class="fw-semibold text-dark">@report.ReportedUserMemberSince.ToString("MMM yyyy")</span>
+                                            </li>
+                                            <li class="d-flex justify-content-between">
+                                                <span>Active Listings:</span>
+                                                <span class="fw-semibold text-dark">@report.ReportedUserActiveListingsCount properties</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <a asp-controller="Profile" asp-action="Member" asp-route-id="@report.ReportedUserId" target="_blank" class="btn btn-outline-custom btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                        <span>Inspect Full Suspect Profile & Catalog</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Right: Allegation Details & Proof Evidence -->
+                            <div class="col-lg-7">
+                                <div class="mb-3">
+                                    <label class="small text-muted fw-bold text-uppercase d-block mb-1">
+                                        <i class="bi bi-chat-quote-fill text-danger me-1"></i> Fraud Allegation & Incident Description
+                                    </label>
+                                    <div class="p-3 rounded-3 bg-light text-dark small border">
+                                        @report.Description
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(report.RelatedPropertyTitle))
+                                {
+                                    <div class="mb-3 p-2 px-3 rounded-3 bg-light border d-flex align-items-center justify-content-between small">
+                                        <span><i class="bi bi-building me-2 text-primary"></i>Context Listing: <strong>@report.RelatedPropertyTitle</strong></span>
+                                        @if (report.RelatedPropertyId.HasValue)
+                                        {
+                                            <a asp-controller="Property" asp-action="Details" asp-route-id="@report.RelatedPropertyId.Value" target="_blank" class="small text-decoration-none">View Listing <i class="bi bi-arrow-right"></i></a>
+                                        }
+                                    </div>
+                                }
+
+                                <!-- Proof Attachment Section -->
+                                <div class="mb-4">
+                                    <label class="small text-muted fw-bold text-uppercase d-block mb-2">
+                                        <i class="bi bi-file-earmark-lock2-fill text-primary me-1"></i> Proof & Evidence Documents
+                                    </label>
+
+                                    @if (report.HasProofFile)
+                                    {
+                                        <div class="p-3 rounded-3 border bg-white d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="p-2 bg-primary-subtle text-primary rounded-3">
+                                                    <i class="bi bi-file-earmark-text-fill fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold small text-dark">@(string.IsNullOrEmpty(report.ProofFileName) ? "Evidence Document" : report.ProofFileName)</div>
+                                                    <span class="text-muted" style="font-size: 0.75rem;">Verified Upload &bull; Safe Audit Sandbox</span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <a href="@report.SecureProofViewUrl" target="_blank" class="btn btn-sm btn-outline-primary px-3 rounded-pill d-flex align-items-center gap-1">
+                                                    <i class="bi bi-eye"></i> View Proof
+                                                </a>
+                                                <a href="@report.SecureProofDownloadUrl" class="btn btn-sm btn-outline-secondary px-3 rounded-pill d-flex align-items-center gap-1">
+                                                    <i class="bi bi-download"></i> Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="p-3 rounded-3 bg-light text-muted small text-center border border-dashed">
+                                            <i class="bi bi-info-circle me-1"></i> No binary attachment uploaded. Incident based on written testimony and cross-referenced platform activity.
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Admin Action Buttons -->
+                                @if (report.Status == PropLink.Domain.Enums.ReportStatus.Pending)
+                                {
+                                    <div class="p-3 rounded-4 bg-light border border-danger-subtle d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                        <div>
+                                            <div class="fw-bold text-danger mb-0 small"><i class="bi bi-shield-lock-fill me-1"></i>Admin Decision (Direct Ban Policy)</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">No warning given upon verdict. Direct and permanent account ban.</div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-danger btn-sm px-3 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#directBanModal-@report.ReportId">
+                                                <i class="bi bi-slash-circle-fill"></i> Direct Ban User
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-pill d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#dismissModal-@report.ReportId">
+                                                <i class="bi bi-x-circle"></i> Dismiss
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="p-3 rounded-4 bg-light border small">
+                                        <div class="fw-bold text-dark mb-1"><i class="bi bi-journal-check text-success me-1"></i>Admin Resolution Audit Log</div>
+                                        <div class="text-muted">Reviewed on: @report.ReviewedAt?.ToString("MMM dd, yyyy HH:mm") UTC by @(report.ReviewedByAdminName ?? "System Administrator")</div>
+                                        <div class="text-dark mt-1">Decision Notes: <em>@(string.IsNullOrEmpty(report.AdminDecisionNotes) ? "No additional notes" : report.AdminDecisionNotes)</em></div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIRECT BAN MODAL FOR THIS REPORT -->
+                <div class="modal fade" id="directBanModal-@report.ReportId" tabindex="-1" aria-labelledby="directBanModalLabel-@report.ReportId" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div class="modal-header bg-danger text-white p-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-slash-circle-fill fs-4 text-white"></i>
+                                    <h5 class="modal-title fw-bold mb-0 text-white" id="directBanModalLabel-@report.ReportId">Confirm Direct Account Ban</h5>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <form asp-controller="Admin" asp-action="BanUserFromReport" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ReportId" value="@report.ReportId" />
+                                <input type="hidden" name="ReportedUserId" value="@report.ReportedUserId" />
+
+                                <div class="modal-body p-4">
+                                    <div class="alert alert-danger border-0 small mb-3">
+                                        <strong>WARNING:</strong> This action will permanently terminate <strong>@report.ReportedUserName</strong>'s account, block all login access immediately, and delist all properties owned by this user. There will be no warning.
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-dark">Official Ban Reason <span class="text-danger">*</span></label>
+                                        <input type="text" name="BanReason" class="form-control form-control-custom" value="Fraudulent activity detected: @report.Category" required minlength="5" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-dark">Admin Internal Audit Notes (Optional)</label>
+                                        <textarea name="AdminNotes" class="form-control form-control-custom" rows="3" placeholder="Evidence confirmed via document review..."></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer border-top bg-light p-3">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                                        <i class="bi bi-slash-circle-fill"></i> Execute Immediate Ban
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DISMISS MODAL FOR THIS REPORT -->
+                <div class="modal fade" id="dismissModal-@report.ReportId" tabindex="-1" aria-labelledby="dismissModalLabel-@report.ReportId" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div class="modal-header bg-secondary text-white p-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-check-circle fs-4 text-white"></i>
+                                    <h5 class="modal-title fw-bold mb-0 text-white" id="dismissModalLabel-@report.ReportId">Dismiss Fraud Report</h5>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <form asp-controller="Admin" asp-action="DismissReport" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ReportId" value="@report.ReportId" />
+
+                                <div class="modal-body p-4">
+                                    <p class="small text-muted mb-3">Dismiss this report if evidence is inconclusive, false allegation, or resolved amicably without fraud.</p>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-dark">Dismissal Remarks (Optional)</label>
+                                        <textarea name="DismissNotes" class="form-control form-control-custom" rows="3" placeholder="Evidence verified as legitimate deed; no fraud committed..."></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer border-top bg-light p-3">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-secondary rounded-pill px-4 fw-bold">
+                                        <i class="bi bi-check-circle me-1"></i> Confirm Dismissal
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+            <div class="mb-3">
+                <i class="bi bi-shield-check text-emerald fs-1"></i>
+            </div>
+            <h4 class="fw-bold mb-1 text-heading">No @(Model.ActiveTab == "pending" ? "Pending" : Model.ActiveTab) Reports</h4>
+            <p class="text-muted small mb-0">Platform trust and integrity metrics are currently clean in this queue.</p>
+        </div>
+    }
+</div>

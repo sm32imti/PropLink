@@ -384,4 +384,249 @@ public class AdminController : Controller
             return File(samplePdf, "application/pdf");
         }
     }
+
+    // ==========================================
+    // 5. FRAUD REPORTS & DIRECT BAN DASHBOARD
+    // ==========================================
+    [HttpGet]
+    [Route("admin/reports")]
+    public async Task<IActionResult> Reports(string? tab = "pending")
+    {
+        var allReports = await _context.UserReports
+            .Include(r => r.Reporter)
+            .Include(r => r.ReportedUser)
+                .ThenInclude(u => u!.Properties)
+            .Include(r => r.RelatedProperty)
+            .Include(r => r.ReviewedByAdmin)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        var totalPending = allReports.Count(r => r.Status == ReportStatus.Pending);
+        var totalBanned = await _context.Users.CountAsync(u => u.IsBanned);
+        var totalDismissed = allReports.Count(r => r.Status == ReportStatus.Dismissed);
+
+        var activeTab = tab?.ToLower() switch
+        {
+            "banned" => "banned",
+            "dismissed" => "dismissed",
+            _ => "pending"
+        };
+
+        var filteredReports = activeTab switch
+        {
+            "banned" => allReports.Where(r => r.Status == ReportStatus.ResolvedBanned || (r.ReportedUser != null && r.ReportedUser.IsBanned)).ToList(),
+            "dismissed" => allReports.Where(r => r.Status == ReportStatus.Dismissed).ToList(),
+            _ => allReports.Where(r => r.Status == ReportStatus.Pending).ToList()
+        };
+
+        var reportItems = filteredReports.Select(r => {
+            var suspect = r.ReportedUser;
+            var hasProof = (r.ProofFileData != null && r.ProofFileData.Length > 0) || !string.IsNullOrEmpty(r.ProofFileName);
+
+            return new AdminReportItemViewModel
+            {
+                ReportId = r.Id,
+                CreatedAt = r.CreatedAt,
+                Status = r.Status,
+                Category = r.Category,
+                Description = r.Description,
+                ReporterId = r.ReporterId,
+                ReporterName = r.Reporter?.FullName ?? "Platform Member",
+                ReporterEmail = r.Reporter?.Email ?? "Anonymous",
+                ReportedUserId = r.ReportedUserId,
+                ReportedUserName = suspect?.FullName ?? "Unknown User",
+                ReportedUserEmail = suspect?.Email ?? "Unknown Email",
+                ReportedUserPhone = suspect?.PhoneNumber ?? "No Phone Recorded",
+                ReportedUserNid = suspect?.NidNumber,
+                ReportedUserMemberSince = suspect?.CreatedAt ?? DateTime.UtcNow,
+                ReportedUserIsBanned = suspect?.IsBanned ?? false,
+                ReportedUserBannedAt = suspect?.BannedAt,
+                ReportedUserBanReason = suspect?.BanReason,
+                ReportedUserActiveListingsCount = suspect?.Properties?.Count ?? 0,
+                RelatedPropertyId = r.RelatedPropertyId,
+                RelatedPropertyTitle = r.RelatedProperty?.Title,
+                ProofFileName = r.ProofFileName,
+                ProofContentType = r.ProofContentType,
+                ProofFileSizeBytes = r.ProofFileSizeBytes,
+                HasProofFile = hasProof,
+                SecureProofViewUrl = hasProof ? Url.Action("ViewReportProof", "Admin", new { reportId = r.Id, download = false }) : null,
+                SecureProofDownloadUrl = hasProof ? Url.Action("ViewReportProof", "Admin", new { reportId = r.Id, download = true }) : null,
+                ReviewedAt = r.ReviewedAt,
+                ReviewedByAdminName = r.ReviewedByAdmin?.FullName,
+                AdminDecisionNotes = r.AdminDecisionNotes
+            };
+        }).ToList();
+
+        var viewModel = new AdminReportDashboardViewModel
+        {
+            TotalPendingReports = totalPending,
+            TotalBannedUsers = totalBanned,
+            TotalDismissedReports = totalDismissed,
+            ActiveTab = activeTab,
+            Reports = reportItems
+        };
+
+        return View(viewModel);
+    }
+
+    // ==========================================
+    // 6. DIRECT BAN USER FROM FRAUD REPORT (NO WARNING)
+    // ==========================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Route("admin/reports/ban")]
+    public async Task<IActionResult> BanUserFromReport(BanUserRequestModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "A valid ban reason must be specified for direct account termination.";
+            return RedirectToAction(nameof(Reports));
+        }
+
+        var report = await _context.UserReports
+            .Include(r => r.ReportedUser)
+            .FirstOrDefaultAsync(r => r.Id == model.ReportId);
+
+        var suspectUser = await _context.Users.FindAsync(model.ReportedUserId);
+        if (suspectUser == null && report?.ReportedUser != null)
+        {
+            suspectUser = report.ReportedUser;
+        }
+
+        if (suspectUser == null)
+        {
+            TempData["ErrorMessage"] = "Suspect account could not be found in the registry.";
+            return RedirectToAction(nameof(Reports));
+        }
+
+        var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Guid? adminId = Guid.TryParse(adminIdStr, out var parsedAdminId) ? parsedAdminId : null;
+        var banTimestamp = DateTime.UtcNow;
+
+        // 1. Direct Ban User Record
+        suspectUser.IsBanned = true;
+        suspectUser.BannedAt = banTimestamp;
+        suspectUser.BanReason = model.BanReason.Trim();
+
+        // Sync with in-memory accounts registry
+        if (AccountController._userRegistry.TryGetValue(suspectUser.Email.ToLower(), out var regUser))
+        {
+            regUser.IsBanned = true;
+            regUser.BannedAt = banTimestamp;
+            regUser.BanReason = model.BanReason.Trim();
+        }
+
+        // 2. Suspend/Unpublish all properties owned by this fraudster
+        var suspectProperties = await _context.Properties
+            .Where(p => p.SellerId == suspectUser.Id)
+            .ToListAsync();
+
+        foreach (var p in suspectProperties)
+        {
+            p.VerificationStatus = VerificationStatus.Rejected;
+            p.ListingStatus = ListingStatus.Rejected;
+            p.RejectionReason = $"Account terminated and banned for fraud: {model.BanReason.Trim()}";
+        }
+
+        // 3. Update Report Status
+        if (report != null)
+        {
+            report.Status = ReportStatus.ResolvedBanned;
+            report.ReviewedAt = banTimestamp;
+            report.ReviewedByAdminId = adminId;
+            report.AdminDecisionNotes = $"DIRECT BAN EXECUTED by Administrator ({User.Identity?.Name ?? "Admin"}) on {banTimestamp:g}. Reason: {model.BanReason.Trim()}. Additional Notes: {model.AdminNotes?.Trim()}";
+        }
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"⛔ DIRECT BAN EXECUTED: User '{suspectUser.FullName}' ({suspectUser.Email}) has been permanently banned from PropLink without warning. All active listings have been immediately delisted.";
+        return RedirectToAction(nameof(Reports), new { tab = "banned" });
+    }
+
+    // ==========================================
+    // 7. DISMISS FRAUD REPORT (NOT GUILTY / INSUFFICIENT EVIDENCE)
+    // ==========================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Route("admin/reports/dismiss")]
+    public async Task<IActionResult> DismissReport(DismissReportRequestModel model)
+    {
+        var report = await _context.UserReports
+            .Include(r => r.ReportedUser)
+            .FirstOrDefaultAsync(r => r.Id == model.ReportId);
+
+        if (report == null)
+        {
+            TempData["ErrorMessage"] = "Fraud report record not found.";
+            return RedirectToAction(nameof(Reports));
+        }
+
+        var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Guid? adminId = Guid.TryParse(adminIdStr, out var parsedAdminId) ? parsedAdminId : null;
+
+        report.Status = ReportStatus.Dismissed;
+        report.ReviewedAt = DateTime.UtcNow;
+        report.ReviewedByAdminId = adminId;
+        report.AdminDecisionNotes = !string.IsNullOrWhiteSpace(model.DismissNotes)
+            ? model.DismissNotes.Trim()
+            : $"Dismissed by Administrator ({User.Identity?.Name}) on {DateTime.UtcNow:g}. Insufficient evidence of fraudulent intent.";
+
+        await _context.SaveChangesAsync();
+
+        TempData["ToastMessage"] = $"Fraud report #{report.Id.ToString()[..8]} against '{report.ReportedUser?.FullName ?? "User"}' has been marked as Dismissed.";
+        return RedirectToAction(nameof(Reports), new { tab = "dismissed" });
+    }
+
+    // ==========================================
+    // 8. VIEW SECURE REPORT PROOF DOCUMENT / SCREENSHOT
+    // ==========================================
+    [HttpGet]
+    [Route("admin/reports/proof/{reportId:guid}")]
+    public async Task<IActionResult> ViewReportProof(Guid reportId, bool download = false)
+    {
+        var report = await _context.UserReports.FirstOrDefaultAsync(r => r.Id == reportId);
+        if (report == null)
+        {
+            return NotFound("Report record not found.");
+        }
+
+        if (report.ProofFileData != null && report.ProofFileData.Length > 0)
+        {
+            var fileName = !string.IsNullOrEmpty(report.ProofFileName) ? report.ProofFileName : "proof_evidence.pdf";
+            var mimeType = !string.IsNullOrWhiteSpace(report.ProofContentType)
+                ? report.ProofContentType
+                : (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                    ? "application/pdf"
+                    : (fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                        ? "image/png"
+                        : (fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                            ? "image/jpeg"
+                            : "application/octet-stream")));
+
+            if (download)
+            {
+                return File(report.ProofFileData, mimeType, fileName);
+            }
+            else
+            {
+                Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+                return File(report.ProofFileData, mimeType);
+            }
+        }
+
+        // Fallback demo proof document
+        var demoEvidence = System.Text.Encoding.UTF8.GetBytes(
+            "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n218\n%%EOF\n");
+
+        var defaultName = !string.IsNullOrEmpty(report.ProofFileName) ? report.ProofFileName : "fraud_evidence_sample.pdf";
+        if (download)
+        {
+            return File(demoEvidence, "application/pdf", defaultName);
+        }
+        else
+        {
+            Response.Headers["Content-Disposition"] = $"inline; filename=\"{defaultName}\"";
+            return File(demoEvidence, "application/pdf");
+        }
+    }
 }
