@@ -1,157 +1,347 @@
 @model PropLink.Web.Models.PublicUserProfileViewModel
 @{
     ViewData["Title"] = $"{Model.FullName} - Member Profile";
+    var memberInitial = string.IsNullOrEmpty(Model.FullName) ? "U" : Model.FullName.Substring(0, 1).ToUpper();
 }
 
-<div class="container py-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
-            <li class="breadcrumb-item"><a asp-controller="Property" asp-action="Index">Catalog</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@Model.FullName</li>
-        </ol>
-    </nav>
+<div class="profile-dashboard-page py-4">
+    <div class="container">
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-house me-1"></i>Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Property" asp-action="Index" class="text-decoration-none text-muted">Catalog</a></li>
+                <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">@Model.FullName</li>
+            </ol>
+        </nav>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-check-circle-fill fs-5"></i>
-                <div>@TempData["SuccessMessage"]</div>
+        <!-- Feedback Alert Messages -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4 border-0 bg-success-subtle border-start border-4 border-success" role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+                    <div class="text-dark fw-medium">@TempData["SuccessMessage"]</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+        }
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                <div>@TempData["ErrorMessage"]</div>
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4 border-0 bg-danger-subtle border-start border-4 border-danger" role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+                    <div class="text-dark fw-medium">@TempData["ErrorMessage"]</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+        }
 
-    @if (Model.IsBanned)
-    {
-        <!-- Prominent Banned Notice Banner -->
-        <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-4">
-            <div class="d-flex align-items-start gap-3">
-                <div class="p-3 bg-danger text-white rounded-circle">
-                    <i class="bi bi-slash-circle-fill fs-3"></i>
-                </div>
-                <div>
-                    <h5 class="alert-heading fw-bold mb-1 text-danger">ACCOUNT TERMINATED & BANNED</h5>
-                    <p class="mb-1">This user was banned on @(Model.BannedAt?.ToString("MMM dd, yyyy") ?? "recently") by PropLink platform administration for violating anti-fraud, compliance, or title deed integrity rules.</p>
-                    <div class="small fw-semibold text-danger">Reason: @(Model.BanReason ?? "Fraudulent activity detected.")</div>
+        @if (Model.IsBanned)
+        {
+            <!-- Prominent Banned Notice Banner -->
+            <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-4 bg-danger-subtle border-start border-5 border-danger">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="p-3 bg-danger text-white rounded-circle shadow-sm flex-shrink-0">
+                        <i class="bi bi-slash-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="alert-heading fw-bold mb-1 text-danger">ACCOUNT SUSPENDED & BANNED</h5>
+                        <p class="mb-1 text-dark">This member account was restricted on @(Model.BannedAt?.ToString("MMMM dd, yyyy") ?? "recently") by PropLink platform administration for violating compliance, anti-fraud, or title deed integrity rules.</p>
+                        <div class="small fw-semibold text-danger">Reason: @(Model.BanReason ?? "Violation of platform compliance and verified document standards.")</div>
+                    </div>
                 </div>
             </div>
-        </div>
-    }
+        }
 
-    <div class="row g-4 mb-5">
-        <!-- User Profile Card -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-white sticky-top" style="top: 100px;">
-                <div class="position-relative d-inline-block mx-auto mb-3">
-                    <div class="seller-avatar @(Model.IsBanned ? "bg-danger" : "bg-emerald") text-white fs-1 fw-bold shadow" style="width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        @(string.IsNullOrEmpty(Model.FullName) ? "U" : Model.FullName.Substring(0, 1))
-                    </div>
-                    @if (Model.IsBanned)
-                    {
-                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-danger border border-white p-2" title="Banned User">
-                            <i class="bi bi-x-octagon-fill"></i>
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-success border border-white p-2" title="Verified Member">
-                            <i class="bi bi-shield-fill-check"></i>
-                        </span>
-                    }
+        <!-- ========================================== -->
+        <!-- EXECUTIVE IDENTITY HERO CARD -->
+        <!-- ========================================== -->
+        <div class="profile-hero-card card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+            <div class="profile-hero-banner position-relative">
+                <div class="position-absolute end-0 bottom-0 p-3 d-none d-md-block opacity-25">
+                    <i class="bi bi-shield-check text-white display-3"></i>
                 </div>
-
-                <h4 class="fw-bold mb-1 text-heading">@Model.FullName</h4>
-                <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
-                    @if (Model.IsBanned)
-                    {
-                        <span class="badge bg-danger">Permanently Banned</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-emerald-light text-emerald"><i class="bi bi-patch-check-fill me-1"></i>Verified Member</span>
-                    }
-                    <span class="badge bg-light text-muted border">@Model.Role</span>
-                </div>
-
-                <div class="border-top border-bottom py-3 my-3 text-start small text-muted">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span><i class="bi bi-calendar3 text-emerald me-2"></i>Member Since:</span>
-                        <span class="fw-semibold text-dark">@Model.MemberSince.ToString("MMMM yyyy")</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span><i class="bi bi-building text-emerald me-2"></i>Verified Listings:</span>
-                        <span class="fw-semibold text-dark">@Model.TotalVerifiedProperties</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span><i class="bi bi-envelope text-emerald me-2"></i>Email Address:</span>
-                        <span class="fw-semibold text-dark text-truncate ms-2">@Model.Email</span>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Model.PhoneNumber))
-                    {
-                        <div class="d-flex justify-content-between">
-                            <span><i class="bi bi-telephone text-emerald me-2"></i>Phone:</span>
-                            <span class="fw-semibold text-dark">@Model.PhoneNumber</span>
+            </div>
+            
+            <div class="p-4 p-md-5 pt-0 position-relative">
+                <div class="row align-items-end g-4">
+                    <!-- Avatar with Verification Shield -->
+                    <div class="col-auto">
+                        <div class="profile-avatar-wrapper position-relative">
+                            <div class="profile-avatar @(Model.IsBanned ? "bg-danger" : "bg-emerald") text-white fs-1 fw-bold rounded-circle d-flex align-items-center justify-content-center shadow">
+                                @memberInitial
+                            </div>
+                            @if (Model.IsBanned)
+                            {
+                                <span class="position-absolute bottom-0 end-0 badge rounded-circle p-1 bg-danger border border-2 border-white shadow-sm" title="Account Banned">
+                                    <i class="bi bi-x-circle-fill text-white fs-6"></i>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="position-absolute bottom-0 end-0 badge rounded-circle p-1 bg-success border border-2 border-white shadow-sm" title="Deed-Audited Member">
+                                    <i class="bi bi-patch-check-fill text-white fs-6"></i>
+                                </span>
+                            }
                         </div>
-                    }
-                </div>
+                    </div>
 
-                <!-- Report Fraud Button -->
-                <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-outline-danger btn-sm py-2 rounded-3 d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#userProfileReportModal">
-                        <i class="bi bi-flag-fill text-danger"></i>
-                        <span class="fw-bold">Report Fraud to Admin</span>
-                    </button>
+                    <!-- Member Info & Badges -->
+                    <div class="col">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <h2 class="h3 fw-bold mb-0 text-heading">@Model.FullName</h2>
+                            @if (Model.IsBanned)
+                            {
+                                <span class="badge bg-danger">Permanently Banned</span>
+                            }
+                            else
+                            {
+                                <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-emerald-light text-emerald border border-emerald-subtle")">
+                                    <i class="bi bi-patch-check-fill me-1"></i>@(Model.Role == "Admin" ? "Administrator" : "Verified Member")
+                                </span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-shield-lock-fill me-1"></i> Deed-Audited Seller
+                                </span>
+                            }
+                        </div>
+
+                        <div class="text-muted small d-flex flex-wrap gap-3 mt-1">
+                            <span><i class="bi bi-envelope-fill me-1 text-emerald"></i>@Model.Email</span>
+                            @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                            {
+                                <span><i class="bi bi-telephone-fill me-1 text-emerald"></i>@Model.PhoneNumber</span>
+                            }
+                            <span><i class="bi bi-calendar3 me-1 text-emerald"></i>Member since @Model.MemberSince.ToString("MMMM yyyy")</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Buttons -->
+                    <div class="col-12 col-lg-auto d-flex flex-wrap gap-2">
+                        <a href="mailto:@Model.Email" class="btn btn-emerald btn-sm px-3 py-2 rounded-pill fw-semibold d-flex align-items-center gap-2 shadow-sm">
+                            <i class="bi bi-envelope"></i>
+                            <span>Contact Seller</span>
+                        </a>
+
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-2 rounded-pill fw-semibold d-flex align-items-center gap-2" id="shareProfileBtn" title="Copy public link to share">
+                            <i class="bi bi-share"></i>
+                            <span>Share</span>
+                        </button>
+
+                        <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2 rounded-pill fw-semibold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#userProfileReportModal" title="Report this member to platform administration">
+                            <i class="bi bi-flag"></i>
+                            <span>Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXECUTIVE KPI METRICS ROW -->
+            <div class="profile-stats-section px-4 px-md-5 pb-4 border-top">
+                <div class="row g-3 pt-3">
+                    <div class="col-6 col-md-3">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center h-100">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="p-2 rounded-circle bg-success-subtle-glow text-success">
+                                    <i class="bi bi-building-check profile-stat-icon"></i>
+                                </div>
+                            </div>
+                            <div class="fs-4 fw-bold text-heading">@Model.TotalVerifiedProperties</div>
+                            <div class="text-muted small fw-medium">Verified Properties</div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center h-100">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="p-2 rounded-circle bg-info-subtle-glow text-info">
+                                    <i class="bi bi-collection profile-stat-icon"></i>
+                                </div>
+                            </div>
+                            <div class="fs-4 fw-bold text-heading">@Model.TotalPropertiesListed</div>
+                            <div class="text-muted small fw-medium">Total Listed</div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center h-100">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="p-2 rounded-circle bg-warning-subtle-glow text-warning">
+                                    <i class="bi bi-hammer profile-stat-icon"></i>
+                                </div>
+                            </div>
+                            <div class="fs-4 fw-bold text-heading">@Model.TotalAuctionsHosted</div>
+                            <div class="text-muted small fw-medium">Auctions Hosted</div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="profile-stat-box p-3 rounded-4 border text-center h-100">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="p-2 rounded-circle bg-emerald-light text-emerald">
+                                    <i class="bi bi-shield-check profile-stat-icon"></i>
+                                </div>
+                            </div>
+                            <div class="fs-4 fw-bold text-emerald">100%</div>
+                            <div class="text-muted small fw-medium">Deed Trust Score</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- User Listed Properties -->
-        <div class="col-lg-8">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <div>
-                    <h4 class="fw-bold mb-1 text-heading">Verified Listings by @Model.FullName</h4>
-                    <p class="text-muted small mb-0">Properties audited and verified for legitimate legal title records</p>
-                </div>
-                <span class="badge bg-emerald-light text-emerald px-3 py-2 rounded-pill fw-bold">
-                    @Model.ActiveProperties.Count Properties
-                </span>
-            </div>
+        <!-- ========================================== -->
+        <!-- SEGMENTED TABS: PROPERTIES & CREDENTIALS -->
+        <!-- ========================================== -->
+        <ul class="nav nav-pills custom-segmented-pills mb-4 gap-2" id="memberTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2" 
+                        id="properties-tab" data-bs-toggle="pill" data-bs-target="#properties-content" type="button" role="tab" aria-selected="true">
+                    <i class="bi bi-building"></i>
+                    <span>Verified Listings</span>
+                    <span class="badge bg-white bg-opacity-25 rounded-pill ms-1">@Model.ActiveProperties.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2" 
+                        id="credentials-tab" data-bs-toggle="pill" data-bs-target="#credentials-content" type="button" role="tab" aria-selected="false">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Seller Credibility & Audit</span>
+                </button>
+            </li>
+        </ul>
 
-            @if (Model.ActiveProperties.Any())
-            {
-                <div class="row g-4">
-                    @foreach (var property in Model.ActiveProperties)
-                    {
-                        <div class="col-md-6">
+        <div class="tab-content" id="memberTabContent">
+            <!-- TAB 1: PROPERTIES GRID -->
+            <div class="tab-pane fade show active" id="properties-content" role="tabpanel" aria-labelledby="properties-tab">
+                @if (Model.ActiveProperties.Any())
+                {
+                    <!-- Filter Toolbar -->
+                    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small fw-bold text-muted text-uppercase letter-spacing-1">Filter Type:</span>
+                                <div class="btn-group btn-group-sm" role="group" id="propertyTypeFilterGroup">
+                                    <button type="button" class="btn btn-outline-primary active" data-filter="all">All (@Model.ActiveProperties.Count)</button>
+                                    <button type="button" class="btn btn-outline-primary" data-filter="residential">Residential</button>
+                                    <button type="button" class="btn btn-outline-primary" data-filter="commercial">Commercial</button>
+                                    <button type="button" class="btn btn-outline-primary" data-filter="land">Land</button>
+                                </div>
+                            </div>
+                            <div class="small text-muted">
+                                <i class="bi bi-info-circle me-1 text-primary"></i>All properties verified by administrative title deed checks.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direct Property Grid (No nested col bugs) -->
+                    <div class="row g-4" id="memberPropertiesGrid">
+                        @foreach (var property in Model.ActiveProperties)
+                        {
                             <partial name="_PropertyCard" model="property" />
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
-                    <div class="mb-3">
-                        <i class="bi bi-building-slash text-muted fs-1"></i>
+                        }
                     </div>
-                    <h5 class="fw-bold mb-1">No Active Properties</h5>
-                    <p class="text-muted small mb-0">This member currently has no active verified properties listed on PropLink.</p>
+                }
+                else
+                {
+                    <!-- High-End Empty State -->
+                    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+                        <div class="mb-3">
+                            <div class="d-inline-flex p-4 rounded-circle bg-light text-muted">
+                                <i class="bi bi-building-slash display-4"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-heading">No Active Properties Currently Listed</h4>
+                        <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+                            @Model.FullName does not have any active verified listings at the moment. All real estate listings undergo thorough title deed verification before publication.
+                        </p>
+                        <div>
+                            <a asp-controller="Property" asp-action="Index" class="btn btn-primary-custom rounded-pill px-4 py-2 fw-semibold">
+                                <i class="bi bi-search me-1"></i> Browse Marketplace Catalog
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- TAB 2: SELLER CREDIBILITY & SECURITY AUDIT -->
+            <div class="tab-pane fade" id="credentials-content" role="tabpanel" aria-labelledby="credentials-tab">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                            <h5 class="fw-bold text-heading mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-fill-check text-emerald"></i>
+                                <span>Platform Verification & Trust Standards</span>
+                            </h5>
+                            <p class="text-muted small mb-4">
+                                PropLink enforces legal deed verification to eradicate forged documents, fake ownership claims, and unauthorized real estate transactions.
+                            </p>
+
+                            <div class="vstack gap-3">
+                                <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light border">
+                                    <div class="p-2 bg-success text-white rounded-circle flex-shrink-0">
+                                        <i class="bi bi-check-lg fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">Administrative Deed Audit</div>
+                                        <div class="small text-muted">Each listing submitted by this seller has undergone rigorous cross-examination against administrative cadastral and title ownership records before going live.</div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light border">
+                                    <div class="p-2 bg-success text-white rounded-circle flex-shrink-0">
+                                        <i class="bi bi-person-badge fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">Identity & National ID Audit</div>
+                                        <div class="small text-muted">Member credentials and National Identification records are verified and logged on the platform registry.</div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light border">
+                                    <div class="p-2 bg-success text-white rounded-circle flex-shrink-0">
+                                        <i class="bi bi-patch-check fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">Platform Anti-Fraud Protection Guarantee</div>
+                                        <div class="small text-muted">PropLink provides direct fraud dispute resolution. Any detected fraudulent solicitation leads to immediate platform suspension and administrative ban.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                            <div class="p-3 d-inline-flex rounded-circle bg-emerald-light text-emerald mx-auto mb-3">
+                                <i class="bi bi-award-fill fs-1"></i>
+                            </div>
+                            <h5 class="fw-bold text-heading mb-1">Deed Integrity Verified</h5>
+                            <p class="text-muted small mb-3">Audited member in good standing on PropLink Marketplace.</p>
+                            <div class="p-3 bg-light rounded-3 text-start small border mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Account Status:</span>
+                                    <span class="fw-bold @(Model.IsBanned ? "text-danger" : "text-success")">
+                                        @(Model.IsBanned ? "Suspended" : "Active & Verified")
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Member Since:</span>
+                                    <span class="fw-bold text-dark">@Model.MemberSince.ToString("MMM yyyy")</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Compliance Score:</span>
+                                    <span class="fw-bold text-emerald">100% Pristine</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 rounded-pill py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#userProfileReportModal">
+                                <i class="bi bi-flag me-1"></i> Report Irregularity to Admin
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            }
+            </div>
         </div>
     </div>
 </div>
@@ -169,7 +359,7 @@
                     </div>
                     <div>
                         <h5 class="modal-title fw-bold mb-0 text-white" id="userProfileReportModalLabel">Report @Model.FullName for Fraud to Admin</h5>
-                        <p class="small mb-0 text-white-50">Upload proofs and incident details. Direct ban without warning if found guilty.</p>
+                        <p class="small mb-0 text-white-50">Upload proofs and incident details. Direct ban without warning if verified guilty.</p>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -185,16 +375,16 @@
                 <div class="modal-body p-4">
                     <div class="p-3 rounded-3 bg-light border border-danger-subtle mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="seller-avatar bg-danger text-white fw-bold" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                @(string.IsNullOrEmpty(Model.FullName) ? "U" : Model.FullName.Substring(0, 1))
+                            <div class="profile-avatar bg-danger text-white fw-bold" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                @memberInitial
                             </div>
                             <div>
                                 <div class="fw-bold text-dark">Suspect: @Model.FullName (@Model.Email)</div>
-                                <div class="small text-muted">Member Since: @Model.MemberSince.ToString("MMM yyyy") | ID: @Model.UserId.ToString()[..8]...</div>
+                                <div class="small text-muted">Member Since: @Model.MemberSince.ToString("MMM yyyy") | ID: @Model.UserId.ToString().Substring(0, 8)...</div>
                             </div>
                         </div>
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Direct Fraud Report
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Anti-Fraud Investigation
                         </span>
                     </div>
 
@@ -218,7 +408,7 @@
                             <label class="form-label small fw-bold text-dark">
                                 Detailed Incident Description <span class="text-danger">*</span>
                             </label>
-                            <textarea name="Description" class="form-control form-control-custom" rows="4" placeholder="Detail the scam, fraudulent requests, forged documents, or fraudulent actions observed..." required minlength="15"></textarea>
+                            <textarea name="Description" class="form-control form-control-custom" rows="4" placeholder="Detail the scam, fraudulent requests, forged documents, or irregular conduct observed..." required minlength="15"></textarea>
                         </div>
 
                         <div class="col-12">
@@ -231,7 +421,7 @@
 
                         <div class="col-12">
                             <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle text-warning-emphasis small">
-                                <i class="bi bi-shield-fill-exclamation me-1"></i> <strong>Admin Review & Direct Ban Notice:</strong> Platform admins review incoming reports with top priority. If verified guilty of fraud, the offender will receive a direct and permanent ban.
+                                <i class="bi bi-shield-fill-exclamation me-1"></i> <strong>Platform Compliance Notice:</strong> Platform administrators review incoming fraud reports with high priority. False or malicious reports are also subject to review.
                             </div>
                         </div>
                     </div>
@@ -247,3 +437,60 @@
         </div>
     </div>
 </div>
+
+<!-- FLOATING TOAST FOR SHARE PROFILE -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="shareToast" class="toast align-items-center text-bg-dark border-0 rounded-3 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                <span>Profile link copied to clipboard!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Share Profile link copying
+            const shareBtn = document.getElementById('shareProfileBtn');
+            const shareToastEl = document.getElementById('shareToast');
+            if (shareBtn && shareToastEl) {
+                const toast = new bootstrap.Toast(shareToastEl, { delay: 3000 });
+                shareBtn.addEventListener('click', function () {
+                    navigator.clipboard.writeText(window.location.href).then(function () {
+                        toast.show();
+                    }).catch(function () {
+                        prompt('Copy profile URL:', window.location.href);
+                    });
+                });
+            }
+
+            // Client-side category filtering for active properties
+            const filterGroup = document.getElementById('propertyTypeFilterGroup');
+            if (filterGroup) {
+                const filterButtons = filterGroup.querySelectorAll('button');
+                const items = document.querySelectorAll('#memberPropertiesGrid .property-item');
+
+                filterButtons.forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        filterButtons.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+
+                        const filter = this.getAttribute('data-filter').toLowerCase();
+                        items.forEach(item => {
+                            const itemType = (item.getAttribute('data-type') || '').toLowerCase();
+                            if (filter === 'all' || itemType === filter) {
+                                item.style.display = '';
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        });
+                    });
+                });
+            }
+        });
+    </script>
+}
