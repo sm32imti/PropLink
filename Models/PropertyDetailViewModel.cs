@@ -40,4 +40,8 @@ public class PropertyDetailViewModel
     public AuctionDetailViewModel? ActiveAuction { get; set; }
     public bool HasPendingBiddingRequest { get; set; }
     public bool CanRequestBidding => IsOwner && VerificationStatus == VerificationStatus.Approved && ActiveAuction == null && !HasPendingBiddingRequest;
+
+    // Inspection Protocol State
+    public bool HasUserRequestedInspection { get; set; }
+    public bool IsLockedUnderProcessing { get; set; }
 }

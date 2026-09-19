@@ -629,4 +629,38 @@ public class AdminController : Controller
             return File(demoEvidence, "application/pdf");
         }
     }
+
+    // ==========================================
+    // 6. FIELD INSPECTIONS & AGENT SCHEDULES OVERSIGHT
+    // ==========================================
+    [HttpGet]
+    [Route("admin/inspections")]
+    public async Task<IActionResult> Inspections()
+    {
+        List<InspectionBooking> bookings = new();
+        try
+        {
+            bookings = await _context.InspectionBookings
+                .Include(i => i.Property)
+                    .ThenInclude(p => p!.Images)
+                .Include(i => i.Buyer)
+                .Include(i => i.Seller)
+                .Include(i => i.Agent)
+                .OrderByDescending(i => i.CreatedAt)
+                .ToListAsync();
+        }
+        catch
+        {
+        }
+
+        foreach (var regItem in InspectionController._inspectionRegistry.Values)
+        {
+            if (!bookings.Any(b => b.Id == regItem.Id))
+            {
+                bookings.Add(regItem);
+            }
+        }
+
+        return View(bookings);
+    }
 }

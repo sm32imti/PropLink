@@ -47,6 +47,21 @@ public class AccountController : Controller
             CreatedAt = DateTime.UtcNow
         };
         _userRegistry["user@proplink.com"] = defaultUser;
+
+        // Pre-populate Verification Agent account
+        var agent = new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Verification Agent",
+            Email = "amir@gmail.com",
+            PhoneNumber = "+1-555-0199",
+            NidNumber = "9988776655443",
+            Role = "VerificationAgent",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Amir@123"),
+            CreatedAt = DateTime.UtcNow
+        };
+        _userRegistry["amir@gmail.com"] = agent;
+        _userRegistry["agent@proplink.com"] = agent; // backward alias
     }
 
     public AccountController(ApplicationDbContext context)
