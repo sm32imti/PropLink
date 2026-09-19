@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Auction> Auctions => Set<Auction>();
     public DbSet<Bid> Bids => Set<Bid>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
+    public DbSet<InspectionBooking> InspectionBookings => Set<InspectionBooking>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -213,6 +214,37 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(r => r.ReviewedByAdmin)
                 .WithMany()
                 .HasForeignKey(r => r.ReviewedByAdminId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure InspectionBooking
+        modelBuilder.Entity<InspectionBooking>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.AskingPrice).HasPrecision(18, 2);
+            entity.Property(i => i.OfferedPrice).HasPrecision(18, 2);
+            entity.Property(i => i.InspectionType).HasMaxLength(50);
+            entity.Property(i => i.MeetingLocationNotes).HasMaxLength(500);
+            entity.Property(i => i.Notes).HasMaxLength(1000);
+
+            entity.HasOne(i => i.Property)
+                .WithMany()
+                .HasForeignKey(i => i.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(i => i.Buyer)
+                .WithMany()
+                .HasForeignKey(i => i.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(i => i.Seller)
+                .WithMany()
+                .HasForeignKey(i => i.SellerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(i => i.Agent)
+                .WithMany()
+                .HasForeignKey(i => i.AgentId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }

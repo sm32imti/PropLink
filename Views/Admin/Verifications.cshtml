@@ -60,6 +60,18 @@
                         <span class="badge rounded-pill bg-white text-dark ms-1">@Model.TotalBiddingPendingCount</span>
                     </a>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <a asp-controller="Admin" asp-action="Reports" class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-flag-fill"></i>
+                        <span>Fraud Reports & Bans</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a asp-controller="Admin" asp-action="Inspections" class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar2-check-fill text-primary"></i>
+                        <span>Agent Inspection Schedules</span>
+                    </a>
+                </li>
             </ul>
         </div>
 

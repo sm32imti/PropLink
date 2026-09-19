@@ -94,6 +94,29 @@
                                 </div>
                             </div>
                         }
+                        @if (User.IsInRole("VerificationAgent") || User.IsInRole("Admin"))
+                        {
+                            <div class="p-2 rounded-3 bg-primary-subtle border border-primary-subtle mb-2">
+                                <div class="text-uppercase small text-primary fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">
+                                    <i class="bi bi-person-badge-fill me-1"></i> Field Agent
+                                </div>
+                                <a asp-controller="Agent" asp-action="Index" class="sidebar-nav-item text-primary fw-bold py-1 px-2">
+                                    <i class="bi bi-calendar-check-fill text-primary"></i>
+                                    <span>Agent Workspace</span>
+                                    <span class="badge bg-primary text-white ms-auto">Schedule</span>
+                                </a>
+                            </div>
+                        }
+                        <a asp-controller="Inspection" asp-action="MyRequests" class="sidebar-nav-item">
+                            <i class="bi bi-bag-check-fill text-primary"></i>
+                            <span>My Purchase Requests</span>
+                            <span class="badge bg-primary-subtle text-primary ms-auto">Buyer Queue</span>
+                        </a>
+                        <a asp-controller="Inspection" asp-action="SellerQueue" class="sidebar-nav-item">
+                            <i class="bi bi-inboxes-fill text-warning"></i>
+                            <span>Seller Inspection Queue</span>
+                            <span class="badge bg-warning-subtle text-warning ms-auto">Seller</span>
+                        </a>
                         <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
                             <i class="bi bi-person-circle text-emerald"></i>
                             <span>My Profile & Dashboard</span>

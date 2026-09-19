@@ -107,11 +107,20 @@
                             }
                         </div>
 
-                        <div class="text-muted small d-flex flex-wrap gap-3 mt-1">
-                            <span><i class="bi bi-envelope-fill me-1 text-emerald"></i>@Model.Email</span>
-                            @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                        <div class="text-muted small d-flex flex-wrap align-items-center gap-3 mt-1">
+                            @if (User.IsInRole("Admin"))
                             {
-                                <span><i class="bi bi-telephone-fill me-1 text-emerald"></i>@Model.PhoneNumber</span>
+                                <span><i class="bi bi-envelope-fill me-1 text-emerald"></i>@Model.Email <span class="badge bg-danger text-white ms-1" style="font-size: 0.65rem;">Admin Only</span></span>
+                                @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                                {
+                                    <span><i class="bi bi-telephone-fill me-1 text-emerald"></i>@Model.PhoneNumber <span class="badge bg-danger text-white ms-1" style="font-size: 0.65rem;">Admin Only</span></span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2">
+                                    <i class="bi bi-shield-lock-fill me-1"></i>Contact Masked • Agent-Assisted Inspections Only
+                                </span>
                             }
                             <span><i class="bi bi-calendar3 me-1 text-emerald"></i>Member since @Model.MemberSince.ToString("MMMM yyyy")</span>
                         </div>
@@ -119,9 +128,9 @@
 
                     <!-- Quick Actions Buttons -->
                     <div class="col-12 col-lg-auto d-flex flex-wrap gap-2">
-                        <a href="mailto:@Model.Email" class="btn btn-emerald btn-sm px-3 py-2 rounded-pill fw-semibold d-flex align-items-center gap-2 shadow-sm">
-                            <i class="bi bi-envelope"></i>
-                            <span>Contact Seller</span>
+                        <a href="#memberTab" class="btn btn-emerald btn-sm px-3 py-2 rounded-pill fw-semibold d-flex align-items-center gap-2 shadow-sm">
+                            <i class="bi bi-calendar2-check"></i>
+                            <span>Schedule Inspection</span>
                         </a>
 
                         <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-2 rounded-pill fw-semibold d-flex align-items-center gap-2" id="shareProfileBtn" title="Copy public link to share">

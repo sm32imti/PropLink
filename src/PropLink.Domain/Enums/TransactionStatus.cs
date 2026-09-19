@@ -6,5 +6,6 @@ public enum TransactionStatus
     Negotiation,
     MeetingScheduled,
     AgreementReached,
+    UnderProcessing,
     Sold
 }

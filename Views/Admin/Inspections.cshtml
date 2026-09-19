@@ -1,0 +1,243 @@
+@model List<PropLink.Domain.Entities.InspectionBooking>
+@{
+    ViewData["Title"] = "Field Inspections & Agent Schedules - Admin";
+}
+
+<div class="admin-verification-page py-5">
+    <div class="container py-3">
+        <!-- Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle mb-2 px-3 py-1">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Administrator Compliance Queue
+                </span>
+                <h1 class="h2 fw-bold mb-1">Field Inspections & <span class="gradient-text">Agent Schedules</span></h1>
+                <p class="text-muted mb-0">Monitor inspection schedules fixed by Verification Agents, track on-site visits, and oversee pending deals.</p>
+            </div>
+            <div>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house me-1"></i> Public Marketplace
+                </a>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs for Admin -->
+        <div class="mb-4">
+            <ul class="nav nav-pills custom-segmented-pills gap-2" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a asp-controller="Admin" asp-action="Verifications" asp-route-tab="properties" class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>Deed Verifications</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a asp-controller="Admin" asp-action="Verifications" asp-route-tab="bidding" class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                        <span>Bidding Requests</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a asp-controller="Admin" asp-action="Reports" class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-flag-fill"></i>
+                        <span>Fraud Reports & Bans</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a asp-controller="Admin" asp-action="Inspections" class="nav-link active rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar2-check-fill"></i>
+                        <span>Agent Inspection Schedules</span>
+                        <span class="badge rounded-pill bg-white text-dark ms-1">@Model.Count</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- KPI Metrics Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-4 border-primary">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Requests</div>
+                    <h3 class="fw-bold mb-0 text-dark">@Model.Count</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-4 border-warning">
+                    <div class="text-muted small fw-semibold text-uppercase">Awaiting Schedule</div>
+                    <h3 class="fw-bold mb-0 text-warning">@Model.Count(m => m.Status == PropLink.Domain.Enums.InspectionStatus.PendingAgentSchedule)</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-4 border-info">
+                    <div class="text-muted small fw-semibold text-uppercase">Schedules Fixed</div>
+                    <h3 class="fw-bold mb-0 text-info">@Model.Count(m => m.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed)</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-4 border-success">
+                    <div class="text-muted small fw-semibold text-uppercase">Under Processing</div>
+                    <h3 class="fw-bold mb-0 text-success">@Model.Count(m => m.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing)</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Table Card -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+            <div class="card-header bg-white border-bottom p-3 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-heading">Verification Agent Schedule Oversight</h5>
+                <span class="small text-muted">Real-time status of on-site inspection tasks</span>
+            </div>
+
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Property</th>
+                                <th>Assigned Agent</th>
+                                <th>Schedule Fixed By Agent</th>
+                                <th>Buyer & Seller</th>
+                                <th>Price / Offer</th>
+                                <th>Stage Status</th>
+                                <th class="text-end pe-4">Inspection Pass</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@(item.Property?.Images.OrderBy(img => img.DisplayOrder).FirstOrDefault()?.ImageUrl ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80")" alt="@(item.Property?.Title ?? "Property")" class="rounded-3 shadow-sm object-fit-cover" style="width: 50px; height: 50px;" />
+                                            <div>
+                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@item.PropertyId" class="fw-bold text-dark text-decoration-none d-block text-truncate" style="max-width: 220px;" target="_blank">
+                                                    @(item.Property?.Title ?? "Verified Real Estate Property")
+                                                </a>
+                                                <span class="small text-muted"><i class="bi bi-geo-alt me-1"></i>@(item.Property?.City ?? "Location")</span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="p-2 rounded-circle bg-primary-subtle text-primary fw-bold" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                                                <i class="bi bi-person-badge"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark small">@(item.AgentName ?? item.Agent?.FullName ?? "Verification Agent")</div>
+                                                <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">Field Inspector</span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        @if (item.ScheduledDate.HasValue)
+                                        {
+                                            <div>
+                                                <span class="badge bg-primary text-white mb-1">
+                                                    <i class="bi bi-calendar2-check-fill me-1"></i>@item.ScheduledDate.Value.ToString("MMM dd, yyyy")
+                                                </span>
+                                                <div class="fw-bold text-dark small">@item.ScheduledDate.Value.ToString("hh:mm tt")</div>
+                                                @if (!string.IsNullOrEmpty(item.MeetingLocationNotes))
+                                                {
+                                                    <span class="text-muted small d-block text-truncate" style="max-width: 180px;" title="@item.MeetingLocationNotes">@item.MeetingLocationNotes</span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                                <i class="bi bi-hourglass-split me-1"></i>Agent Has Not Fixed Schedule Yet
+                                            </span>
+                                            <div class="small text-muted mt-1">Requested: @item.PreferredDate.ToString("MMM dd, yyyy")</div>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        <div class="small">
+                                            <div><i class="bi bi-person me-1 text-primary"></i>Buyer: <strong>@(item.Buyer?.FullName ?? "Buyer")</strong></div>
+                                            <div class="text-muted"><i class="bi bi-house me-1 text-secondary"></i>Seller: @(item.Seller?.FullName ?? "Seller")</div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        @if (item.OfferedPrice.HasValue && item.OfferedPrice.Value > 0)
+                                        {
+                                            <div>
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle mb-1">Custom Offer</span>
+                                                <div class="fw-bold text-success fs-6">$@item.OfferedPrice.Value.ToString("N0")</div>
+                                                <div class="small text-muted">Asking: $@item.AskingPrice.ToString("N0")</div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle mb-1">Asking Price</span>
+                                                <div class="fw-bold text-dark fs-6">$@item.AskingPrice.ToString("N0")</div>
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @switch (item.Status)
+                                        {
+                                            case PropLink.Domain.Enums.InspectionStatus.PendingSellerApproval:
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                                    <i class="bi bi-hourglass-split me-1"></i>Awaiting Seller Selection
+                                                </span>
+                                                break;
+                                            case PropLink.Domain.Enums.InspectionStatus.PendingAgentSchedule:
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="bi bi-person-badge me-1"></i>With Agent (To Fix Schedule)
+                                                </span>
+                                                break;
+                                            case PropLink.Domain.Enums.InspectionStatus.ScheduleFixed:
+                                                <span class="badge bg-primary text-white">
+                                                    <i class="bi bi-calendar-check me-1"></i>Schedule Fixed
+                                                </span>
+                                                break;
+                                            case PropLink.Domain.Enums.InspectionStatus.InspectionCompleted:
+                                                <span class="badge bg-info text-dark">
+                                                    <i class="bi bi-check2-all me-1"></i>Inspection Conducted
+                                                </span>
+                                                break;
+                                            case PropLink.Domain.Enums.InspectionStatus.UnderProcessing:
+                                                <span class="badge bg-success text-white">
+                                                    <i class="bi bi-lock-fill me-1"></i>Under Processing (Locked)
+                                                </span>
+                                                break;
+                                            case PropLink.Domain.Enums.InspectionStatus.DeclinedBySeller:
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                    <i class="bi bi-x-circle me-1"></i>Declined by Seller
+                                                </span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary">@item.Status</span>
+                                                break;
+                                        }
+                                    </td>
+
+                                    <td class="text-end pe-4">
+                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline-secondary rounded-pill px-3" target="_blank">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i> View Property
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-calendar2-x text-muted display-4"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark">No Inspection Bookings Recorded</h5>
+                    <p class="text-muted small mb-0">When buyers request on-site physical inspections, they will appear here with the assigned Verification Agent's fixed schedule.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

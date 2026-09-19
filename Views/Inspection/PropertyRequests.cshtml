@@ -1,0 +1,333 @@
+@model PropLink.Web.Models.SellerPropertyRequestsViewModel
+@{
+    ViewData["Title"] = $"Buyer Requests for {Model.PropertyTitle} - PropLink";
+    var pendingList = Model.Requests.Where(r => r.Status == PropLink.Domain.Enums.InspectionStatus.PendingSellerApproval).ToList();
+    var activeAgentList = Model.Requests.Where(r => r.Status == PropLink.Domain.Enums.InspectionStatus.PendingAgentSchedule || r.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed || r.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing).ToList();
+}
+
+<div class="container py-5">
+    <!-- Breadcrumb & Back button -->
+    <div class="mb-3">
+        <a asp-controller="Inspection" asp-action="SellerQueue" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back to Seller Queue
+        </a>
+    </div>
+
+    <!-- Property Hero Card -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row gap-4 align-items-start align-items-md-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="@Model.PropertyImageUrl" alt="@Model.PropertyTitle"
+                         class="rounded-3 object-fit-cover shadow-sm"
+                         style="width: 120px; height: 90px;" />
+                    <div>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small mb-1">
+                            Your Property Listing
+                        </span>
+                        <h1 class="h4 fw-bold mb-1 text-dark">@Model.PropertyTitle</h1>
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-geo-alt me-1 text-danger"></i>@Model.PropertyAddress, @Model.PropertyCity
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="text-md-end">
+                        <span class="text-muted small d-block">Asking Price</span>
+                        <span class="fs-4 fw-bold text-dark">$@Model.AskingPrice.ToString("N0")</span>
+                    </div>
+
+                    <a asp-controller="Property" asp-action="Details" asp-route-id="@Model.PropertyId"
+                       class="btn btn-outline-primary rounded-pill px-3 py-2" target="_blank">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> View Live Page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Messages -->
+    @if (TempData["ToastMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4 border-0 bg-success-subtle border-start border-4 border-success" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                <div class="text-dark fw-medium">@TempData["ToastMessage"]</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Protocol Info Card -->
+    <div class="card border-0 bg-primary-subtle rounded-4 p-3 mb-4 shadow-sm">
+        <div class="d-flex gap-3 align-items-center">
+            <div class="p-3 bg-white text-primary rounded-circle shadow-sm">
+                <i class="bi bi-shield-check fs-4"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold text-dark mb-1">PropLink Seller Selection & Verification Protocol</h6>
+                <p class="text-muted small mb-0">
+                    Compare buyer requests below. When you find an offer you prefer, click <strong>"Accept & Forward to Verification Agent"</strong>.
+                    That request will immediately be sent to an assigned Verification Agent to fix the physical inspection date and time.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buyer Requests Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-bold text-dark mb-0">
+            <i class="bi bi-people-fill text-primary me-2"></i>Buyer Requests for this Property (@Model.Requests.Count)
+        </h4>
+        @if (pendingList.Any())
+        {
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">
+                @pendingList.Count Request@(pendingList.Count > 1 ? "s" : "") Awaiting Your Selection
+            </span>
+        }
+    </div>
+
+    @if (!Model.Requests.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+            <div class="p-4 bg-light rounded-circle d-inline-block mb-3 text-muted mx-auto">
+                <i class="bi bi-clipboard-x fs-1"></i>
+            </div>
+            <h5 class="fw-bold text-dark">No Requests Received for This Property</h5>
+            <p class="text-muted small max-w-md mx-auto mb-0">
+                When buyers request inspection or submit direct price offers, they will be listed here for your review and selection.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var req in Model.Requests)
+            {
+                var isPending = req.Status == PropLink.Domain.Enums.InspectionStatus.PendingSellerApproval;
+                var isForwarded = req.Status == PropLink.Domain.Enums.InspectionStatus.PendingAgentSchedule || req.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed || req.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing;
+
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white @(isPending ? "border-start border-4 border-warning" : (isForwarded ? "border-start border-4 border-primary" : ""))">
+                        <div class="card-body p-4">
+                            <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
+                                <!-- Left: Buyer and Offer Details -->
+                                <div class="flex-grow-1">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                        <h5 class="fw-bold text-dark mb-0">
+                                            <i class="bi bi-person-circle text-secondary me-1"></i>@req.BuyerName
+                                        </h5>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Verified PropLink Buyer
+                                        </span>
+                                        @if (req.AgreedToAntiBypassTerms)
+                                        {
+                                            <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill small">
+                                                <i class="bi bi-shield-lock me-1"></i>Anti-Bypass Agreed
+                                            </span>
+                                        }
+                                        <span class="text-muted small ms-auto">
+                                            Submitted: @req.CreatedAt.ToString("MMM dd, yyyy h:mm tt")
+                                        </span>
+                                    </div>
+
+                                    <!-- Pricing / Offer Breakdown -->
+                                    <div class="row g-3 my-2 p-3 bg-light rounded-4">
+                                        <div class="col-sm-4">
+                                            <span class="text-muted small d-block">Request Type</span>
+                                            @if (req.InspectionType == "PriceOfferWithInspection" && req.OfferedPrice.HasValue)
+                                            {
+                                                <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold">
+                                                    <i class="bi bi-cash-stack me-1"></i>Price Offer + Inspection
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success text-white rounded-pill px-3 py-1 fw-bold">
+                                                    <i class="bi bi-check-circle me-1"></i>Direct Asking Price
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <div class="col-sm-4">
+                                            <span class="text-muted small d-block">Buyer's Offered Amount</span>
+                                            @if (req.OfferedPrice.HasValue)
+                                            {
+                                                <span class="fs-5 fw-bold text-success">$@req.OfferedPrice.Value.ToString("N0")</span>
+                                                @if (req.OfferedPrice.Value < req.AskingPrice)
+                                                {
+                                                    var diff = req.AskingPrice - req.OfferedPrice.Value;
+                                                    <span class="small text-danger d-block">(-$@diff.ToString("N0") from asking)</span>
+                                                }
+                                                else if (req.OfferedPrice.Value > req.AskingPrice)
+                                                {
+                                                    var diff = req.OfferedPrice.Value - req.AskingPrice;
+                                                    <span class="small text-success d-block">(+$@diff.ToString("N0") above asking)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="fs-5 fw-bold text-dark">$@req.AskingPrice.ToString("N0")</span>
+                                                <span class="small text-muted d-block">(Full Asking Price)</span>
+                                            }
+                                        </div>
+
+                                        <div class="col-sm-4">
+                                            <span class="text-muted small d-block">Buyer Preferred Date & Slot</span>
+                                            <span class="fw-semibold text-dark d-block">
+                                                <i class="bi bi-calendar-event me-1 text-primary"></i>@req.PreferredDate.ToString("MMM dd, yyyy")
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Notes / Details -->
+                                    @if (!string.IsNullOrEmpty(req.Notes))
+                                    {
+                                        <div class="small text-muted mt-2">
+                                            <span class="fw-semibold text-dark">Details:</span> @req.Notes
+                                        </div>
+                                    }
+
+                                    <!-- Confirmed Agent Schedule details if scheduled -->
+                                    @if (req.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed && req.ScheduledDate.HasValue)
+                                    {
+                                        <div class="alert alert-info rounded-4 py-2 px-3 mt-3 mb-0 d-flex align-items-center gap-2">
+                                            <i class="bi bi-calendar-check-fill fs-5 text-info"></i>
+                                            <div>
+                                                <div class="fw-bold text-dark">Fixed Schedule: @req.ScheduledDate.Value.ToString("f")</div>
+                                                <div class="small text-muted">Assigned Verification Agent: @(req.AgentName ?? "Verification Agent") | Meeting instructions: @(req.MeetingLocationNotes ?? "On-site deed review")</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Right: Current Status & Selection Action -->
+                                <div class="d-flex flex-column justify-content-between align-items-lg-end min-w-220 gap-3">
+                                    <div>
+                                        @switch (req.Status)
+                                        {
+                                            case PropLink.Domain.Enums.InspectionStatus.PendingSellerApproval:
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-2 fw-semibold">
+                                                    <i class="bi bi-hourglass-split me-1"></i> Awaiting Your Selection
+                                                </span>
+                                                break;
+
+                                            case PropLink.Domain.Enums.InspectionStatus.PendingAgentSchedule:
+                                                <span class="badge bg-primary text-white rounded-pill px-3 py-2 fw-semibold">
+                                                    <i class="bi bi-check2-circle me-1"></i> Selected & Forwarded to Agent
+                                                </span>
+                                                <div class="small text-primary fw-medium mt-1 text-lg-end">Verification Agent will fix schedule</div>
+                                                break;
+
+                                            case PropLink.Domain.Enums.InspectionStatus.ScheduleFixed:
+                                                <span class="badge bg-info text-white rounded-pill px-3 py-2 fw-semibold">
+                                                    <i class="bi bi-calendar-check me-1"></i> Schedule Confirmed
+                                                </span>
+                                                break;
+
+                                            case PropLink.Domain.Enums.InspectionStatus.InspectionCompleted:
+                                                <span class="badge bg-success text-white rounded-pill px-3 py-2 fw-semibold">
+                                                    <i class="bi bi-patch-check-fill me-1"></i> Inspection Completed
+                                                </span>
+                                                break;
+
+                                            case PropLink.Domain.Enums.InspectionStatus.UnderProcessing:
+                                                <span class="badge bg-dark text-white rounded-pill px-3 py-2 fw-semibold">
+                                                    <i class="bi bi-lock-fill me-1"></i> Under Processing
+                                                </span>
+                                                break;
+
+                                            case PropLink.Domain.Enums.InspectionStatus.DeclinedBySeller:
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+                                                    <i class="bi bi-x-circle me-1"></i> Declined
+                                                </span>
+                                                break;
+                                        }
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    @if (req.Status == PropLink.Domain.Enums.InspectionStatus.PendingSellerApproval)
+                                    {
+                                        <div class="d-flex flex-column gap-2 w-100">
+                                            <!-- Accept & Forward to Verification Agent Button -->
+                                            <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm"
+                                                    data-bs-toggle="modal" data-bs-target="#acceptModal-@req.BookingId">
+                                                <i class="bi bi-check-circle me-1"></i> Accept & Forward to Agent
+                                            </button>
+
+                                            <!-- Decline Button -->
+                                            <form asp-controller="Inspection" asp-action="DeclineRequest" method="post" class="w-100">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="bookingId" value="@req.BookingId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 w-100"
+                                                        onclick="return confirm('Are you sure you want to decline this buyer offer?');">
+                                                    <i class="bi bi-x me-1"></i> Decline Offer
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Accept Confirmation Modal -->
+                                        <div class="modal fade" id="acceptModal-@req.BookingId" tabindex="-1" aria-labelledby="modalLabel-@req.BookingId" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content rounded-4 border-0 shadow-lg">
+                                                    <div class="modal-header border-0 pb-0">
+                                                        <h5 class="modal-title fw-bold" id="modalLabel-@req.BookingId">
+                                                            <i class="bi bi-person-check-fill text-primary me-2"></i>Select Buyer & Forward to Agent
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body py-4">
+                                                        <p class="text-muted mb-3">
+                                                            You are selecting the request from <strong class="text-dark">@req.BuyerName</strong> for this property.
+                                                        </p>
+
+                                                        <div class="p-3 bg-light rounded-4 mb-3">
+                                                            <div class="d-flex justify-content-between mb-1">
+                                                                <span class="text-muted small">Buyer Offer / Amount:</span>
+                                                                <span class="fw-bold text-success">$@(req.OfferedPrice.HasValue ? req.OfferedPrice.Value.ToString("N0") : req.AskingPrice.ToString("N0"))</span>
+                                                            </div>
+                                                            <div class="d-flex justify-content-between mb-1">
+                                                                <span class="text-muted small">Preferred Date:</span>
+                                                                <span class="fw-semibold text-dark">@req.PreferredDate.ToString("MMM dd, yyyy")</span>
+                                                            </div>
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Assigned Agent:</span>
+                                                                <span class="fw-bold text-primary">Authorized Verification Agent</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="alert alert-warning-subtle border-0 rounded-4 small p-3 text-dark">
+                                                            <i class="bi bi-shield-lock-fill text-warning me-1"></i>
+                                                            Once accepted, this request goes to an authorized <strong>Verification Agent</strong> to fix the on-site deed audit schedule. You will coordinate through PropLink.
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-0 pt-0">
+                                                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                                        <form asp-controller="Inspection" asp-action="AcceptRequest" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="bookingId" value="@req.BookingId" />
+                                                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                                                                <i class="bi bi-check2-circle me-1"></i> Confirm & Forward to Agent
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted small text-lg-end">
+                                            <i class="bi bi-info-circle me-1"></i>Managed via PropLink Protocol
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

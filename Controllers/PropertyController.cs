@@ -265,6 +265,42 @@ public class PropertyController : Controller
 
         var hasPendingRequest = property.BiddingRequests.Any(r => r.Status == BiddingRequestStatus.Pending);
 
+        // Check if property is locked under processing after inspection
+        bool isLockedUnderProcessing = property.TransactionStatus == TransactionStatus.UnderProcessing;
+        if (!isLockedUnderProcessing)
+        {
+            try
+            {
+                isLockedUnderProcessing = await _context.InspectionBookings
+                    .AnyAsync(i => i.PropertyId == property.Id && i.Status == InspectionStatus.UnderProcessing);
+            }
+            catch { }
+
+            if (!isLockedUnderProcessing)
+            {
+                isLockedUnderProcessing = InspectionController._inspectionRegistry.Values
+                    .Any(i => i.PropertyId == property.Id && i.Status == InspectionStatus.UnderProcessing);
+            }
+        }
+
+        // Check if current user has already requested an inspection for this property
+        bool hasUserRequestedInspection = false;
+        if (CurrentUserId.HasValue)
+        {
+            try
+            {
+                hasUserRequestedInspection = await _context.InspectionBookings
+                    .AnyAsync(i => i.PropertyId == property.Id && i.BuyerId == CurrentUserId.Value && i.Status != InspectionStatus.Cancelled && i.Status != InspectionStatus.DeclinedBySeller);
+            }
+            catch { }
+
+            if (!hasUserRequestedInspection)
+            {
+                hasUserRequestedInspection = InspectionController._inspectionRegistry.Values
+                    .Any(i => i.PropertyId == property.Id && i.BuyerId == CurrentUserId.Value && i.Status != InspectionStatus.Cancelled && i.Status != InspectionStatus.DeclinedBySeller);
+            }
+        }
+
         var viewModel = new PropertyDetailViewModel
         {
             Id = property.Id,
@@ -291,7 +327,9 @@ public class PropertyController : Controller
             SellerTotalProperties = sellerTotalProperties,
             IsOwner = isOwner,
             ActiveAuction = auctionVm,
-            HasPendingBiddingRequest = hasPendingRequest
+            HasPendingBiddingRequest = hasPendingRequest,
+            IsLockedUnderProcessing = isLockedUnderProcessing,
+            HasUserRequestedInspection = hasUserRequestedInspection
         };
 
         if (!viewModel.ImageUrls.Any())
