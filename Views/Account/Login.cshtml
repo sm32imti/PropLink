@@ -54,7 +54,10 @@
                             </div>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
-                                <input asp-for="Password" class="form-control form-control-custom border-start-0 ps-0" type="password" placeholder="Enter your password" id="loginPassword" required />
+                                <input asp-for="Password" class="form-control form-control-custom border-start-0 border-end-0 ps-0" type="password" placeholder="Enter your password" id="loginPassword" required />
+                                <button class="btn btn-outline-secondary border-start-0 bg-white" type="button" id="toggleLoginPasswordBtn" title="Toggle password visibility">
+                                    <i class="bi bi-eye text-muted" id="toggleLoginPasswordIcon"></i>
+                                </button>
                             </div>
                             <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
@@ -103,5 +106,18 @@
             document.getElementById('loginEmail').value = email;
             document.getElementById('loginPassword').value = password;
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleBtn = document.getElementById('toggleLoginPasswordBtn');
+            const passInput = document.getElementById('loginPassword');
+            const toggleIcon = document.getElementById('toggleLoginPasswordIcon');
+            if (toggleBtn && passInput) {
+                toggleBtn.addEventListener('click', function () {
+                    const isPass = passInput.type === 'password';
+                    passInput.type = isPass ? 'text' : 'password';
+                    toggleIcon.className = isPass ? 'bi bi-eye-slash text-primary' : 'bi bi-eye text-muted';
+                });
+            }
+        });
     </script>
 }

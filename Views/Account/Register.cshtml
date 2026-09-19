@@ -7,7 +7,7 @@
     <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-lg-5 col-md-8">
-                <div class="auth-card p-4 p-md-5">
+                <div class="auth-card p-4 p-md-5 shadow-sm rounded-4 border-0">
                     <!-- Brand Icon & Title -->
                     <div class="text-center mb-4">
                         <div class="auth-icon-wrapper mx-auto mb-3">
@@ -19,13 +19,13 @@
 
                     @if (!ViewData.ModelState.IsValid)
                     {
-                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 border-0 shadow-sm" role="alert">
                             <div asp-validation-summary="All" class="mb-0 small fw-medium"></div>
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     }
 
-                    <form asp-controller="Account" asp-action="Register" method="post" class="auth-form">
+                    <form asp-controller="Account" asp-action="Register" method="post" class="auth-form" id="registerForm" novalidate>
                         @Html.AntiForgeryToken()
 
                         <!-- Full Name -->
@@ -63,9 +63,40 @@
                             <label asp-for="Password" class="form-label small fw-bold">Password</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
-                                <input asp-for="Password" type="password" class="form-control form-control-custom border-start-0 ps-0" placeholder="Min. 6 characters" required />
+                                <input asp-for="Password" type="password" class="form-control form-control-custom border-start-0 border-end-0 ps-0" id="regPassword" placeholder="Min. 8 characters with Capital, Number & Special" required autocomplete="new-password" />
+                                <button class="btn btn-outline-secondary border-start-0 bg-white" type="button" id="togglePasswordBtn" title="Toggle password visibility">
+                                    <i class="bi bi-eye text-muted" id="togglePasswordIcon"></i>
+                                </button>
                             </div>
-                            <span asp-validation-for="Password" class="text-danger small"></span>
+                            <span asp-validation-for="Password" class="text-danger small" id="passwordServerError"></span>
+
+                            <!-- PASSWORD BASIC RULES CARD -->
+                            <div class="card border-0 bg-light rounded-3 p-3 mt-2" id="passwordRulesCard">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="small fw-bold text-dark">
+                                        <i class="bi bi-shield-lock-fill text-primary me-1"></i> Password Basic Rules:
+                                    </span>
+                                    <span class="badge bg-secondary-subtle text-secondary small" id="ruleCompletionBadge">0 / 4 Met</span>
+                                </div>
+                                <ul class="list-unstyled mb-0 small ps-1" id="passwordRulesList">
+                                    <li class="d-flex align-items-center gap-2 mb-1" id="rule-length">
+                                        <i class="bi bi-circle text-muted rule-icon"></i>
+                                        <span class="rule-text text-muted">At least <strong>8 characters</strong></span>
+                                    </li>
+                                    <li class="d-flex align-items-center gap-2 mb-1" id="rule-capital">
+                                        <i class="bi bi-circle text-muted rule-icon"></i>
+                                        <span class="rule-text text-muted">At least one <strong>Capital letter (A-Z)</strong></span>
+                                    </li>
+                                    <li class="d-flex align-items-center gap-2 mb-1" id="rule-number">
+                                        <i class="bi bi-circle text-muted rule-icon"></i>
+                                        <span class="rule-text text-muted">At least one <strong>Number (0-9)</strong></span>
+                                    </li>
+                                    <li class="d-flex align-items-center gap-2" id="rule-special">
+                                        <i class="bi bi-circle text-muted rule-icon"></i>
+                                        <span class="rule-text text-muted">At least one <strong>Special character</strong> (!@@#$%^&*...)</span>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
 
                         <!-- Confirm Password -->
@@ -73,18 +104,22 @@
                             <label asp-for="ConfirmPassword" class="form-label small fw-bold">Confirm Password</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-check2-circle text-muted"></i></span>
-                                <input asp-for="ConfirmPassword" type="password" class="form-control form-control-custom border-start-0 ps-0" placeholder="Re-enter password" required />
+                                <input asp-for="ConfirmPassword" type="password" class="form-control form-control-custom border-start-0 border-end-0 ps-0" id="regConfirmPassword" placeholder="Re-enter password" required autocomplete="new-password" />
+                                <button class="btn btn-outline-secondary border-start-0 bg-white" type="button" id="toggleConfirmBtn" title="Toggle password visibility">
+                                    <i class="bi bi-eye text-muted" id="toggleConfirmIcon"></i>
+                                </button>
                             </div>
-                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small" id="confirmPasswordError"></span>
+                            <div id="passwordMatchHint" class="small mt-1 d-none"></div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
+                        <button type="submit" id="submitRegisterBtn" class="btn btn-primary-custom w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm">
                             <i class="bi bi-arrow-right-circle"></i>
                             <span>Create Account</span>
                         </button>
                     </form>
 
-                    <div class="text-center mt-4 pt-2">
+                    <div class="text-center mt-4 pt-2 border-top">
                         <p class="small text-muted mb-0">
                             Already have an account? 
                             <a asp-controller="Account" asp-action="Login" class="text-primary fw-bold text-decoration-none">Sign In Here</a>
@@ -95,3 +130,206 @@
         </div>
     </div>
 </section>
+
+<!-- ========================================== -->
+<!-- PASSWORD VALIDATION ALERT POPUP MODAL -->
+<!-- ========================================== -->
+<div class="modal fade" id="passwordAlertModal" tabindex="-1" aria-labelledby="passwordAlertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-danger text-white p-3 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-exclamation fs-4"></i>
+                    <h5 class="modal-title fw-bold text-white mb-0" id="passwordAlertModalLabel">Password Requirement Missing</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="my-2 d-inline-flex p-3 bg-danger-subtle text-danger rounded-circle">
+                    <i class="bi bi-exclamation-octagon-fill fs-1" id="popupIcon"></i>
+                </div>
+                <h5 class="fw-bold mt-3 mb-2" id="popupTitle">Special Character Needed</h5>
+                <p class="text-muted small mb-3" id="popupMessage">
+                    Please make sure your password follows all the basic rules before creating an account.
+                </p>
+                <div class="p-3 bg-light rounded-3 text-start small border">
+                    <div class="fw-bold text-dark mb-1">Required Rules:</div>
+                    <div class="text-muted">✓ Minimum 8 characters</div>
+                    <div class="text-muted">✓ At least one capital letter (A-Z)</div>
+                    <div class="text-muted">✓ At least one number (0-9)</div>
+                    <div class="text-muted">✓ At least one special character (!@@#$%^&*...)</div>
+                </div>
+            </div>
+            <div class="modal-footer border-top bg-light p-3">
+                <button type="button" class="btn btn-primary-custom w-100 fw-bold py-2 rounded-3" data-bs-dismiss="modal" id="popupDismissBtn">
+                    <i class="bi bi-pencil-square me-1"></i> Fix Password Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const passwordInput = document.getElementById('regPassword');
+            const confirmInput = document.getElementById('regConfirmPassword');
+            const form = document.getElementById('registerForm');
+            const modalEl = document.getElementById('passwordAlertModal');
+            const modal = new bootstrap.Modal(modalEl);
+            const popupTitle = document.getElementById('popupTitle');
+            const popupMessage = document.getElementById('popupMessage');
+            const popupDismissBtn = document.getElementById('popupDismissBtn');
+
+            // Password Toggle Visibility
+            const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+            const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+            togglePasswordBtn.addEventListener('click', function () {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                togglePasswordIcon.className = isPassword ? 'bi bi-eye-slash text-primary' : 'bi bi-eye text-muted';
+            });
+
+            const toggleConfirmBtn = document.getElementById('toggleConfirmBtn');
+            const toggleConfirmIcon = document.getElementById('toggleConfirmIcon');
+            toggleConfirmBtn.addEventListener('click', function () {
+                const isPassword = confirmInput.type === 'password';
+                confirmInput.type = isPassword ? 'text' : 'password';
+                toggleConfirmIcon.className = isPassword ? 'bi bi-eye-slash text-primary' : 'bi bi-eye text-muted';
+            });
+
+            // Rules DOM elements
+            const ruleLength = document.getElementById('rule-length');
+            const ruleCapital = document.getElementById('rule-capital');
+            const ruleNumber = document.getElementById('rule-number');
+            const ruleSpecial = document.getElementById('rule-special');
+            const completionBadge = document.getElementById('ruleCompletionBadge');
+
+            function updateRule(elem, isValid) {
+                const icon = elem.querySelector('.rule-icon');
+                const text = elem.querySelector('.rule-text');
+                if (isValid) {
+                    icon.className = 'bi bi-check-circle-fill text-success rule-icon';
+                    text.classList.remove('text-muted');
+                    text.classList.add('text-success', 'fw-semibold');
+                } else {
+                    icon.className = 'bi bi-circle text-muted rule-icon';
+                    text.classList.remove('text-success', 'fw-semibold');
+                    text.classList.add('text-muted');
+                }
+            }
+
+            function validatePassword() {
+                const val = passwordInput.value || '';
+                const hasLength = val.length >= 8;
+                const hasCapital = /[A-Z]/.test(val);
+                const hasNumber = /[0-9]/.test(val);
+                const hasSpecial = /[^a-zA-Z0-9]/.test(val);
+
+                updateRule(ruleLength, hasLength);
+                updateRule(ruleCapital, hasCapital);
+                updateRule(ruleNumber, hasNumber);
+                updateRule(ruleSpecial, hasSpecial);
+
+                let metCount = (hasLength ? 1 : 0) + (hasCapital ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecial ? 1 : 0);
+                completionBadge.textContent = `${metCount} / 4 Met`;
+                if (metCount === 4) {
+                    completionBadge.className = 'badge bg-success small';
+                } else {
+                    completionBadge.className = 'badge bg-secondary-subtle text-secondary small';
+                }
+
+                return {
+                    hasLength,
+                    hasCapital,
+                    hasNumber,
+                    hasSpecial,
+                    isValid: hasLength && hasCapital && hasNumber && hasSpecial
+                };
+            }
+
+            passwordInput.addEventListener('input', validatePassword);
+
+            // Confirm Password Match Check
+            const matchHint = document.getElementById('passwordMatchHint');
+            function checkPasswordMatch() {
+                if (!confirmInput.value) {
+                    matchHint.classList.add('d-none');
+                    return;
+                }
+                matchHint.classList.remove('d-none');
+                if (passwordInput.value === confirmInput.value) {
+                    matchHint.className = 'small mt-1 text-success fw-semibold';
+                    matchHint.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Passwords match';
+                } else {
+                    matchHint.className = 'small mt-1 text-danger fw-semibold';
+                    matchHint.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> Passwords do not match';
+                }
+            }
+
+            confirmInput.addEventListener('input', checkPasswordMatch);
+            passwordInput.addEventListener('input', checkPasswordMatch);
+
+            // Show custom pop up when a rule is violated
+            function showPopup(title, message) {
+                popupTitle.textContent = title;
+                popupMessage.textContent = message;
+                modal.show();
+            }
+
+            popupDismissBtn.addEventListener('click', function () {
+                setTimeout(() => {
+                    passwordInput.focus();
+                }, 300);
+            });
+
+            // Form Submit Interceptor
+            form.addEventListener('submit', function (e) {
+                const fullName = (document.querySelector('[name="FullName"]').value || '').trim();
+                const email = (document.querySelector('[name="Email"]').value || '').trim();
+
+                if (!fullName || !email) {
+                    return; // Let standard required validation handle basic fields
+                }
+
+                const result = validatePassword();
+                if (!result.isValid) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (!passwordInput.value) {
+                        showPopup('Password Required', 'Please enter a password that satisfies all security rules.');
+                        return;
+                    }
+
+                    if (!result.hasSpecial) {
+                        showPopup('Special Character Needed', 'Your password must contain at least one special character (e.g. ! @@ # $ % ^ & * _ + -).');
+                        return;
+                    }
+
+                    if (!result.hasCapital) {
+                        showPopup('Capital Character Needed', 'Your password must contain at least one uppercase / capital letter (A-Z).');
+                        return;
+                    }
+
+                    if (!result.hasNumber) {
+                        showPopup('Number Needed', 'Your password must contain at least one number / digit (0-9).');
+                        return;
+                    }
+
+                    if (!result.hasLength) {
+                        showPopup('Password Too Short', 'Your password must be at least 8 characters long.');
+                        return;
+                    }
+                }
+
+                if (passwordInput.value !== confirmInput.value) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showPopup('Passwords Do Not Match', 'The confirmation password does not match the password you entered.');
+                    return;
+                }
+            });
+        });
+    </script>
+}
