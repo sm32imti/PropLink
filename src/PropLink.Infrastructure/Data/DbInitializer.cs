@@ -109,7 +109,29 @@ public static class DbInitializer
                         ""ReviewedByAdminId"" uuid REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
                         ""AdminDecisionNotes"" character varying(2000)
                     );",
-                    @"ALTER TABLE ""Auctions"" ADD CONSTRAINT ""FK_Auctions_WinningBidId"" FOREIGN KEY (""WinningBidId"") REFERENCES ""Bids""(""Id"") ON DELETE SET NULL;"
+                    @"ALTER TABLE ""Auctions"" ADD CONSTRAINT ""FK_Auctions_WinningBidId"" FOREIGN KEY (""WinningBidId"") REFERENCES ""Bids""(""Id"") ON DELETE SET NULL;",
+                    @"CREATE TABLE IF NOT EXISTS ""InspectionBookings"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""PropertyId"" uuid NOT NULL REFERENCES ""Properties""(""Id"") ON DELETE CASCADE,
+                        ""BuyerId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""SellerId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""AgentId"" uuid REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                        ""AgentName"" character varying(200),
+                        ""InspectionType"" character varying(50) NOT NULL DEFAULT 'DirectAskingPrice',
+                        ""AskingPrice"" numeric(18,2) NOT NULL DEFAULT 0,
+                        ""OfferedPrice"" numeric(18,2),
+                        ""PreferredDate"" timestamp with time zone NOT NULL,
+                        ""ScheduledDate"" timestamp with time zone,
+                        ""MeetingLocationNotes"" character varying(500),
+                        ""Status"" integer NOT NULL DEFAULT 0,
+                        ""AgreedToAntiBypassTerms"" boolean NOT NULL DEFAULT TRUE,
+                        ""Notes"" character varying(1000),
+                        ""CreatedAt"" timestamp with time zone NOT NULL,
+                        ""ScheduledAt"" timestamp with time zone,
+                        ""CompletedAt"" timestamp with time zone
+                    );",
+                    @"UPDATE ""Users"" SET ""IsBanned"" = FALSE, ""BannedAt"" = NULL, ""BanReason"" = NULL WHERE ""Email"" = 'user@proplink.com';",
+                    @"UPDATE ""Properties"" SET ""SellerId"" = (SELECT ""Id"" FROM ""Users"" WHERE ""Email"" = 'user@proplink.com' LIMIT 1) WHERE ""Id"" = 'd32f47bc-479c-46c1-b267-0a54036ebde2';"
                 };
 
                 foreach (var sql in migrationQueries)
@@ -267,9 +289,39 @@ public static class DbInitializer
 
             context.Users.Add(defaultUser);
         }
-        else if (string.IsNullOrEmpty(defaultUser.NidNumber))
+        else
         {
-            defaultUser.NidNumber = "1234567890123";
+            defaultUser.IsBanned = false;
+            defaultUser.BannedAt = null;
+            defaultUser.BanReason = null;
+            if (string.IsNullOrEmpty(defaultUser.NidNumber))
+            {
+                defaultUser.NidNumber = "1234567890123";
+            }
+        }
+
+        // Seed Verification Agent
+        var amirAgent = context.Users.FirstOrDefault(u => u.Email == "amir@gmail.com");
+        if (amirAgent == null)
+        {
+            amirAgent = new User
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Verification Agent",
+                Email = "amir@gmail.com",
+                PhoneNumber = "+1-555-0199",
+                NidNumber = "9988776655443",
+                Role = "VerificationAgent",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Amir@123"),
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Users.Add(amirAgent);
+        }
+        else
+        {
+            amirAgent.FullName = "Verification Agent";
+            amirAgent.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Amir@123");
+            amirAgent.Role = "VerificationAgent";
         }
 
         context.SaveChanges();

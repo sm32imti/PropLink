@@ -5,9 +5,18 @@
         <div class="property-image-wrapper">
             <img src="@Model.ImageUrl" alt="@Model.Title" class="property-img" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
             <div class="property-badges">
-                <span class="badge-verified">
-                    <i class="bi bi-shield-fill-check me-1"></i>Deed Verified
-                </span>
+                @if (Model.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.UnderProcessing)
+                {
+                    <span class="badge bg-warning text-dark shadow-sm">
+                        <i class="bi bi-lock-fill me-1"></i>Under Processing
+                    </span>
+                }
+                else
+                {
+                    <span class="badge-verified">
+                        <i class="bi bi-shield-fill-check me-1"></i>Deed Verified
+                    </span>
+                }
                 <span class="badge-type">@Model.PropertyType</span>
             </div>
             <button type="button" 

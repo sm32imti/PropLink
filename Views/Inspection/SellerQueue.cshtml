@@ -1,0 +1,265 @@
+@model List<PropLink.Web.Models.SellerPropertyQueueItemViewModel>
+@{
+    ViewData["Title"] = "Seller Inspection Queue - PropLink";
+    var totalProperties = Model.Count;
+    var totalPending = Model.Sum(m => m.PendingReviewCount);
+    var totalForwarded = Model.Sum(m => m.ForwardedToAgentCount);
+}
+
+<div class="container py-5">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small mb-1">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+                    <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Seller Inspection Queue</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold mb-1 text-heading">
+                <i class="bi bi-inboxes-fill text-primary me-2"></i>Seller Inspection & Purchase Queue
+            </h1>
+            <p class="text-muted small mb-0">
+                Properties receiving buyer deed inspection requests and price offers. Enter any property below to compare buyer requests and select which one to forward to the Verification Agent.
+            </p>
+        </div>
+
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-bold">
+            <i class="bi bi-shield-check me-1"></i> Owner Review Hub
+        </span>
+    </div>
+
+    <!-- Alert Messages -->
+    @if (TempData["ToastMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4 border-0 bg-success-subtle border-start border-4 border-success" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                <div class="text-dark fw-medium">@TempData["ToastMessage"]</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4 border-0 bg-danger-subtle border-start border-4 border-danger" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                <div class="text-dark fw-medium">@TempData["ErrorMessage"]</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Stat Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-warning">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Pending Your Selection</span>
+                        <h3 class="fw-bold mb-0 text-dark">@totalPending</h3>
+                    </div>
+                    <div class="p-3 bg-warning-subtle text-warning rounded-circle">
+                        <i class="bi bi-hand-index-thumb fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-primary">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">With Verification Agent</span>
+                        <h3 class="fw-bold mb-0 text-dark">@totalForwarded</h3>
+                    </div>
+                    <div class="p-3 bg-primary-subtle text-primary rounded-circle">
+                        <i class="bi bi-person-badge fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-success">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Properties with Inquiries</span>
+                        <h3 class="fw-bold mb-0 text-dark">@totalProperties</h3>
+                    </div>
+                    <div class="p-3 bg-success-subtle text-success rounded-circle">
+                        <i class="bi bi-buildings fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties List Card -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-houses me-2 text-primary"></i>Properties Requested for Inspection (@Model.Count)
+            </h5>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill small">
+                Click a property to review & select buyer offers
+            </span>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 px-3">
+                <div class="p-4 bg-light rounded-circle d-inline-block mb-3 text-muted">
+                    <i class="bi bi-inbox fs-1"></i>
+                </div>
+                <h5 class="fw-bold text-dark">No Inspection Requests Received Yet</h5>
+                <p class="text-muted small max-w-md mx-auto mb-4">
+                    When prospective buyers request physical deed inspection or submit direct price offers for your properties, they will appear here in your queue for your review and selection.
+                </p>
+                <a asp-controller="Property" asp-action="Create" class="btn btn-outline-primary rounded-pill px-4">
+                    <i class="bi bi-plus-circle me-1"></i> Post New Property Listing
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase text-muted">
+                        <tr>
+                            <th class="ps-4 py-3">Property Listing</th>
+                            <th class="py-3">Asking Price</th>
+                            <th class="py-3">Buyer Requests Count</th>
+                            <th class="py-3">Top Offer Received</th>
+                            <th class="py-3">Current Pipeline Status</th>
+                            <th class="pe-4 py-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <!-- Property Info -->
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="@item.PropertyImageUrl" alt="@item.PropertyTitle"
+                                             class="rounded-3 object-fit-cover shadow-sm"
+                                             style="width: 80px; height: 60px;" />
+                                        <div>
+                                            <a asp-controller="Inspection" asp-action="PropertyRequests" asp-route-propertyId="@item.PropertyId"
+                                               class="fw-bold text-dark text-decoration-none hover-primary d-block fs-6">
+                                                @item.PropertyTitle
+                                            </a>
+                                            <span class="small text-muted d-block">
+                                                <i class="bi bi-geo-alt me-1"></i>@item.PropertyAddress, @item.PropertyCity
+                                            </span>
+                                            <span class="small text-muted">
+                                                Latest inquiry: @item.LatestRequestDate.ToString("MMM dd, yyyy")
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Asking Price -->
+                                <td class="py-3">
+                                    <div class="fw-bold text-dark fs-6">
+                                        $@item.AskingPrice.ToString("N0")
+                                    </div>
+                                </td>
+
+                                <!-- Buyer Requests Count Badge -->
+                                <td class="py-3">
+                                    <div class="d-flex flex-column gap-1">
+                                        <div>
+                                            <span class="badge bg-primary rounded-pill px-3 py-1 fw-bold">
+                                                @item.TotalRequestsCount Total Request@(item.TotalRequestsCount > 1 ? "s" : "")
+                                            </span>
+                                        </div>
+                                        @if (item.PendingReviewCount > 0)
+                                        {
+                                            <div>
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-1 small">
+                                                    <i class="bi bi-clock me-1"></i>@item.PendingReviewCount Pending Review
+                                                </span>
+                                            </div>
+                                        }
+                                        @if (item.ForwardedToAgentCount > 0)
+                                        {
+                                            <div>
+                                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-1 small">
+                                                    <i class="bi bi-person-check me-1"></i>@item.ForwardedToAgentCount With Verification Agent
+                                                </span>
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+
+                                <!-- Highest Offer -->
+                                <td class="py-3">
+                                    @if (item.HighestOfferPrice.HasValue && item.HighestOfferPrice.Value > 0)
+                                    {
+                                        <div class="fw-bold text-success fs-6">
+                                            $@item.HighestOfferPrice.Value.ToString("N0")
+                                        </div>
+                                        @if (item.HighestOfferPrice.Value >= item.AskingPrice)
+                                        {
+                                            <span class="badge bg-success-subtle text-success small">At/Above Asking</span>
+                                        }
+                                        else
+                                        {
+                                            var diff = item.AskingPrice - item.HighestOfferPrice.Value;
+                                            <span class="badge bg-secondary-subtle text-muted small">-$@diff.ToString("N0")</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Full Asking Price</span>
+                                    }
+                                </td>
+
+                                <!-- Pipeline Status -->
+                                <td class="py-3">
+                                    @if (item.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.UnderProcessing)
+                                    {
+                                        <span class="badge bg-dark text-white rounded-pill px-3 py-2">
+                                            <i class="bi bi-lock-fill me-1"></i> Under Processing
+                                        </span>
+                                    }
+                                    else if (item.ForwardedToAgentCount > 0)
+                                    {
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2">
+                                            <i class="bi bi-calendar-check me-1"></i> Inspection in Progress
+                                        </span>
+                                    }
+                                    else if (item.PendingReviewCount > 0)
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-2">
+                                            <i class="bi bi-hourglass-split me-1"></i> Decision Needed
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-muted border rounded-pill px-3 py-2">
+                                            Active Listing
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Action Button: Enter into property to view all requests -->
+                                <td class="pe-4 py-3 text-end">
+                                    <a asp-controller="Inspection" asp-action="PropertyRequests" asp-route-propertyId="@item.PropertyId"
+                                       class="btn btn-primary rounded-pill px-3 py-2 fw-semibold shadow-sm">
+                                        <span>View Requests (@item.TotalRequestsCount)</span>
+                                        <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
