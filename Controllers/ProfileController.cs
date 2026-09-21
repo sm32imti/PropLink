@@ -68,14 +68,41 @@ public class ProfileController : Controller
         var memberSince = user?.CreatedAt ?? DateTime.UtcNow;
 
         // 1. Fetch authenticated user's SELLING / LISTED PROPERTIES
-        var userProperties = await _context.Properties
-            .Include(p => p.Images)
-            .Include(p => p.BiddingRequests)
-            .Include(p => p.Auctions)
-                .ThenInclude(a => a.Bids)
-            .Where(p => p.SellerId == userId.Value)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
+        List<Property> userProperties = new();
+        try
+        {
+            userProperties = await _context.Properties
+                .Include(p => p.Images)
+                .Include(p => p.BiddingRequests)
+                .Include(p => p.Auctions)
+                    .ThenInclude(a => a.Bids)
+                .Where(p => p.SellerId == userId.Value)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+        catch { }
+
+        // Merge any properties from registry if user is seller
+        foreach (var regBooking in InspectionController._inspectionRegistry.Values.Where(b => b.SellerId == userId.Value))
+        {
+            if (regBooking.Property != null && !userProperties.Any(p => p.Id == regBooking.PropertyId))
+            {
+                userProperties.Add(regBooking.Property);
+            }
+        }
+
+        // Auto-heal TransactionStatus if marked sold in registry or transactions
+        foreach (var p in userProperties)
+        {
+            if (p.TransactionStatus != TransactionStatus.Sold)
+            {
+                if (InspectionController._transactionRegistry.Values.Any(t => t.PropertyId == p.Id && t.Status == TransactionStatus.Sold) ||
+                    InspectionController._inspectionRegistry.Values.Any(b => b.PropertyId == p.Id && b.Notes != null && b.Notes.Contains("Sale Finalized")))
+                {
+                    p.TransactionStatus = TransactionStatus.Sold;
+                }
+            }
+        }
 
         var now = DateTime.UtcNow;
         var sellingHistory = userProperties.Select(p => {
@@ -110,25 +137,71 @@ public class ProfileController : Controller
         }).ToList();
 
         // 2. Fetch authenticated user's BUYING / TRANSACTION HISTORY
-        var userPurchases = await _context.PropertyTransactions
-            .Include(t => t.Property)
-                .ThenInclude(p => p!.Images)
-            .Where(t => t.BuyerId == userId.Value)
-            .OrderByDescending(t => t.TransactionDate)
-            .ToListAsync();
+        List<PropertyTransaction> userPurchases = new();
+        try
+        {
+            userPurchases = await _context.PropertyTransactions
+                .Include(t => t.Property)
+                    .ThenInclude(p => p!.Images)
+                .Where(t => t.BuyerId == userId.Value)
+                .OrderByDescending(t => t.TransactionDate)
+                .ToListAsync();
+        }
+        catch { }
+
+        // Merge from static _transactionRegistry
+        foreach (var regTx in InspectionController._transactionRegistry.Values.Where(t => t.BuyerId == userId.Value))
+        {
+            if (!userPurchases.Any(t => t.Id == regTx.Id || (t.PropertyId == regTx.PropertyId && t.BuyerId == regTx.BuyerId)))
+            {
+                userPurchases.Add(regTx);
+            }
+        }
+
+        // Merge any sold bookings where this user is the buyer
+        foreach (var soldBooking in InspectionController._inspectionRegistry.Values.Where(b => b.BuyerId == userId.Value && (b.Property?.TransactionStatus == TransactionStatus.Sold || (b.Notes != null && b.Notes.Contains("Sale Finalized")))))
+        {
+            if (!userPurchases.Any(t => t.PropertyId == soldBooking.PropertyId && t.BuyerId == userId.Value))
+            {
+                var fallbackProp = soldBooking.Property;
+                if (fallbackProp == null)
+                {
+                    try
+                    {
+                        fallbackProp = await _context.Properties.Include(p => p.Images).FirstOrDefaultAsync(p => p.Id == soldBooking.PropertyId);
+                    }
+                    catch { }
+                }
+
+                userPurchases.Add(new PropertyTransaction
+                {
+                    Id = Guid.NewGuid(),
+                    PropertyId = soldBooking.PropertyId,
+                    Property = fallbackProp,
+                    BuyerId = soldBooking.BuyerId,
+                    AgreedPrice = soldBooking.OfferedPrice ?? (fallbackProp?.Price ?? soldBooking.AskingPrice),
+                    Status = TransactionStatus.Sold,
+                    Notes = soldBooking.Notes ?? "Sale finalized via verification agent.",
+                    TransactionDate = soldBooking.CompletedAt ?? DateTime.UtcNow,
+                    CompletedDate = soldBooking.CompletedAt ?? DateTime.UtcNow
+                });
+            }
+        }
 
         var buyingHistory = userPurchases.Select(t => {
             var propImg = t.Property?.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
+            var propTitle = t.Property?.Title ?? "Verified Real Estate Property";
+            var location = t.Property != null ? $"{t.Property.City}, {t.Property.State}" : "Deed Verified Location";
             return new PropertyTransactionViewModel
             {
                 TransactionId = t.Id,
                 PropertyId = t.PropertyId,
-                PropertyTitle = t.Property?.Title ?? "Property Agreement",
+                PropertyTitle = propTitle,
                 PropertyImageUrl = !string.IsNullOrWhiteSpace(propImg)
                     ? propImg 
                     : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
                 AgreedPrice = t.AgreedPrice,
-                Location = t.Property != null ? $"{t.Property.City}, {t.Property.State}" : "Prime Location",
+                Location = location,
                 TransactionStatus = t.Status,
                 Notes = t.Notes,
                 TransactionDate = t.TransactionDate

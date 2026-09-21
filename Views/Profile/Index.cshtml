@@ -100,7 +100,7 @@
                         <div class="profile-stat-box p-3 rounded-4 border text-center">
                             <span class="profile-stat-icon text-muted mb-1 d-block"><i class="bi bi-houses"></i></span>
                             <span class="h4 fw-bold text-heading d-block mb-0">@Model.TotalListedProperties</span>
-                            <span class="small text-muted">Total Properties</span>
+                            <span class="small text-muted">Selling History</span>
                         </div>
                     </div>
                     <div class="col-lg col-md-4 col-6">
@@ -128,7 +128,7 @@
                         <div class="profile-stat-box p-3 rounded-4 border text-center border-info-subtle bg-info-subtle-glow">
                             <span class="profile-stat-icon text-info mb-1 d-block"><i class="bi bi-bag-check-fill"></i></span>
                             <span class="h4 fw-bold text-info d-block mb-0">@Model.TotalPurchasesCount</span>
-                            <span class="small text-muted">Agreements</span>
+                            <span class="small text-muted">Buying History</span>
                         </div>
                     </div>
                 </div>
@@ -141,7 +141,7 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2" id="selling-tab" data-bs-toggle="pill" data-bs-target="#sellingHistory" type="button" role="tab" aria-controls="sellingHistory" aria-selected="true">
                         <i class="bi bi-building"></i>
-                        <span>My Listed Properties</span>
+                        <span>Selling history</span>
                         <span class="badge rounded-pill bg-white text-dark ms-1">@Model.SellingHistory.Count</span>
                     </button>
                 </li>
@@ -162,7 +162,7 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2" id="buying-tab" data-bs-toggle="pill" data-bs-target="#buyingHistory" type="button" role="tab" aria-controls="buyingHistory" aria-selected="false">
                         <i class="bi bi-bag-check"></i>
-                        <span>Purchase Agreements</span>
+                        <span>Buying history</span>
                         <span class="badge rounded-pill bg-white text-dark ms-1">@Model.BuyingHistory.Count</span>
                     </button>
                 </li>
@@ -191,7 +191,13 @@
                                             
                                             <!-- Verification & Auction Status Badges -->
                                             <div class="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1">
-                                                @if (item.HasActiveAuction)
+                                                @if (item.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.Sold)
+                                                {
+                                                    <span class="badge bg-danger text-white shadow-sm fw-bold">
+                                                        <i class="bi bi-patch-check-fill me-1"></i> SOLD OUT
+                                                    </span>
+                                                }
+                                                else if (item.HasActiveAuction)
                                                 {
                                                     <span class="badge bg-danger shadow-sm d-flex align-items-center gap-1">
                                                         <i class="bi bi-lightning-charge-fill"></i> Auction Live
@@ -235,7 +241,16 @@
                                             <div>
                                                 <div class="d-flex justify-content-between align-items-center text-muted small mb-1">
                                                     <span><i class="bi bi-calendar3 me-1"></i>@item.FormattedDate</span>
-                                                    <span class="badge bg-light text-dark border">@item.TransactionStatus</span>
+                                                    @if (item.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.Sold)
+                                                    {
+                                                        <span class="badge bg-danger text-white fw-bold">
+                                                            <i class="bi bi-patch-check-fill me-1"></i> Sold Out
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-light text-dark border">@item.TransactionStatus</span>
+                                                    }
                                                 </div>
 
                                                 <h5 class="h6 fw-bold mb-1 text-truncate" title="@item.Title">
@@ -249,12 +264,20 @@
                                                 </div>
 
                                                 <div class="d-flex align-items-baseline gap-2 mb-2">
-                                                    <span class="fs-5 fw-bold text-primary">@item.FormattedPrice</span>
-                                                    @if (item.HasActiveAuction && item.CurrentHighestBid.HasValue)
+                                                    @if (item.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.Sold)
                                                     {
-                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">
-                                                            High Bid: @item.FormattedHighestBid
-                                                        </span>
+                                                        <span class="fs-5 fw-bold text-danger">Sold for @item.FormattedPrice</span>
+                                                        <span class="badge bg-success text-white small"><i class="bi bi-check2-all me-1"></i> Deed Finalized</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="fs-5 fw-bold text-primary">@item.FormattedPrice</span>
+                                                        @if (item.HasActiveAuction && item.CurrentHighestBid.HasValue)
+                                                        {
+                                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">
+                                                                High Bid: @item.FormattedHighestBid
+                                                            </span>
+                                                        }
                                                     }
                                                 </div>
 
@@ -273,7 +296,23 @@
 
                                             <!-- Status Message & Actions -->
                                             <div class="mt-auto">
-                                                @if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Rejected)
+                                                @if (item.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.Sold)
+                                                {
+                                                    <div class="d-flex flex-column gap-2 pt-2 border-top">
+                                                        <div class="alert alert-success-subtle border border-success-subtle p-2 small mb-1 rounded-3 d-flex align-items-center justify-content-between">
+                                                            <div>
+                                                                <i class="bi bi-shield-check text-success me-1"></i>
+                                                                <strong class="text-success">Sold & Deed Transferred</strong>
+                                                            </div>
+                                                            <span class="badge bg-success text-white">Completed</span>
+                                                        </div>
+                                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger w-100 rounded-pill d-flex align-items-center justify-content-center gap-1">
+                                                            <i class="bi bi-eye"></i>
+                                                            <span>View Sold Listing</span>
+                                                        </a>
+                                                    </div>
+                                                }
+                                                else if (item.VerificationStatus == PropLink.Domain.Enums.VerificationStatus.Rejected)
                                                 {
                                                     <div class="alert alert-danger p-2 small mb-2 rounded-3">
                                                         <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Administrator Feedback:</div>
@@ -641,8 +680,8 @@
                                         <div class="col-sm-5 position-relative">
                                             <img src="@purchase.PropertyImageUrl" class="w-100 h-100 object-fit-cover" style="min-height: 200px;" alt="@purchase.PropertyTitle" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                                             <div class="position-absolute top-0 start-0 m-2">
-                                                <span class="badge bg-success shadow-sm">
-                                                    <i class="bi bi-shield-check me-1"></i> Deed Verified
+                                                <span class="badge bg-success shadow-sm fw-bold">
+                                                    <i class="bi bi-shield-check me-1"></i> Deed Acquired & Verified
                                                 </span>
                                             </div>
                                         </div>
@@ -650,9 +689,18 @@
                                         <div class="col-sm-7 p-3 p-md-4 d-flex flex-column justify-content-between">
                                             <div>
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                                        @purchase.TransactionStatus
-                                                    </span>
+                                                    @if (purchase.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.Sold)
+                                                    {
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">
+                                                            <i class="bi bi-patch-check-fill me-1"></i> Sold & Acquired
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                            @purchase.TransactionStatus
+                                                        </span>
+                                                    }
                                                     <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>@purchase.FormattedDate</span>
                                                 </div>
 
@@ -667,8 +715,8 @@
                                                 </div>
 
                                                 <div class="d-flex align-items-baseline gap-2 mb-2">
-                                                    <span class="small text-muted">Agreed Price:</span>
-                                                    <span class="fs-5 fw-bold text-emerald">@purchase.FormattedAgreedPrice</span>
+                                                    <span class="small text-muted">Purchase Price:</span>
+                                                    <span class="fs-5 fw-bold text-success">@purchase.FormattedAgreedPrice</span>
                                                 </div>
 
                                                 @if (!string.IsNullOrEmpty(purchase.Notes))
@@ -681,9 +729,9 @@
 
                                             <div class="pt-2 border-top mt-2 d-flex justify-content-between align-items-center">
                                                 <span class="small text-success fw-semibold">
-                                                    <i class="bi bi-check2-all me-1"></i> Formal Agreement
+                                                    <i class="bi bi-check2-all me-1"></i> Legal Title Transferred
                                                 </span>
-                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@purchase.PropertyId" class="btn btn-sm btn-outline-custom rounded-pill">
+                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@purchase.PropertyId" class="btn btn-sm btn-outline-success rounded-pill px-3">
                                                     View Details &rarr;
                                                 </a>
                                             </div>
@@ -696,14 +744,14 @@
                 }
                 else
                 {
-                    <!-- Empty State for Buying -->
+                    <!-- Empty State for Buying History -->
                     <div class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 bg-white">
                         <div class="empty-state-icon mx-auto text-emerald mb-3" style="font-size: 3.5rem;">
-                            <i class="bi bi-bag"></i>
+                            <i class="bi bi-bag-check"></i>
                         </div>
-                        <h4 class="fw-bold mb-2">No Purchase Agreements Recorded</h4>
+                        <h4 class="fw-bold mb-2">No Buying History Recorded</h4>
                         <p class="text-muted max-w-500 mx-auto mb-4">
-                            Explore verified properties with guaranteed legal title clearance and initiate direct purchase agreements with verified sellers.
+                            Explore verified properties with guaranteed legal title clearance and purchase deed-cleared properties through PropLink.
                         </p>
                         <div>
                             <a asp-controller="Property" asp-action="Index" class="btn btn-primary-custom px-4 py-2 d-inline-flex align-items-center gap-2 rounded-pill">

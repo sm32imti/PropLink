@@ -44,4 +44,6 @@ public class PropertyDetailViewModel
     // Inspection Protocol State
     public bool HasUserRequestedInspection { get; set; }
     public bool IsLockedUnderProcessing { get; set; }
+    public bool IsInspectionVisitActive { get; set; }
+    public bool IsSold => TransactionStatus == TransactionStatus.Sold;
 }

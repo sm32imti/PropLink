@@ -241,11 +241,25 @@
 
                                         @if (item.Status == PropLink.Domain.Enums.InspectionStatus.InspectionCompleted)
                                         {
-                                            <form asp-controller="Agent" asp-action="MarkUnderProcessing" method="post" class="d-inline ms-1">
+                                            <!-- Option 1: Sold -->
+                                            <button type="button" class="btn btn-sm btn-success fw-bold rounded-pill px-3" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#markSoldModal" 
+                                                    data-booking-id="@item.BookingId"
+                                                    data-property-title="@item.PropertyTitle"
+                                                    data-selling-price="@(item.OfferedPrice.HasValue ? item.OfferedPrice.Value.ToString("F0") : item.AskingPrice.ToString("F0"))"
+                                                    title="Both parties agree & documents verified: Mark Sold Out">
+                                                <i class="bi bi-check-circle-fill me-1"></i> Sold
+                                            </button>
+
+                                            <!-- Option 2: Not Sold -->
+                                            <form asp-controller="Agent" asp-action="MarkNotSold" method="post" class="d-inline ms-1">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="bookingId" value="@item.BookingId" />
-                                                <button type="submit" class="btn btn-sm btn-success fw-bold rounded-pill px-3" onclick="return confirm('Lock this property as Under Processing? Other buyers will no longer be able to message or bid.');">
-                                                    <i class="bi bi-lock-fill me-1"></i> Proceed to Buy (Lock)
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                                        onclick="return confirm('Mark this inspection as Not Sold? This will remove the block on this property and allow new buyers to make requests again.');"
+                                                        title="Deal not closed: remove block and allow other buyers to request">
+                                                    <i class="bi bi-x-circle me-1"></i> Not Sold
                                                 </button>
                                             </form>
                                         }
@@ -321,6 +335,57 @@
     </div>
 </div>
 
+<!-- Modal: Mark Property Sold -->
+<div class="modal fade" id="markSoldModal" tabindex="-1" aria-labelledby="markSoldModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form asp-controller="Agent" asp-action="MarkSold" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="bookingId" id="soldModalBookingId" />
+
+                <div class="modal-header border-bottom p-4 bg-success-subtle">
+                    <h5 class="modal-title fw-bold text-success" id="markSoldModalLabel">
+                        <i class="bi bi-patch-check-fill me-2"></i> Finalize Sale & Mark Sold Out
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 mb-3 border">
+                        <div class="small text-muted">Property:</div>
+                        <div class="fw-bold text-dark fs-6 text-truncate" id="soldModalPropertyTitle">...</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Final Confirmed Selling Price ($) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light fw-bold">$</span>
+                            <input type="number" name="sellingPrice" id="soldModalSellingPrice" class="form-control form-control-custom" required min="1" step="1" />
+                        </div>
+                        <div class="form-text small text-muted">This confirmed price will be recorded and displayed with the "Sold Out" badge in the marketplace.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Agent Remarks / Settlement Notes</label>
+                        <textarea name="remarks" class="form-control form-control-custom" rows="2" placeholder="e.g. Title deed verified, deed agreement signed by both buyer and seller."></textarea>
+                    </div>
+
+                    <div class="p-3 rounded-3 bg-success-subtle border border-success-subtle text-success-emphasis small">
+                        <i class="bi bi-shield-lock-fill me-1"></i> Both parties agree & documents are verified. This will mark the listing as <strong>Sold Out</strong>.
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top bg-light p-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bi bi-check2-circle me-1"></i> Confirm & Mark Sold
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -336,6 +401,22 @@
                     document.getElementById('modalPropertyTitle').textContent = title;
                     if (preferred) {
                         document.getElementById('modalScheduledDateTime').value = preferred;
+                    }
+                });
+            }
+
+            const soldModalEl = document.getElementById('markSoldModal');
+            if (soldModalEl) {
+                soldModalEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const bookingId = button.getAttribute('data-booking-id');
+                    const title = button.getAttribute('data-property-title');
+                    const price = button.getAttribute('data-selling-price');
+
+                    document.getElementById('soldModalBookingId').value = bookingId;
+                    document.getElementById('soldModalPropertyTitle').textContent = title;
+                    if (price) {
+                        document.getElementById('soldModalSellingPrice').value = price;
                     }
                 });
             }
