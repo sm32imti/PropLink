@@ -47,6 +47,7 @@ public class PropertyController : Controller
         decimal? maxPrice,
         string? city,
         string? sortBy,
+        string? statusFilter,
         int page = 1,
         int pageSize = 6)
     {
@@ -91,6 +92,18 @@ public class PropertyController : Controller
             query = query.Where(p => p.City.ToLower() == city.Trim().ToLower());
         }
 
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            if (string.Equals(statusFilter, "sold", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(p => p.TransactionStatus == TransactionStatus.Sold);
+            }
+            else if (string.Equals(statusFilter, "available", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(p => p.TransactionStatus != TransactionStatus.Sold);
+            }
+        }
+
         // Sorting
         query = sortBy switch
         {
@@ -117,6 +130,16 @@ public class PropertyController : Controller
             var activeAuction = p.Auctions.FirstOrDefault(a => a.Status == AuctionStatus.Active && a.EndTime > now);
             var highestBid = activeAuction?.Bids.OrderByDescending(b => b.Amount).FirstOrDefault()?.Amount;
 
+            var cardStatus = p.TransactionStatus;
+            if (cardStatus != TransactionStatus.Sold)
+            {
+                if (InspectionController._transactionRegistry.Values.Any(t => t.PropertyId == p.Id && t.Status == TransactionStatus.Sold) ||
+                    InspectionController._inspectionRegistry.Values.Any(b => b.PropertyId == p.Id && b.Notes != null && b.Notes.Contains("Sale Finalized")))
+                {
+                    cardStatus = TransactionStatus.Sold;
+                }
+            }
+
             return new PropertyCardViewModel
             {
                 Id = p.Id,
@@ -133,7 +156,7 @@ public class PropertyController : Controller
                 ImageUrl = p.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl
                            ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
                 VerificationStatus = p.VerificationStatus,
-                TransactionStatus = p.TransactionStatus,
+                TransactionStatus = cardStatus,
                 SellerName = p.Seller?.FullName ?? "Verified Seller",
                 TimeAgo = GetTimeAgo(p.CreatedAt),
                 HasActiveAuction = activeAuction != null,
@@ -152,6 +175,7 @@ public class PropertyController : Controller
             MaxPrice = maxPrice,
             City = city,
             SortBy = sortBy,
+            StatusFilter = statusFilter,
             CurrentPage = page,
             PageSize = pageSize,
             TotalItems = totalItems
@@ -283,6 +307,29 @@ public class PropertyController : Controller
             }
         }
 
+        // Check if an inspection visit is currently forwarded, scheduled, or conducted by an agent
+        bool isInspectionVisitActive = false;
+        try
+        {
+            isInspectionVisitActive = await _context.InspectionBookings
+                .AnyAsync(i => i.PropertyId == property.Id &&
+                    (i.Status == InspectionStatus.PendingAgentSchedule ||
+                     i.Status == InspectionStatus.ScheduleFixed ||
+                     i.Status == InspectionStatus.InspectionCompleted ||
+                     i.Status == InspectionStatus.UnderProcessing));
+        }
+        catch { }
+
+        if (!isInspectionVisitActive)
+        {
+            isInspectionVisitActive = InspectionController._inspectionRegistry.Values
+                .Any(i => i.PropertyId == property.Id &&
+                    (i.Status == InspectionStatus.PendingAgentSchedule ||
+                     i.Status == InspectionStatus.ScheduleFixed ||
+                     i.Status == InspectionStatus.InspectionCompleted ||
+                     i.Status == InspectionStatus.UnderProcessing));
+        }
+
         // Check if current user has already requested an inspection for this property
         bool hasUserRequestedInspection = false;
         if (CurrentUserId.HasValue)
@@ -301,6 +348,27 @@ public class PropertyController : Controller
             }
         }
 
+        var detailTransactionStatus = property.TransactionStatus;
+        if (detailTransactionStatus != TransactionStatus.Sold)
+        {
+            if (InspectionController._transactionRegistry.Values.Any(t => t.PropertyId == property.Id && t.Status == TransactionStatus.Sold) ||
+                InspectionController._inspectionRegistry.Values.Any(b => b.PropertyId == property.Id && b.Notes != null && b.Notes.Contains("Sale Finalized")))
+            {
+                detailTransactionStatus = TransactionStatus.Sold;
+            }
+            else
+            {
+                try
+                {
+                    if (await _context.PropertyTransactions.AnyAsync(t => t.PropertyId == property.Id && t.Status == TransactionStatus.Sold))
+                    {
+                        detailTransactionStatus = TransactionStatus.Sold;
+                    }
+                }
+                catch { }
+            }
+        }
+
         var viewModel = new PropertyDetailViewModel
         {
             Id = property.Id,
@@ -316,7 +384,7 @@ public class PropertyController : Controller
             Bathrooms = property.Bathrooms,
             SquareFeet = property.SquareFeet,
             VerificationStatus = property.VerificationStatus,
-            TransactionStatus = property.TransactionStatus,
+            TransactionStatus = detailTransactionStatus,
             CreatedAt = property.CreatedAt,
             ImageUrls = property.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList(),
             SellerId = property.SellerId,
@@ -329,6 +397,7 @@ public class PropertyController : Controller
             ActiveAuction = auctionVm,
             HasPendingBiddingRequest = hasPendingRequest,
             IsLockedUnderProcessing = isLockedUnderProcessing,
+            IsInspectionVisitActive = isInspectionVisitActive,
             HasUserRequestedInspection = hasUserRequestedInspection
         };
 

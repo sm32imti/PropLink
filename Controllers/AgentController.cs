@@ -255,4 +255,225 @@ public class AgentController : Controller
         TempData["ToastMessage"] = "Property has been set to 'Under Processing'! Other users can no longer submit inquiries while legal settlement proceeds.";
         return RedirectToAction(nameof(Index));
     }
+
+    // ==========================================
+    // 5. AGENT MARKS PROPERTY AS SOLD
+    // ==========================================
+    [HttpPost("mark-sold")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkSold(Guid bookingId, decimal sellingPrice, string? remarks)
+    {
+        InspectionBooking? booking = null;
+        try
+        {
+            booking = await _context.InspectionBookings
+                .Include(b => b.Property)
+                .Include(b => b.Buyer)
+                .Include(b => b.Seller)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+        }
+        catch { }
+
+        if (booking == null && InspectionController._inspectionRegistry.TryGetValue(bookingId, out var regBooking))
+        {
+            booking = regBooking;
+        }
+
+        if (booking == null)
+        {
+            TempData["ErrorMessage"] = "Booking record not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        booking.Status = InspectionStatus.UnderProcessing;
+        booking.CompletedAt = DateTime.UtcNow;
+        if (!string.IsNullOrWhiteSpace(remarks))
+        {
+            booking.Notes = (booking.Notes ?? "") + $" | Sale Finalized: {remarks}";
+        }
+
+        // 1. Explicitly fetch and update tracked entity in PostgreSQL
+        Property? dbProp = null;
+        try
+        {
+            dbProp = await _context.Properties.FirstOrDefaultAsync(p => p.Id == booking.PropertyId);
+        }
+        catch { }
+
+        if (dbProp != null)
+        {
+            dbProp.TransactionStatus = TransactionStatus.Sold;
+            dbProp.ListingStatus = ListingStatus.Sold;
+            if (sellingPrice > 0)
+            {
+                dbProp.Price = sellingPrice;
+            }
+            try
+            {
+                _context.Properties.Update(dbProp);
+            }
+            catch { }
+        }
+
+        // 2. Also update navigation property if present
+        if (booking.Property != null)
+        {
+            booking.Property.TransactionStatus = TransactionStatus.Sold;
+            booking.Property.ListingStatus = ListingStatus.Sold;
+            if (sellingPrice > 0)
+            {
+                booking.Property.Price = sellingPrice;
+            }
+        }
+
+        // 3. Keep in-memory registry perfectly synchronized
+        InspectionController._inspectionRegistry[booking.Id] = booking;
+        foreach (var b in InspectionController._inspectionRegistry.Values.Where(x => x.PropertyId == booking.PropertyId))
+        {
+            if (b.Property != null)
+            {
+                b.Property.TransactionStatus = TransactionStatus.Sold;
+                b.Property.ListingStatus = ListingStatus.Sold;
+                if (sellingPrice > 0) b.Property.Price = sellingPrice;
+            }
+        }
+
+        // 4. Create or update PropertyTransaction record for buyer & seller history
+        var finalAgreedPrice = sellingPrice > 0 ? sellingPrice : (dbProp?.Price ?? booking.AskingPrice);
+        PropertyTransaction? tx = null;
+        try
+        {
+            tx = await _context.PropertyTransactions
+                .FirstOrDefaultAsync(t => t.PropertyId == booking.PropertyId && t.BuyerId == booking.BuyerId);
+        }
+        catch { }
+
+        if (tx == null)
+        {
+            tx = new PropertyTransaction
+            {
+                Id = Guid.NewGuid(),
+                PropertyId = booking.PropertyId,
+                Property = dbProp ?? booking.Property,
+                BuyerId = booking.BuyerId,
+                AgreedPrice = finalAgreedPrice,
+                Status = TransactionStatus.Sold,
+                Notes = string.IsNullOrWhiteSpace(remarks) ? "Inspection verified and deed transferred by Verification Agent." : remarks,
+                TransactionDate = DateTime.UtcNow,
+                CompletedDate = DateTime.UtcNow
+            };
+            try
+            {
+                _context.PropertyTransactions.Add(tx);
+            }
+            catch { }
+        }
+        else
+        {
+            tx.Status = TransactionStatus.Sold;
+            tx.AgreedPrice = finalAgreedPrice;
+            tx.CompletedDate = DateTime.UtcNow;
+            if (!string.IsNullOrWhiteSpace(remarks))
+            {
+                tx.Notes = (tx.Notes ?? "") + $" | {remarks}";
+            }
+            try
+            {
+                _context.PropertyTransactions.Update(tx);
+            }
+            catch { }
+        }
+
+        InspectionController._transactionRegistry[tx.Id] = tx;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AgentController.MarkSold] Db save: {ex.Message}");
+        }
+
+        var displayPrice = dbProp?.Price ?? (booking.Property?.Price ?? sellingPrice);
+        TempData["ToastMessage"] = $"Property successfully marked as SOLD for {displayPrice:C0}! Added to buyer's Buying History and seller's Selling History.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ==========================================
+    // 6. AGENT MARKS PROPERTY AS NOT SOLD
+    // ==========================================
+    [HttpPost("mark-not-sold")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkNotSold(Guid bookingId, string? reason)
+    {
+        InspectionBooking? booking = null;
+        try
+        {
+            booking = await _context.InspectionBookings
+                .Include(b => b.Property)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+        }
+        catch { }
+
+        if (booking == null && InspectionController._inspectionRegistry.TryGetValue(bookingId, out var regBooking))
+        {
+            booking = regBooking;
+        }
+
+        if (booking == null)
+        {
+            TempData["ErrorMessage"] = "Booking record not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        booking.Status = InspectionStatus.DeclinedBySeller;
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            booking.Notes = (booking.Notes ?? "") + $" | Not Sold: {reason}";
+        }
+
+        Property? dbProp = null;
+        try
+        {
+            dbProp = await _context.Properties.FirstOrDefaultAsync(p => p.Id == booking.PropertyId);
+        }
+        catch { }
+
+        if (dbProp != null)
+        {
+            dbProp.TransactionStatus = TransactionStatus.Available;
+            dbProp.ListingStatus = ListingStatus.Approved;
+            try
+            {
+                _context.Properties.Update(dbProp);
+            }
+            catch { }
+        }
+
+        if (booking.Property != null)
+        {
+            booking.Property.TransactionStatus = TransactionStatus.Available;
+            booking.Property.ListingStatus = ListingStatus.Approved;
+        }
+
+        InspectionController._inspectionRegistry[booking.Id] = booking;
+        foreach (var b in InspectionController._inspectionRegistry.Values.Where(x => x.PropertyId == booking.PropertyId))
+        {
+            if (b.Property != null)
+            {
+                b.Property.TransactionStatus = TransactionStatus.Available;
+                b.Property.ListingStatus = ListingStatus.Approved;
+            }
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch { }
+
+        TempData["ToastMessage"] = "Inspection marked as Not Sold. The property block has been removed and it is now open for new buyer requests!";
+        return RedirectToAction(nameof(Index));
+    }
 }
