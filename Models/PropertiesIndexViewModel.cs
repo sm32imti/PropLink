@@ -13,6 +13,7 @@ public class PropertiesIndexViewModel
     public decimal? MaxPrice { get; set; }
     public string? City { get; set; }
     public string? SortBy { get; set; }
+    public string? StatusFilter { get; set; } // "all", "available", "sold"
 
     // Backend Pagination
     public int CurrentPage { get; set; } = 1;

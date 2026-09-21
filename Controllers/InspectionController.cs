@@ -17,6 +17,7 @@ public class InspectionController : Controller
 
     // Concurrent registry fallback to guarantee immediate memory persistence
     internal static readonly ConcurrentDictionary<Guid, InspectionBooking> _inspectionRegistry = new();
+    internal static readonly ConcurrentDictionary<Guid, PropertyTransaction> _transactionRegistry = new();
 
     public InspectionController(ApplicationDbContext context)
     {
@@ -103,27 +104,42 @@ public class InspectionController : Controller
             return RedirectToAction("Details", "Property", new { id = model.PropertyId });
         }
 
-        // 1. Property Lock Check: Once locked after inspection, no more buyers can request inspection
-        bool isPropertyLocked = property.TransactionStatus == TransactionStatus.UnderProcessing;
+        // 1. Sold Property Check
+        if (property.TransactionStatus == TransactionStatus.Sold)
+        {
+            TempData["ErrorMessage"] = "This property has been marked as Sold Out. No further buying requests are permitted.";
+            return RedirectToAction("Details", "Property", new { id = model.PropertyId });
+        }
+
+        // 2. Property Lock Check: When an inspection request has been forwarded to an agent or is in progress, block new buyer requests
+        bool isPropertyLocked = property.TransactionStatus == TransactionStatus.UnderProcessing || property.TransactionStatus == TransactionStatus.MeetingScheduled;
         if (!isPropertyLocked)
         {
             try
             {
                 isPropertyLocked = await _context.InspectionBookings
-                    .AnyAsync(i => i.PropertyId == property.Id && i.Status == InspectionStatus.UnderProcessing);
+                    .AnyAsync(i => i.PropertyId == property.Id &&
+                        (i.Status == InspectionStatus.PendingAgentSchedule ||
+                         i.Status == InspectionStatus.ScheduleFixed ||
+                         i.Status == InspectionStatus.InspectionCompleted ||
+                         i.Status == InspectionStatus.UnderProcessing));
             }
             catch { }
 
             if (!isPropertyLocked)
             {
                 isPropertyLocked = _inspectionRegistry.Values
-                    .Any(i => i.PropertyId == property.Id && i.Status == InspectionStatus.UnderProcessing);
+                    .Any(i => i.PropertyId == property.Id &&
+                        (i.Status == InspectionStatus.PendingAgentSchedule ||
+                         i.Status == InspectionStatus.ScheduleFixed ||
+                         i.Status == InspectionStatus.InspectionCompleted ||
+                         i.Status == InspectionStatus.UnderProcessing));
             }
         }
 
         if (isPropertyLocked)
         {
-            TempData["ErrorMessage"] = "This property has completed deed inspection and is currently locked under title processing. No further inspection requests are permitted.";
+            TempData["ErrorMessage"] = "This property currently has an active inspection visit being coordinated with a Verification Agent. New buying requests are temporarily on hold.";
             return RedirectToAction("Details", "Property", new { id = model.PropertyId });
         }
 
@@ -419,6 +435,21 @@ public class InspectionController : Controller
         booking.Status = InspectionStatus.PendingAgentSchedule;
         booking.AgentId = agent?.Id;
         booking.AgentName = agent?.FullName ?? "Verification Agent";
+
+        // Mark property transaction status as MeetingScheduled to indicate an active visit coordination
+        if (booking.Property != null)
+        {
+            booking.Property.TransactionStatus = TransactionStatus.MeetingScheduled;
+        }
+        else
+        {
+            try
+            {
+                var p = await _context.Properties.FirstOrDefaultAsync(pr => pr.Id == booking.PropertyId);
+                if (p != null) p.TransactionStatus = TransactionStatus.MeetingScheduled;
+            }
+            catch { }
+        }
 
         _inspectionRegistry[booking.Id] = booking;
 

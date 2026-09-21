@@ -79,22 +79,34 @@
                         {
                             <div class="p-2 rounded-3 bg-danger-subtle border border-danger-subtle mb-2">
                                 <div class="text-uppercase small text-danger fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">
-                                    <i class="bi bi-shield-shaded me-1"></i> Admin Slide Controls
+                                    <i class="bi bi-shield-shaded me-1"></i> Admin Workspace
                                 </div>
                                 <div class="d-flex flex-column gap-1">
                                     <a asp-controller="Admin" asp-action="Verifications" class="sidebar-nav-item text-danger fw-bold py-1 px-2">
                                         <i class="bi bi-shield-lock-fill text-danger"></i>
-                                        <span>Verifications Queue</span>
+                                        <span>Admin Verification Queue</span>
                                     </a>
                                     <a asp-controller="Admin" asp-action="Reports" class="sidebar-nav-item text-danger fw-bold py-1 px-2">
                                         <i class="bi bi-exclamation-octagon-fill text-danger"></i>
-                                        <span>Fraud Reports & Bans</span>
+                                        <span>Fraud Reports and Ban</span>
                                         <span class="badge bg-danger text-white ms-auto">Review</span>
+                                    </a>
+                                    <a asp-controller="Agent" asp-action="Index" class="sidebar-nav-item text-primary fw-bold py-1 px-2">
+                                        <i class="bi bi-person-badge-fill text-primary"></i>
+                                        <span>Verification Agent Workspace</span>
+                                    </a>
+                                    <a asp-controller="Admin" asp-action="Verifications" asp-route-tab="bidding" class="sidebar-nav-item text-warning-emphasis fw-bold py-1 px-2">
+                                        <i class="bi bi-hammer text-warning"></i>
+                                        <span>Bidding and Auction Request</span>
                                     </a>
                                 </div>
                             </div>
+                            <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
+                                <i class="bi bi-person-circle text-emerald"></i>
+                                <span>My Profile and Activity</span>
+                            </a>
                         }
-                        @if (User.IsInRole("VerificationAgent") || User.IsInRole("Admin"))
+                        else if (User.IsInRole("VerificationAgent"))
                         {
                             <div class="p-2 rounded-3 bg-primary-subtle border border-primary-subtle mb-2">
                                 <div class="text-uppercase small text-primary fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">
@@ -102,37 +114,48 @@
                                 </div>
                                 <a asp-controller="Agent" asp-action="Index" class="sidebar-nav-item text-primary fw-bold py-1 px-2">
                                     <i class="bi bi-calendar-check-fill text-primary"></i>
-                                    <span>Agent Workspace</span>
-                                    <span class="badge bg-primary text-white ms-auto">Schedule</span>
+                                    <span>Verification Space</span>
+                                    <span class="badge bg-primary text-white ms-auto">Queue</span>
                                 </a>
                             </div>
+                            <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
+                                <i class="bi bi-person-circle text-emerald"></i>
+                                <span>My Profile and Activity</span>
+                            </a>
                         }
-                        <a asp-controller="Inspection" asp-action="MyRequests" class="sidebar-nav-item">
-                            <i class="bi bi-bag-check-fill text-primary"></i>
-                            <span>My Purchase Requests</span>
-                            <span class="badge bg-primary-subtle text-primary ms-auto">Buyer Queue</span>
-                        </a>
-                        <a asp-controller="Inspection" asp-action="SellerQueue" class="sidebar-nav-item">
-                            <i class="bi bi-inboxes-fill text-warning"></i>
-                            <span>Seller Inspection Queue</span>
-                            <span class="badge bg-warning-subtle text-warning ms-auto">Seller</span>
-                        </a>
-                        <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
-                            <i class="bi bi-person-circle text-emerald"></i>
-                            <span>My Profile & Dashboard</span>
-                        </a>
-                        <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
-                            <i class="bi bi-lightning-charge-fill text-danger"></i>
-                            <span>My Auctions & Bids</span>
-                        </a>
-                        <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
-                            <i class="bi bi-building text-emerald"></i>
-                            <span>My Listed Properties</span>
-                        </a>
-                        <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
-                            <i class="bi bi-bag-check text-emerald"></i>
-                            <span>Purchase Agreements</span>
-                        </a>
+                        else
+                        {
+                            <a asp-controller="Inspection" asp-action="MyRequests" class="sidebar-nav-item">
+                                <i class="bi bi-bag-check-fill text-primary"></i>
+                                <span>My Purchase Requests</span>
+                                <span class="badge bg-primary-subtle text-primary ms-auto">Buyer Queue</span>
+                            </a>
+                            <a asp-controller="Inspection" asp-action="SellerQueue" class="sidebar-nav-item">
+                                <i class="bi bi-inboxes-fill text-warning"></i>
+                                <span>Seller Inspection Queue</span>
+                                <span class="badge bg-warning-subtle text-warning ms-auto">Seller</span>
+                            </a>
+                            <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
+                                <i class="bi bi-person-circle text-emerald"></i>
+                                <span>My Profile and Activity</span>
+                            </a>
+                            <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
+                                <i class="bi bi-lightning-charge-fill text-danger"></i>
+                                <span>My Auctions & Bids</span>
+                            </a>
+                            <a asp-controller="Property" asp-action="Sell" class="sidebar-nav-item">
+                                <i class="bi bi-plus-circle text-emerald"></i>
+                                <span>Sell a Property</span>
+                            </a>
+                            <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
+                                <i class="bi bi-building text-emerald"></i>
+                                <span>Selling / Listing History</span>
+                            </a>
+                            <a asp-controller="Profile" asp-action="Index" class="sidebar-nav-item">
+                                <i class="bi bi-bag-check text-muted"></i>
+                                <span>Buying History</span>
+                            </a>
+                        }
 
                         <form asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
                             @Html.AntiForgeryToken()

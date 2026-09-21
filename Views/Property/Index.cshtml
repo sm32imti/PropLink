@@ -48,18 +48,16 @@
                     </select>
                 </div>
                 <div class="col-lg-2 col-md-6">
-                    <label class="form-label small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> City</label>
-                    <input type="text" name="city" value="@Model.City" class="form-control form-control-custom" placeholder="e.g. Beverly Hills" />
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-tag me-1"></i> Status</label>
+                    <select name="statusFilter" class="form-select form-control-custom">
+                        <option value="">All Listings</option>
+                        <option value="available" selected="@(Model.StatusFilter == "available" ? "selected" : null)">Available Only</option>
+                        <option value="sold" selected="@(Model.StatusFilter == "sold" ? "selected" : null)">Sold Out Only</option>
+                    </select>
                 </div>
                 <div class="col-lg-2 col-md-6">
-                    <label class="form-label small text-muted mb-1"><i class="bi bi-currency-dollar me-1"></i> Max Price</label>
-                    <select name="maxPrice" class="form-select form-control-custom">
-                        <option value="">Any Price</option>
-                        <option value="500000" selected="@(Model.MaxPrice == 500000 ? "selected" : null)">Up to $500k</option>
-                        <option value="1000000" selected="@(Model.MaxPrice == 1000000 ? "selected" : null)">Up to $1.0M</option>
-                        <option value="2000000" selected="@(Model.MaxPrice == 2000000 ? "selected" : null)">Up to $2.0M</option>
-                        <option value="5000000" selected="@(Model.MaxPrice == 5000000 ? "selected" : null)">Up to $5.0M</option>
-                    </select>
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> City</label>
+                    <input type="text" name="city" value="@Model.City" class="form-control form-control-custom" placeholder="e.g. Beverly Hills" />
                 </div>
                 <div class="col-lg-3 col-md-12 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-search flex-grow-1 d-flex align-items-center justify-content-center gap-2">
@@ -80,9 +78,9 @@
             <div class="d-flex align-items-center gap-2">
                 <span class="small text-muted d-none d-sm-inline">Sort by:</span>
                 <select class="form-select form-select-sm form-control-custom" style="width: auto;" onchange="location = this.value;">
-                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = "newest" })" selected="@(Model.SortBy != "price_asc" && Model.SortBy != "price_desc" ? "selected" : null)">Newest Listed</option>
-                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = "price_asc" })" selected="@(Model.SortBy == "price_asc" ? "selected" : null)">Price: Low to High</option>
-                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = "price_desc" })" selected="@(Model.SortBy == "price_desc" ? "selected" : null)">Price: High to Low</option>
+                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, statusFilter = Model.StatusFilter, sortBy = "newest" })" selected="@(Model.SortBy != "price_asc" && Model.SortBy != "price_desc" ? "selected" : null)">Newest Listed</option>
+                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, statusFilter = Model.StatusFilter, sortBy = "price_asc" })" selected="@(Model.SortBy == "price_asc" ? "selected" : null)">Price: Low to High</option>
+                    <option value="@Url.Action("Index", new { searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, statusFilter = Model.StatusFilter, sortBy = "price_desc" })" selected="@(Model.SortBy == "price_desc" ? "selected" : null)">Price: High to Low</option>
                 </select>
             </div>
         </div>
@@ -99,9 +97,24 @@
                                 <img src="@property.ImageUrl" alt="@property.Title" class="property-img" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';" />
                                 
                                 <div class="property-badges">
-                                    <span class="badge badge-verified">
-                                        <i class="bi bi-patch-check-fill me-1"></i> Verified
-                                    </span>
+                                    @if (property.IsSold || property.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.Sold)
+                                    {
+                                        <span class="badge bg-danger text-white shadow-sm fw-bold">
+                                            <i class="bi bi-patch-check-fill me-1"></i> SOLD OUT
+                                        </span>
+                                    }
+                                    else if (property.TransactionStatus == PropLink.Domain.Enums.TransactionStatus.UnderProcessing)
+                                    {
+                                        <span class="badge bg-warning text-dark shadow-sm">
+                                            <i class="bi bi-lock-fill me-1"></i> Under Processing
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-verified">
+                                            <i class="bi bi-patch-check-fill me-1"></i> Verified
+                                        </span>
+                                    }
                                     <span class="badge badge-type ms-1">@property.PropertyType</span>
                                     @if (property.HasActiveAuction)
                                     {
@@ -125,8 +138,15 @@
                                     <span class="d-none">Compare</span>
                                 </button>
 
-                                <div class="property-price-tag">
-                                    @if (property.HasActiveAuction && property.CurrentHighestBid.HasValue)
+                                <div class="property-price-tag @(property.IsSold ? "bg-dark text-white border border-danger" : "")">
+                                    @if (property.IsSold)
+                                    {
+                                        <div class="d-flex flex-column align-items-end">
+                                            <span class="badge bg-danger text-white px-2 py-0 mb-1" style="font-size: 0.65rem;">Sold Out</span>
+                                            <span>Sold: @property.FormattedPrice</span>
+                                        </div>
+                                    }
+                                    else if (property.HasActiveAuction && property.CurrentHighestBid.HasValue)
                                     {
                                         <div class="d-flex flex-column align-items-end">
                                             <span class="badge bg-danger text-white px-2 py-1 mb-1" style="font-size: 0.7rem;">Live Highest Bid</span>
@@ -195,7 +215,7 @@
                 <nav aria-label="Page navigation" class="mt-4">
                     <ul class="pagination justify-content-center gap-1">
                         <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
-                            <a class="page-link rounded-3" href="@Url.Action("Index", new { page = Model.CurrentPage - 1, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = Model.SortBy })">
+                            <a class="page-link rounded-3" href="@Url.Action("Index", new { page = Model.CurrentPage - 1, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, statusFilter = Model.StatusFilter, sortBy = Model.SortBy })">
                                 <i class="bi bi-chevron-left"></i> Previous
                             </a>
                         </li>
@@ -203,14 +223,14 @@
                         @for (int i = 1; i <= Model.TotalPages; i++)
                         {
                             <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                <a class="page-link rounded-3" href="@Url.Action("Index", new { page = i, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = Model.SortBy })">
+                                <a class="page-link rounded-3" href="@Url.Action("Index", new { page = i, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, statusFilter = Model.StatusFilter, sortBy = Model.SortBy })">
                                     @i
                                 </a>
                             </li>
                         }
 
                         <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
-                            <a class="page-link rounded-3" href="@Url.Action("Index", new { page = Model.CurrentPage + 1, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, sortBy = Model.SortBy })">
+                            <a class="page-link rounded-3" href="@Url.Action("Index", new { page = Model.CurrentPage + 1, searchQuery = Model.SearchQuery, propertyType = Model.PropertyType, city = Model.City, maxPrice = Model.MaxPrice, statusFilter = Model.StatusFilter, sortBy = Model.SortBy })">
                                 Next <i class="bi bi-chevron-right"></i>
                             </a>
                         </li>

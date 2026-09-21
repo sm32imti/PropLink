@@ -84,33 +84,56 @@
                             {
                                 <li>
                                     <a class="dropdown-item d-flex align-items-center gap-2 fw-bold text-danger" asp-controller="Admin" asp-action="Verifications">
-                                        <i class="bi bi-shield-lock-fill text-danger"></i> Admin Verifications Queue
+                                        <i class="bi bi-shield-lock-fill text-danger"></i> Admin Verification Queue
                                     </a>
                                 </li>
                                 <li>
                                     <a class="dropdown-item d-flex align-items-center gap-2 fw-bold text-danger" asp-controller="Admin" asp-action="Reports">
-                                        <i class="bi bi-exclamation-octagon-fill text-danger"></i> Fraud Reports & Bans
+                                        <i class="bi bi-exclamation-octagon-fill text-danger"></i> Fraud Reports and Ban
                                     </a>
                                 </li>
-                                <li><hr class="dropdown-divider"></li>
-                            }
-                            @if (User.IsInRole("VerificationAgent") || User.IsInRole("Admin"))
-                            {
                                 <li>
                                     <a class="dropdown-item d-flex align-items-center gap-2 fw-bold text-primary" asp-controller="Agent" asp-action="Index">
                                         <i class="bi bi-person-badge-fill text-primary"></i> Verification Agent Workspace
                                     </a>
                                 </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 fw-bold text-warning-emphasis" asp-controller="Admin" asp-action="Verifications" asp-route-tab="bidding">
+                                        <i class="bi bi-hammer text-warning"></i> Bidding and Auction Request
+                                    </a>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index">
+                                        <i class="bi bi-person-circle text-emerald"></i> My Profile and Activity
+                                    </a>
+                                </li>
                             }
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 fw-semibold text-primary" asp-controller="Inspection" asp-action="MyRequests"><i class="bi bi-bag-check-fill text-primary"></i> My Purchase Requests (Buyer Queue)</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 fw-semibold text-warning-emphasis" asp-controller="Inspection" asp-action="SellerQueue"><i class="bi bi-inboxes-fill text-warning"></i> Seller Inspection Queue</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-person-circle text-emerald"></i> My Profile & Activity</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-lightning-charge-fill text-danger"></i> My Auctions & Bids</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Property" asp-action="Sell"><i class="bi bi-plus-circle text-emerald"></i> Sell a Property</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-building text-emerald"></i> Selling / Listing History</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-bag-check text-muted"></i> Buying History</a></li>
+                            else if (User.IsInRole("VerificationAgent"))
+                            {
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 fw-bold text-primary" asp-controller="Agent" asp-action="Index">
+                                        <i class="bi bi-person-badge-fill text-primary"></i> Verification Space
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index">
+                                        <i class="bi bi-person-circle text-emerald"></i> My Profile and Activity
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 fw-semibold text-primary" asp-controller="Inspection" asp-action="MyRequests"><i class="bi bi-bag-check-fill text-primary"></i> My Purchase Requests (Buyer Queue)</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 fw-semibold text-warning-emphasis" asp-controller="Inspection" asp-action="SellerQueue"><i class="bi bi-inboxes-fill text-warning"></i> Seller Inspection Queue</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-person-circle text-emerald"></i> My Profile and Activity</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-lightning-charge-fill text-danger"></i> My Auctions & Bids</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Property" asp-action="Sell"><i class="bi bi-plus-circle text-emerald"></i> Sell a Property</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-building text-emerald"></i> Selling / Listing History</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-bag-check text-muted"></i> Buying History</a></li>
+                            }
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="px-2">
