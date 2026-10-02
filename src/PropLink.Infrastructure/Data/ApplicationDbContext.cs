@@ -21,6 +21,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Bid> Bids => Set<Bid>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
     public DbSet<InspectionBooking> InspectionBookings => Set<InspectionBooking>();
+    public DbSet<InspectionChatMessage> InspectionChatMessages => Set<InspectionChatMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -246,6 +247,25 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(i => i.AgentId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure InspectionChatMessage
+        modelBuilder.Entity<InspectionChatMessage>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.SenderName).IsRequired().HasMaxLength(150);
+            entity.Property(m => m.SenderRole).IsRequired().HasMaxLength(50);
+            entity.Property(m => m.Message).IsRequired().HasMaxLength(2000);
+
+            entity.HasOne(m => m.Booking)
+                .WithMany(b => b.ChatMessages)
+                .HasForeignKey(m => m.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

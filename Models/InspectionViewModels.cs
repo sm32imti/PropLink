@@ -143,3 +143,55 @@ public class SellerInspectionRequestItemViewModel
     public bool AgreedToAntiBypassTerms { get; set; }
 }
 
+public class InspectionChatViewModel
+{
+    public Guid BookingId { get; set; }
+    public Guid PropertyId { get; set; }
+    public string PropertyTitle { get; set; } = string.Empty;
+    public string PropertyAddress { get; set; } = string.Empty;
+    public string PropertyCity { get; set; } = string.Empty;
+    public string? PropertyImageUrl { get; set; }
+    public decimal AskingPrice { get; set; }
+    public decimal? OfferedPrice { get; set; }
+    public InspectionStatus Status { get; set; }
+    public DateTime? ScheduledDate { get; set; }
+    public string? MeetingLocationNotes { get; set; }
+    public string? AgentName { get; set; }
+
+    public Guid BuyerId { get; set; }
+    public string BuyerName { get; set; } = string.Empty;
+
+    public Guid SellerId { get; set; }
+    public string SellerName { get; set; } = string.Empty;
+
+    public Guid CurrentUserId { get; set; }
+    public string CurrentUserRole { get; set; } = string.Empty; // "Buyer", "Seller", "Admin", "Moderator", "VerificationAgent"
+    public bool CanSendMessage { get; set; }
+    public bool IsReadOnlyStaff { get; set; }
+    public string? StaffRoleBadge { get; set; }
+
+    public List<InspectionChatMessageItemViewModel> Messages { get; set; } = new();
+}
+
+public class InspectionChatMessageItemViewModel
+{
+    public Guid Id { get; set; }
+    public Guid SenderId { get; set; }
+    public string SenderName { get; set; } = string.Empty;
+    public string SenderRole { get; set; } = string.Empty; // "Buyer" or "Seller"
+    public string Message { get; set; } = string.Empty;
+    public DateTime SentAt { get; set; }
+    public bool IsFromCurrentUser { get; set; }
+}
+
+public class SendInspectionChatMessageRequest
+{
+    [Required]
+    public Guid BookingId { get; set; }
+
+    [Required(ErrorMessage = "Message cannot be empty")]
+    [MaxLength(2000)]
+    public string Message { get; set; } = string.Empty;
+}
+
+
