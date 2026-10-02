@@ -306,7 +306,8 @@ public class ProfileController : Controller
                     PlacedAt = latestBid.PlacedAt,
                     EndTime = auction.EndTime,
                     AuctionStatus = auction.Status,
-                    BidPosition = position
+                    BidPosition = position,
+                    CanCancel = auction.Status == AuctionStatus.Active && DateTime.UtcNow < auction.EndTime
                 };
             }).ToList();
 
