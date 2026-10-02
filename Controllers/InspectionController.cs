@@ -165,11 +165,33 @@ public class InspectionController : Controller
             return RedirectToAction(nameof(MyRequests));
         }
 
+        // 3. Subscription Monthly Visit Limit Check:
+        // Free Member: Max 2 visits per month (last 30 days)
+        // Pro Member: Unlimited visits
+        var buyerUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == buyerId.Value);
+        bool isProBuyer = buyerUser != null && buyerUser.HasActiveProSubscription;
+
+        if (!isProBuyer)
+        {
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            int monthlyRequestsCount = await _context.InspectionBookings
+                .CountAsync(i => i.BuyerId == buyerId.Value && i.CreatedAt >= thirtyDaysAgo && i.Status != InspectionStatus.Cancelled);
+
+            if (monthlyRequestsCount >= 2)
+            {
+                TempData["SubscriptionLimitReached"] = "You have used your 2 free property visit requests for this month. Upgrade to PropLink Pro for unlimited property visit requests!";
+                return RedirectToAction("Pricing", "Subscription");
+            }
+        }
+
         // Find buyer entity or create placeholder
-        User? buyer = null;
+        User? buyer = buyerUser;
         try
         {
-            buyer = await _context.Users.FirstOrDefaultAsync(u => u.Id == buyerId.Value);
+            if (buyer == null)
+            {
+                buyer = await _context.Users.FirstOrDefaultAsync(u => u.Id == buyerId.Value);
+            }
         }
         catch
         {

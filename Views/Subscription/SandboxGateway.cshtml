@@ -1,0 +1,176 @@
+@{
+    ViewData["Title"] = "SSLCommerz Sandbox Payment Gateway";
+    var tranId = ViewBag.TranId as string ?? $"SUB-{DateTime.UtcNow:yyyyMMddHHmmss}";
+    var amount = (decimal)(ViewBag.Amount ?? 999.00m);
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Gateway Wrapper -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white text-dark">
+                <!-- Gateway Header -->
+                <div class="bg-dark text-white p-4 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 bg-primary rounded-3 text-white fw-bold">SSL</div>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-white">SSLCommerz Sandbox Gateway</h5>
+                            <small class="text-white-50">Merchant: PropLink Real Estate (Sandbox Mode)</small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="small text-white-50 d-block">AMOUNT TO PAY:</span>
+                        <span class="fs-4 fw-bold text-warning">৳@amount.ToString("F2") BDT</span>
+                    </div>
+                </div>
+
+                <!-- Tabs for Payment Methods -->
+                <div class="p-3 bg-light border-bottom">
+                    <ul class="nav nav-pills nav-fill gap-2" id="paymentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-pill fw-bold" id="bkash-tab" data-bs-toggle="pill" data-bs-target="#bkash-pane" type="button" role="tab">
+                                <i class="bi bi-phone-fill text-danger me-1"></i> bKash
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill fw-bold" id="nagad-tab" data-bs-toggle="pill" data-bs-target="#nagad-pane" type="button" role="tab">
+                                <i class="bi bi-wallet2 text-warning me-1"></i> Nagad
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill fw-bold" id="card-tab" data-bs-toggle="pill" data-bs-target="#card-pane" type="button" role="tab">
+                                <i class="bi bi-credit-card-2-front-fill text-primary me-1"></i> Visa / Card
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Contents -->
+                <div class="card-body p-4 p-md-5">
+                    <div class="tab-content" id="paymentTabsContent">
+                        <!-- 1. bKash Tab -->
+                        <div class="tab-pane fade show active" id="bkash-pane" role="tabpanel">
+                            <div class="text-center mb-4">
+                                <div class="p-2 px-3 bg-danger-subtle text-danger rounded-pill d-inline-block fw-bold small mb-2">
+                                    bKash Payment Gateway
+                                </div>
+                                <h6 class="fw-bold text-dark">Enter your bKash Account Number</h6>
+                                <p class="text-muted small">Enter any test mobile number to simulate bKash payment authorization.</p>
+                            </div>
+
+                            <form action="/subscription/ssl-success" method="post" id="bkashForm">
+                                <input type="hidden" name="tran_id" value="@tranId" />
+                                <input type="hidden" name="val_id" value="SIM_BKASH_@DateTime.UtcNow.Ticks.ToString()[^8..]" />
+                                <input type="hidden" name="amount" value="@amount.ToString("F2")" />
+                                <input type="hidden" name="card_type" value="BKASH-bKash" />
+                                <input type="hidden" name="bank_tran_id" value="BKASH@(DateTime.UtcNow.ToString("yyyyMMddHHmmss"))" />
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">bKash Mobile Number</label>
+                                    <input type="text" class="form-control rounded-3 p-3 text-center fs-5 fw-bold" value="01711111111" required />
+                                </div>
+
+                                <div class="row g-2 mb-4">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Test OTP</label>
+                                        <input type="text" class="form-control rounded-3 p-2 text-center" value="123456" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Test PIN</label>
+                                        <input type="password" class="form-control rounded-3 p-2 text-center" value="12345" />
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                    <span>Confirm bKash Payment (৳@amount.ToString("F2"))</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- 2. Nagad Tab -->
+                        <div class="tab-pane fade" id="nagad-pane" role="tabpanel">
+                            <div class="text-center mb-4">
+                                <div class="p-2 px-3 bg-warning-subtle text-warning rounded-pill d-inline-block fw-bold small mb-2">
+                                    Nagad Digital Payment
+                                </div>
+                                <h6 class="fw-bold text-dark">Enter your Nagad Account Details</h6>
+                                <p class="text-muted small">Simulate Nagad mobile banking authentication.</p>
+                            </div>
+
+                            <form action="/subscription/ssl-success" method="post" id="nagadForm">
+                                <input type="hidden" name="tran_id" value="@tranId" />
+                                <input type="hidden" name="val_id" value="SIM_NAGAD_@DateTime.UtcNow.Ticks.ToString()[^8..]" />
+                                <input type="hidden" name="amount" value="@amount.ToString("F2")" />
+                                <input type="hidden" name="card_type" value="NAGAD-Nagad" />
+                                <input type="hidden" name="bank_tran_id" value="NGD@(DateTime.UtcNow.ToString("yyyyMMddHHmmss"))" />
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Nagad Account Number</label>
+                                    <input type="text" class="form-control rounded-3 p-3 text-center fs-5 fw-bold" value="01822222222" required />
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label small fw-bold text-muted">Test PIN</label>
+                                    <input type="password" class="form-control rounded-3 p-2 text-center" value="1234" />
+                                </div>
+
+                                <button type="submit" class="btn btn-warning text-dark w-100 py-3 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                    <span>Confirm Nagad Payment (৳@amount.ToString("F2"))</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- 3. Visa / Card Tab -->
+                        <div class="tab-pane fade" id="card-pane" role="tabpanel">
+                            <div class="text-center mb-4">
+                                <div class="p-2 px-3 bg-primary-subtle text-primary rounded-pill d-inline-block fw-bold small mb-2">
+                                    Debit / Credit Card
+                                </div>
+                                <h6 class="fw-bold text-dark">Enter Card Credentials</h6>
+                                <p class="text-muted small">Simulate Visa / Mastercard payment transaction.</p>
+                            </div>
+
+                            <form action="/subscription/ssl-success" method="post" id="cardForm">
+                                <input type="hidden" name="tran_id" value="@tranId" />
+                                <input type="hidden" name="val_id" value="SIM_VISA_@DateTime.UtcNow.Ticks.ToString()[^8..]" />
+                                <input type="hidden" name="amount" value="@amount.ToString("F2")" />
+                                <input type="hidden" name="card_type" value="VISA-CityBank" />
+                                <input type="hidden" name="bank_tran_id" value="VISA@(DateTime.UtcNow.ToString("yyyyMMddHHmmss"))" />
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Card Number</label>
+                                    <input type="text" class="form-control rounded-3 p-3 fs-6" value="4111 2222 3333 4444" required />
+                                </div>
+
+                                <div class="row g-2 mb-4">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Expiry (MM/YY)</label>
+                                        <input type="text" class="form-control rounded-3 p-2 text-center" value="12/28" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">CVV</label>
+                                        <input type="password" class="form-control rounded-3 p-2 text-center" value="123" />
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                    <span>Authorize Card Payment (৳@amount.ToString("F2"))</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="card-footer bg-light p-3 text-center border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check text-success me-1"></i>SSLCommerz Sandbox Test Environment. No real funds are deducted.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

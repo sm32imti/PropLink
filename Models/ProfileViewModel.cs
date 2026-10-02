@@ -13,6 +13,8 @@ public class ProfileViewModel
     public string NidNumber { get; set; } = string.Empty;
     public string Role { get; set; } = "User";
     public DateTime MemberSince { get; set; }
+    public bool IsSubscribed { get; set; }
+    public DateTime? SubscriptionExpiresAt { get; set; }
 
     // Form Model for Profile Editing
     public EditProfileViewModel EditProfile { get; set; } = new();
