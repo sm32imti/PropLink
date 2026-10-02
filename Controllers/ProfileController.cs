@@ -320,6 +320,8 @@ public class ProfileController : Controller
             NidNumber = userNid,
             Role = userRole,
             MemberSince = memberSince,
+            IsSubscribed = user?.HasActiveProSubscription ?? false,
+            SubscriptionExpiresAt = user?.SubscriptionExpiresAt,
             EditProfile = new EditProfileViewModel
             {
                 FullName = userFullName,

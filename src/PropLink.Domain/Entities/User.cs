@@ -18,6 +18,13 @@ public class User
     public DateTime? BannedAt { get; set; }
     public string? BanReason { get; set; }
 
+    // Subscription & Membership Tier (PropLink Pro)
+    public bool IsSubscribed { get; set; } = false;
+    public string SubscriptionTier { get; set; } = "Free"; // "Free" or "Pro"
+    public DateTime? SubscriptionExpiresAt { get; set; }
+
+    public bool HasActiveProSubscription => IsSubscribed && SubscriptionExpiresAt.HasValue && SubscriptionExpiresAt.Value > DateTime.UtcNow;
+
     public ICollection<Property> Properties { get; set; } = new List<Property>();
     public ICollection<PropertyTransaction> Purchases { get; set; } = new List<PropertyTransaction>();
     public ICollection<Inquiry> Inquiries { get; set; } = new List<Inquiry>();

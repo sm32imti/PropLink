@@ -22,6 +22,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserReport> UserReports => Set<UserReport>();
     public DbSet<InspectionBooking> InspectionBookings => Set<InspectionBooking>();
     public DbSet<InspectionChatMessage> InspectionChatMessages => Set<InspectionChatMessage>();
+    public DbSet<SubscriptionPayment> SubscriptionPayments => Set<SubscriptionPayment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -266,6 +267,22 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure SubscriptionPayment
+        modelBuilder.Entity<SubscriptionPayment>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.TransactionId).IsRequired().HasMaxLength(100);
+            entity.Property(s => s.Amount).HasPrecision(18, 2);
+            entity.Property(s => s.PaymentMethod).HasMaxLength(50);
+            entity.Property(s => s.Currency).HasMaxLength(10);
+            entity.Property(s => s.Status).HasMaxLength(50);
+
+            entity.HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

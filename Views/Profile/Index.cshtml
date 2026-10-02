@@ -71,6 +71,12 @@
                             <span class="badge bg-success-subtle text-success border border-success-subtle">
                                 <i class="bi bi-shield-check me-1"></i> Account Verified
                             </span>
+                            @if (Model.IsSubscribed)
+                            {
+                                <span class="badge pro-vip-tag-small">
+                                    <i class="bi bi-patch-check-fill text-warning me-1"></i> ⭐ PRO SUBSCRIBER
+                                </span>
+                            }
                         </div>
                         <div class="text-muted small d-flex flex-wrap gap-3 mt-2">
                             <span><i class="bi bi-envelope me-1 text-emerald"></i>@Model.Email</span>
@@ -907,3 +913,19 @@
         });
     </script>
 }
+
+<style>
+    .pro-vip-tag-small {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%) !important;
+        border: 1px solid rgba(245, 158, 11, 0.65) !important;
+        color: #fbbf24 !important;
+        font-weight: 800;
+        font-size: 0.76rem;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+</style>

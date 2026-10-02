@@ -637,8 +637,26 @@ public class PropertyController : Controller
     [HttpGet]
     [Authorize]
     [Route("sell-property")]
-    public IActionResult Sell()
+    public async Task<IActionResult> Sell()
     {
+        var userId = CurrentUserId;
+        if (userId.HasValue)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId.Value);
+            bool isPro = user != null && user.HasActiveProSubscription;
+            int limit = isPro ? 10 : 1;
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            int postsCount = await _context.Properties.CountAsync(p => p.SellerId == userId.Value && p.CreatedAt >= thirtyDaysAgo);
+
+            if (postsCount >= limit)
+            {
+                TempData["SubscriptionLimitReached"] = isPro
+                    ? "You have reached your PropLink Pro limit of 10 property listings this month."
+                    : "You have used your 1 free property listing for this month. Upgrade to PropLink Pro to list up to 10 verified properties!";
+                return RedirectToAction("Pricing", "Subscription");
+            }
+        }
+
         return View(new SellPropertyViewModel());
     }
 
@@ -653,9 +671,26 @@ public class PropertyController : Controller
             return View(model);
         }
 
+        var userId = CurrentUserId;
+        if (userId.HasValue)
+        {
+            var userCheck = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId.Value);
+            bool isPro = userCheck != null && userCheck.HasActiveProSubscription;
+            int limit = isPro ? 10 : 1;
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            int postsCount = await _context.Properties.CountAsync(p => p.SellerId == userId.Value && p.CreatedAt >= thirtyDaysAgo);
+
+            if (postsCount >= limit)
+            {
+                TempData["SubscriptionLimitReached"] = isPro
+                    ? "You have reached your PropLink Pro limit of 10 property listings this month."
+                    : "You have used your 1 free property listing for this month. Upgrade to PropLink Pro to list up to 10 verified properties!";
+                return RedirectToAction("Pricing", "Subscription");
+            }
+        }
+
         try
         {
-            var userId = CurrentUserId;
             User? user = null;
 
             if (userId.HasValue)
