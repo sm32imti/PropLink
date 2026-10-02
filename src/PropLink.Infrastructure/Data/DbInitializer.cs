@@ -130,6 +130,16 @@ public static class DbInitializer
                         ""ScheduledAt"" timestamp with time zone,
                         ""CompletedAt"" timestamp with time zone
                     );",
+                    @"CREATE TABLE IF NOT EXISTS ""InspectionChatMessages"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""BookingId"" uuid NOT NULL REFERENCES ""InspectionBookings""(""Id"") ON DELETE CASCADE,
+                        ""SenderId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""SenderName"" character varying(150) NOT NULL,
+                        ""SenderRole"" character varying(50) NOT NULL,
+                        ""Message"" character varying(2000) NOT NULL,
+                        ""SentAt"" timestamp with time zone NOT NULL,
+                        ""IsRead"" boolean NOT NULL DEFAULT FALSE
+                    );",
                     @"UPDATE ""Users"" SET ""IsBanned"" = FALSE, ""BannedAt"" = NULL, ""BanReason"" = NULL WHERE ""Email"" = 'user@proplink.com';",
                     @"UPDATE ""Properties"" SET ""SellerId"" = (SELECT ""Id"" FROM ""Users"" WHERE ""Email"" = 'user@proplink.com' LIMIT 1) WHERE ""Id"" = 'd32f47bc-479c-46c1-b267-0a54036ebde2';"
                 };

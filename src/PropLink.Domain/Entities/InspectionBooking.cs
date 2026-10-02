@@ -42,4 +42,6 @@ public class InspectionBooking
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ScheduledAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+
+    public ICollection<InspectionChatMessage> ChatMessages { get; set; } = new List<InspectionChatMessage>();
 }

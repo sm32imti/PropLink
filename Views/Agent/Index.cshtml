@@ -239,6 +239,15 @@
                                             </form>
                                         }
 
+                                        @if (item.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed || item.Status == PropLink.Domain.Enums.InspectionStatus.InspectionCompleted || item.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing)
+                                        {
+                                            <a asp-controller="Inspection" asp-action="Chat" asp-route-bookingId="@item.BookingId" 
+                                               class="btn btn-sm btn-outline-primary rounded-pill px-3 ms-1" 
+                                               title="View Buyer-Seller Chat (Audit Mode)">
+                                                <i class="bi bi-chat-dots-fill me-1"></i> Chat
+                                            </a>
+                                        }
+
                                         @if (item.Status == PropLink.Domain.Enums.InspectionStatus.InspectionCompleted)
                                         {
                                             <!-- Option 1: Sold -->
