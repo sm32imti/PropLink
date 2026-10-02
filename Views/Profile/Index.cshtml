@@ -629,9 +629,23 @@
                                                 <span class="small text-danger fw-semibold">
                                                     <i class="bi bi-broadcast me-1"></i> Auction Live
                                                 </span>
-                                                <a asp-controller="Property" asp-action="Details" asp-route-id="@bid.PropertyId" class="btn btn-sm btn-danger rounded-pill px-3">
-                                                    @(bid.BidPosition == "Outbid" ? "Increase Bid" : "View Auction") &rarr;
-                                                </a>
+                                                <div class="d-flex gap-2">
+                                                    @if (bid.CanCancel)
+                                                    {
+                                                        <form asp-controller="Property" asp-action="CancelBid" asp-route-id="@bid.PropertyId" method="post" class="d-inline" onsubmit="return confirm('Mistaken bid? Are you sure you want to cancel your bid of @bid.FormattedYourLatestBid on @bid.PropertyTitle? The auction will rollback to the previous bid.');">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="bidId" value="@bid.BidId" />
+                                                            <input type="hidden" name="auctionId" value="@bid.AuctionId" />
+                                                            <input type="hidden" name="returnUrl" value="/Profile" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Mistaken bid? Cancel and rollback">
+                                                                <i class="bi bi-x-circle me-1"></i> Cancel Bid
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    <a asp-controller="Property" asp-action="Details" asp-route-id="@bid.PropertyId" class="btn btn-sm btn-danger rounded-pill px-3">
+                                                        @(bid.BidPosition == "Outbid" ? "Increase Bid" : "View Auction") &rarr;
+                                                    </a>
+                                                </div>
                                             }
                                             else
                                             {

@@ -239,6 +239,8 @@ public class PropertyController : Controller
                 }
             }
 
+            var isAuctionActive = relevantAuction.Status == AuctionStatus.Active && DateTime.UtcNow < relevantAuction.EndTime;
+
             var bidHistoryList = orderedBids.Select(b => {
                 var isThisViewer = CurrentUserId.HasValue && b.BuyerId == CurrentUserId.Value;
                 string displayName;
@@ -263,7 +265,8 @@ public class PropertyController : Controller
                     Amount = b.Amount,
                     PlacedAt = b.PlacedAt,
                     IsFromDirectOffer = b.IsFromDirectOffer,
-                    IsViewer = isThisViewer
+                    IsViewer = isThisViewer,
+                    CanCancel = isAuctionActive && (isThisViewer || isAdmin)
                 };
             }).ToList();
 
@@ -279,6 +282,7 @@ public class PropertyController : Controller
                 HighestBidderId = highestBid?.BuyerId,
                 HighestBidderName = highestBid?.Buyer?.FullName,
                 IsViewerHighestBidder = isViewerHighest,
+                ViewerHighestBidId = isViewerHighest ? highestBid?.Id : null,
                 StartTime = relevantAuction.StartTime,
                 EndTime = relevantAuction.EndTime,
                 Status = relevantAuction.Status,
@@ -1345,6 +1349,108 @@ public class PropertyController : Controller
     }
 
     // ==========================================
+    // 7.1 CANCEL / ROLLBACK BID ON ACTIVE AUCTION
+    // ==========================================
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    [Route("properties/{id:guid}/cancel-bid")]
+    public async Task<IActionResult> CancelBid(Guid id, [FromForm] Guid? bidId, [FromForm] Guid? auctionId, [FromForm] string? returnUrl = null)
+    {
+        var userId = CurrentUserId;
+        if (!userId.HasValue) return Challenge();
+
+        var property = await _context.Properties
+            .Include(p => p.Auctions)
+                .ThenInclude(a => a.Bids)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (property == null)
+        {
+            return NotFound();
+        }
+
+        var auction = auctionId.HasValue 
+            ? property.Auctions.FirstOrDefault(a => a.Id == auctionId.Value)
+            : property.Auctions.OrderByDescending(a => a.CreatedAt).FirstOrDefault(a => a.Status == AuctionStatus.Active);
+
+        if (auction == null)
+        {
+            TempData["ErrorMessage"] = "No active auction found for this property.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (auction.Status != AuctionStatus.Active)
+        {
+            TempData["ErrorMessage"] = "Cannot cancel bid: This auction is no longer active.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (DateTime.UtcNow >= auction.EndTime)
+        {
+            TempData["ErrorMessage"] = "Cannot cancel bid: This auction has concluded.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        Bid? bidToCancel = null;
+        if (bidId.HasValue && bidId.Value != Guid.Empty)
+        {
+            bidToCancel = auction.Bids.FirstOrDefault(b => b.Id == bidId.Value);
+        }
+        else
+        {
+            // If no specific bidId was supplied, target the user's latest/highest bid in this auction
+            bidToCancel = auction.Bids
+                .Where(b => b.BuyerId == userId.Value)
+                .OrderByDescending(b => b.PlacedAt)
+                .FirstOrDefault();
+        }
+
+        if (bidToCancel == null)
+        {
+            TempData["ErrorMessage"] = "The specified bid could not be found or has already been cancelled.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (bidToCancel.BuyerId != userId.Value && !User.IsInRole("Admin"))
+        {
+            TempData["ErrorMessage"] = "You do not have permission to cancel this bid.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var cancelledAmount = bidToCancel.Amount;
+
+        // Reset WinningBidId if pointing to this bid
+        if (auction.WinningBidId == bidToCancel.Id)
+        {
+            auction.WinningBidId = null;
+        }
+
+        _context.Bids.Remove(bidToCancel);
+        await _context.SaveChangesAsync();
+
+        // Calculate rollback state for informative message
+        var remainingBids = auction.Bids.Where(b => b.Id != bidToCancel.Id).OrderByDescending(b => b.Amount).ToList();
+        var newHighest = remainingBids.FirstOrDefault();
+
+        if (newHighest != null)
+        {
+            TempData["ToastMessage"] = $"Your mistaken bid of ${cancelledAmount:N0} has been cancelled. The auction rolled back to the previous leading bid (${newHighest.Amount:N0}).";
+        }
+        else
+        {
+            TempData["ToastMessage"] = $"Your mistaken bid of ${cancelledAmount:N0} has been cancelled. The auction rolled back to the starting price (${auction.StartPrice:N0}).";
+        }
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // ==========================================
     // 8. GET LIVE BID HISTORY JSON API
     // ==========================================
     [HttpGet]
@@ -1379,6 +1485,8 @@ public class PropertyController : Controller
             }
         }
 
+        var isAuctionActive = auction.Status == AuctionStatus.Active && DateTime.UtcNow < auction.EndTime;
+
         var bidsList = orderedBids.Select(b => {
             var isThisViewer = CurrentUserId.HasValue && b.BuyerId == CurrentUserId.Value;
             string displayName;
@@ -1403,6 +1511,7 @@ public class PropertyController : Controller
                 formattedAmount = b.Amount.ToString("C0"),
                 placedAt = b.PlacedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 isViewer = isThisViewer,
+                canCancel = isAuctionActive && (isThisViewer || isAdmin),
                 isDirectOffer = b.IsFromDirectOffer
             };
         });
