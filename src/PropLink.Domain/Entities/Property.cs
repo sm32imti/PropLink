@@ -20,6 +20,10 @@ public class Property
     public int Bedrooms { get; set; }
     public int Bathrooms { get; set; }
     public double SquareFeet { get; set; }
+    public bool? ParkingAvailable { get; set; }
+    public bool? NearSchoolOrUniversity { get; set; }
+    public bool? NearHospital { get; set; }
+    public bool? NearPublicTransport { get; set; }
 
     // Statuses
     public ListingStatus ListingStatus { get; set; } = ListingStatus.Draft;

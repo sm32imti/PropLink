@@ -38,6 +38,18 @@ public class SellPropertyViewModel
     [Display(Name = "Bathrooms")]
     public int Bathrooms { get; set; } = 2;
 
+    [Display(Name = "Parking Available")]
+    public bool? ParkingAvailable { get; set; }
+
+    [Display(Name = "Near School or University")]
+    public bool? NearSchoolOrUniversity { get; set; }
+
+    [Display(Name = "Near Hospital")]
+    public bool? NearHospital { get; set; }
+
+    [Display(Name = "Near Public Transport")]
+    public bool? NearPublicTransport { get; set; }
+
     [Required(ErrorMessage = "Street address is required")]
     [Display(Name = "Street Address")]
     public string Address { get; set; } = string.Empty;

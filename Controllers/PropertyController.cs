@@ -692,6 +692,10 @@ public class PropertyController : Controller
                 SquareFeet = model.SquareFeet,
                 Bedrooms = model.Bedrooms,
                 Bathrooms = model.Bathrooms,
+                ParkingAvailable = model.ParkingAvailable,
+                NearSchoolOrUniversity = model.NearSchoolOrUniversity,
+                NearHospital = model.NearHospital,
+                NearPublicTransport = model.NearPublicTransport,
                 Address = model.Address.Trim(),
                 City = model.City.Trim(),
                 State = model.State.Trim(),
@@ -907,6 +911,10 @@ public class PropertyController : Controller
             SquareFeet = property.SquareFeet,
             Bedrooms = property.Bedrooms,
             Bathrooms = property.Bathrooms,
+            ParkingAvailable = property.ParkingAvailable,
+            NearSchoolOrUniversity = property.NearSchoolOrUniversity,
+            NearHospital = property.NearHospital,
+            NearPublicTransport = property.NearPublicTransport,
             Address = property.Address,
             City = property.City,
             State = property.State,
@@ -952,6 +960,10 @@ public class PropertyController : Controller
         property.SquareFeet = model.SquareFeet;
         property.Bedrooms = model.Bedrooms;
         property.Bathrooms = model.Bathrooms;
+        property.ParkingAvailable = model.ParkingAvailable;
+        property.NearSchoolOrUniversity = model.NearSchoolOrUniversity;
+        property.NearHospital = model.NearHospital;
+        property.NearPublicTransport = model.NearPublicTransport;
         property.Address = model.Address.Trim();
         property.City = model.City.Trim();
         property.State = model.State.Trim();
