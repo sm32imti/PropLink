@@ -28,18 +28,6 @@ public class EditPropertyViewModel
     public int Bedrooms { get; set; }
     public int Bathrooms { get; set; }
 
-    [Display(Name = "Parking Available")]
-    public bool? ParkingAvailable { get; set; }
-
-    [Display(Name = "Near School or University")]
-    public bool? NearSchoolOrUniversity { get; set; }
-
-    [Display(Name = "Near Hospital")]
-    public bool? NearHospital { get; set; }
-
-    [Display(Name = "Near Public Transport")]
-    public bool? NearPublicTransport { get; set; }
-
     [Required]
     public string Address { get; set; } = string.Empty;
 

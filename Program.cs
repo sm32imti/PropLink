@@ -52,7 +52,6 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.C
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<PropLink.Application.Common.Interfaces.ICloudStorageService, PropLink.Infrastructure.Services.CloudStorageService>();
-builder.Services.AddScoped<PropLink.Application.Common.Interfaces.IPropertyRecommendationService, PropLink.Infrastructure.Services.PropertyRecommendationService>();
 builder.Services.AddHostedService<PropLink.Infrastructure.Services.AuctionExpiryBackgroundService>();
 
 builder.Services.AddControllersWithViews();
