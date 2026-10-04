@@ -284,26 +284,36 @@
 
                                 <!-- Action -->
                                 <td class="pe-4 py-3 text-end">
-                                    <div class="d-flex justify-content-end align-items-center gap-1">
-                                        @if (item.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed || item.Status == PropLink.Domain.Enums.InspectionStatus.InspectionCompleted || item.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing)
-                                        {
-                                            <a asp-controller="Inspection" asp-action="Chat" asp-route-bookingId="@item.BookingId"
-                                               class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm fw-semibold">
-                                                <i class="bi bi-chat-dots-fill me-1"></i> Chat with Seller
-                                            </a>
-                                        }
-                                        else if (item.Status == PropLink.Domain.Enums.InspectionStatus.PendingSellerApproval || item.Status == PropLink.Domain.Enums.InspectionStatus.PendingAgentSchedule)
-                                        {
-                                            <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small" title="Chat unlocks once inspection schedule is fixed by agent">
-                                                <i class="bi bi-lock me-1"></i>Chat Locked
-                                            </span>
-                                        }
+<div class="d-flex justify-content-end align-items-center gap-1">
 
-                                        <a asp-controller="Property" asp-action="Details" asp-route-id="@item.PropertyId"
-                                           class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                            <i class="bi bi-eye me-1"></i> View
-                                        </a>
-                                    </div>
+    @if (item.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed ||
+         item.Status == PropLink.Domain.Enums.InspectionStatus.InspectionCompleted ||
+         item.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing)
+    {
+        <a asp-controller="Inspection"
+           asp-action="Chat"
+           asp-route-bookingId="@item.BookingId"
+           class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm fw-semibold">
+            <i class="bi bi-chat-dots-fill me-1"></i> Chat with Seller
+        </a>
+    }
+    else if (item.Status == PropLink.Domain.Enums.InspectionStatus.PendingSellerApproval ||
+             item.Status == PropLink.Domain.Enums.InspectionStatus.PendingAgentSchedule)
+    {
+        <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small"
+              title="Chat unlocks once inspection schedule is fixed by agent">
+            <i class="bi bi-lock me-1"></i> Chat Locked
+        </span>
+    }
+
+    <a asp-controller="Property"
+       asp-action="Details"
+       asp-route-id="@item.PropertyId"
+       class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+        <i class="bi bi-eye me-1"></i> View Property
+    </a>
+
+</div>
                                 </td>
                             </tr>
                         }

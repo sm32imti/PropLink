@@ -1646,3 +1646,107 @@ h1, h2, h3, h4, h5, h6, .heading-text {
     background-color: var(--bg-subtle);
     border-color: var(--brand-dark-border);
 }
+
+.recommendation-page {
+    min-height: 80vh;
+    background-color: var(--bg-page);
+}
+
+.recommendation-heading {
+    max-width: 820px;
+}
+
+.recommendation-form-section,
+.recommendation-result,
+.recommendation-empty {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+}
+
+.recommendation-weights {
+    border-left: 3px solid var(--emerald-accent);
+    background-color: var(--bg-subtle);
+    border-radius: 4px;
+}
+
+.recommendation-weight-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.recommendation-weight-list li:last-child {
+    border-bottom: 0;
+}
+
+.recommendation-result {
+    overflow: hidden;
+}
+
+.recommendation-result-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 240px;
+    max-height: 390px;
+    object-fit: cover;
+}
+
+.recommendation-score {
+    display: grid;
+    place-content: center;
+    flex: 0 0 84px;
+    aspect-ratio: 1;
+    border: 3px solid var(--emerald-accent);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 1.15;
+}
+
+.recommendation-score-value {
+    color: var(--emerald-accent);
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.recommendation-progress {
+    height: 8px;
+    background-color: var(--bg-subtle);
+}
+
+.recommendation-progress .progress-bar {
+    background: var(--emerald-gradient);
+}
+
+.recommendation-specs {
+    color: var(--text-body);
+}
+
+.recommendation-breakdown summary {
+    cursor: pointer;
+}
+
+.recommendation-detail {
+    border-radius: 4px;
+    background-color: var(--bg-subtle);
+}
+
+@media (max-width: 767.98px) {
+    .recommendation-result-image {
+        height: 230px;
+        min-height: 0;
+    }
+
+    .recommendation-score {
+        flex-basis: 72px;
+    }
+
+    .recommendation-score-value {
+        font-size: 1.15rem;
+    }
+}

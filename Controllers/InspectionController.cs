@@ -165,6 +165,11 @@ public class InspectionController : Controller
             return RedirectToAction(nameof(MyRequests));
         }
 
+        // Find buyer entity or create placeholder
+        User? buyer = null;
+        try
+        {
+            buyer = await _context.Users.FirstOrDefaultAsync(u => u.Id == buyerId.Value);
         // 3. Subscription Monthly Visit Limit Check:
         // Free Member: Max 2 visits per month (last 30 days)
         // Pro Member: Unlimited visits

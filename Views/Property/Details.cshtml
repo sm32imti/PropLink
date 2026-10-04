@@ -332,35 +332,61 @@
                             <!-- Bidder Alert Banners -->
                             @if (Model.ActiveAuction.IsViewerHighestBidder)
                             {
-                                <div class="alert alert-success d-flex flex-column gap-2 p-3 rounded-4 shadow-sm mb-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-trophy-fill fs-4 text-success flex-shrink-0"></i>
-                                        <div class="small">
-                                            <strong>You are the highest bidder!</strong>
-                                            @if (Model.ActiveAuction.IsAwaitingConfirmation)
-                                            {
-                                                <div>Your winning bid of @Model.ActiveAuction.FormattedCurrentHighestBid is currently awaiting seller confirmation.</div>
-                                            }
-                                            else
-                                            {
-                                                <div>You are currently leading this live auction.</div>
-                                            }
-                                        </div>
-                                    </div>
-                                    @if (Model.ActiveAuction.IsActive)
-                                    {
-                                        <div class="d-flex justify-content-end pt-2 border-top border-success-subtle">
-                                            <form asp-controller="Property" asp-action="CancelBid" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Mistaken bid? Are you sure you want to cancel your leading bid of @Model.ActiveAuction.FormattedCurrentHighestBid? The auction will roll back to the previous bid.');">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="bidId" value="@(Model.ActiveAuction.ViewerHighestBidId ?? Guid.Empty)" />
-                                                <input type="hidden" name="auctionId" value="@Model.ActiveAuction.AuctionId" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger bg-white rounded-pill px-3 py-1 shadow-sm d-flex align-items-center gap-1" title="Cancel this mistaken bid and rollback the auction">
-                                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                                    <span class="fw-semibold">Mistaken Bid? Cancel & Rollback</span>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    }
+<div class="alert alert-success d-flex flex-column gap-2 p-3 rounded-4 shadow-sm mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-trophy-fill fs-4 text-success flex-shrink-0"></i>
+
+        <div class="small">
+            <strong>You are the highest bidder!</strong>
+
+            @if (Model.ActiveAuction.IsAwaitingConfirmation)
+            {
+                <div>
+                    Your winning bid of @Model.ActiveAuction.FormattedCurrentHighestBid
+                    is currently awaiting seller confirmation.
+                </div>
+            }
+            else
+            {
+                <div>
+                    You are currently leading this live auction.
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.ActiveAuction.IsActive)
+    {
+        <div class="d-flex justify-content-end pt-2 border-top border-success-subtle">
+            <form asp-controller="Property"
+                  asp-action="CancelBid"
+                  asp-route-id="@Model.Id"
+                  method="post"
+                  class="d-inline"
+                  onsubmit="return confirm('Mistaken bid? Are you sure you want to cancel your leading bid of @Model.ActiveAuction.FormattedCurrentHighestBid? The auction will roll back to the previous bid.');">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="bidId"
+                       value="@(Model.ActiveAuction.ViewerHighestBidId ?? Guid.Empty)" />
+
+                <input type="hidden"
+                       name="auctionId"
+                       value="@Model.ActiveAuction.AuctionId" />
+
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger bg-white rounded-pill px-3 py-1 shadow-sm d-flex align-items-center gap-1"
+                        title="Cancel this mistaken bid and rollback the auction">
+
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span class="fw-semibold">Mistaken Bid? Cancel & Rollback</span>
+
+                </button>
+            </form>
+        </div>
+    }
+</div>
                                 </div>
                             }
 
@@ -452,20 +478,39 @@
                                                                 </div>
                                                                 <div class="text-muted" style="font-size: 0.75rem;">@bid.FormattedPlacedAt</div>
                                                             </div>
-                                                            <div class="d-flex align-items-center gap-2">
-                                                                <span class="fw-bold fs-6 text-danger">@bid.FormattedAmount</span>
-                                                                @if (bid.CanCancel)
-                                                                {
-                                                                    <form asp-controller="Property" asp-action="CancelBid" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Mistaken bid? Are you sure you want to cancel this bid of @bid.FormattedAmount? The auction will roll back to the previous bid.');">
-                                                                        @Html.AntiForgeryToken()
-                                                                        <input type="hidden" name="bidId" value="@bid.BidId" />
-                                                                        <input type="hidden" name="auctionId" value="@Model.ActiveAuction.AuctionId" />
-                                                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2 rounded-pill shadow-xs" title="Mistaken bid? Cancel and rollback" style="font-size: 0.72rem; line-height: 1.5;">
-                                                                            <i class="bi bi-x-circle me-1"></i>Cancel
-                                                                        </button>
-                                                                    </form>
-                                                                }
-                                                            </div>
+<div class="d-flex align-items-center gap-2">
+    <span class="fw-bold fs-6 text-danger">@bid.FormattedAmount</span>
+
+    @if (bid.CanCancel)
+    {
+        <form asp-controller="Property"
+              asp-action="CancelBid"
+              asp-route-id="@Model.Id"
+              method="post"
+              class="d-inline"
+              onsubmit="return confirm('Mistaken bid? Are you sure you want to cancel this bid of @bid.FormattedAmount? The auction will roll back to the previous bid.');">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="bidId"
+                   value="@bid.BidId" />
+
+            <input type="hidden"
+                   name="auctionId"
+                   value="@Model.ActiveAuction.AuctionId" />
+
+            <button type="submit"
+                    class="btn btn-sm btn-outline-danger py-0 px-2 rounded-pill shadow-xs"
+                    title="Mistaken bid? Cancel and rollback"
+                    style="font-size: 0.72rem; line-height: 1.5;">
+
+                <i class="bi bi-x-circle me-1"></i>Cancel
+
+            </button>
+        </form>
+    }
+</div>
                                                         </li>
                                                     }
                                                 </ul>

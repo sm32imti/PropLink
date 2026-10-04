@@ -318,24 +318,31 @@
                                     }
                                     else
                                     {
-                                        @if (req.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed || req.Status == PropLink.Domain.Enums.InspectionStatus.InspectionCompleted || req.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing)
-                                        {
-                                            <div class="d-flex flex-column gap-2 w-100">
-                                                <a asp-controller="Inspection" asp-action="Chat" asp-route-bookingId="@req.BookingId"
-                                                   class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-center">
-                                                    <i class="bi bi-chat-dots-fill me-1"></i> Chat with Buyer
-                                                </a>
-                                                <div class="text-muted small text-center">
-                                                    <i class="bi bi-check-circle-fill text-success me-1"></i>Schedule Confirmed
-                                                </div>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="text-muted small text-lg-end">
-                                                <i class="bi bi-info-circle me-1"></i>Managed via PropLink Protocol
-                                            </div>
-                                        }
+@if (req.Status == PropLink.Domain.Enums.InspectionStatus.ScheduleFixed ||
+     req.Status == PropLink.Domain.Enums.InspectionStatus.InspectionCompleted ||
+     req.Status == PropLink.Domain.Enums.InspectionStatus.UnderProcessing)
+{
+    <div class="d-flex flex-column gap-2 w-100">
+        <a asp-controller="Inspection"
+           asp-action="Chat"
+           asp-route-bookingId="@req.BookingId"
+           class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-center">
+            <i class="bi bi-chat-dots-fill me-1"></i> Chat with Buyer
+        </a>
+
+        <div class="text-muted small text-center">
+            <i class="bi bi-check-circle-fill text-success me-1"></i>
+            Schedule Confirmed
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-muted small text-lg-end">
+        <i class="bi bi-info-circle me-1"></i>
+        Managed via PropLink Protocol
+    </div>
+}
                                     }
                                 </div>
                             </div>
