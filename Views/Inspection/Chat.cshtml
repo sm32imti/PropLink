@@ -1,0 +1,845 @@
+@model PropLink.Web.Models.InspectionChatViewModel
+@{
+    ViewData["Title"] = $"Inspection Chat - {Model.PropertyTitle}";
+    var isStaff = Model.IsReadOnlyStaff;
+}
+
+<div class="container py-4 chat-page-wrapper">
+    <!-- Breadcrumb & Top Bar -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div class="d-flex align-items-center gap-2">
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Admin" asp-action="Inspections" class="chat-btn-back">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Inspections
+                </a>
+            }
+            else if (User.IsInRole("VerificationAgent"))
+            {
+                <a asp-controller="Agent" asp-action="Index" class="chat-btn-back">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Agent Queue
+                </a>
+            }
+            else if (Model.CurrentUserRole == "Seller")
+            {
+                <a asp-controller="Inspection" asp-action="PropertyRequests" asp-route-propertyId="@Model.PropertyId" class="chat-btn-back">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Requests
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Inspection" asp-action="MyRequests" class="chat-btn-back">
+                    <i class="bi bi-arrow-left me-1"></i> Back to My Requests
+                </a>
+            }
+            <span class="chat-text-muted">/</span>
+            <span class="fw-semibold chat-text-heading">Schedule Communication</span>
+        </div>
+
+        <div>
+            @if (isStaff)
+            {
+                <span class="chat-badge-audit">
+                    <i class="bi bi-shield-lock-fill me-1"></i> @(Model.StaffRoleBadge ?? "Staff Audit View (Read-Only)")
+                </span>
+            }
+            else
+            {
+                <span class="chat-badge-monitored">
+                    <i class="bi bi-shield-check me-1"></i> End-to-End Monitored Channel
+                </span>
+            }
+        </div>
+    </div>
+
+    <!-- Property & Inspection Fixed Schedule Context Card -->
+    <div class="chat-info-card mb-4">
+        <div class="row align-items-center g-3">
+            <!-- Thumbnail & Property Info -->
+            <div class="col-lg-5 col-md-6 d-flex align-items-center gap-3">
+                <img src="@Model.PropertyImageUrl" alt="@Model.PropertyTitle"
+                     class="chat-property-thumb flex-shrink-0" />
+                <div class="overflow-hidden">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-primary text-white rounded-pill px-2 py-0 small fw-bold">
+                            <i class="bi bi-calendar-check me-1"></i>Schedule Fixed
+                        </span>
+                        @if (Model.OfferedPrice.HasValue)
+                        {
+                            <span class="chat-badge-offer">
+                                Offer: $@Model.OfferedPrice.Value.ToString("N0")
+                            </span>
+                        }
+                    </div>
+                    <h6 class="fw-bold chat-text-heading text-truncate mb-0" title="@Model.PropertyTitle">
+                        <a asp-controller="Property" asp-action="Details" asp-route-id="@Model.PropertyId" class="chat-property-link" target="_blank">
+                            @Model.PropertyTitle <i class="bi bi-box-arrow-up-right small ms-1 opacity-75"></i>
+                        </a>
+                    </h6>
+                    <small class="chat-text-muted d-block text-truncate">
+                        <i class="bi bi-geo-alt me-1 text-primary"></i>@Model.PropertyAddress, @Model.PropertyCity
+                    </small>
+                </div>
+            </div>
+
+            <!-- Fixed Schedule Details -->
+            <div class="col-lg-4 col-md-6 border-start-custom ps-lg-4">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-calendar2-event-fill text-primary"></i>
+                    <span class="small chat-text-muted text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Confirmed Meeting:</span>
+                </div>
+                <div class="fw-bold chat-text-heading fs-6">
+                    @(Model.ScheduledDate.HasValue ? Model.ScheduledDate.Value.ToString("dddd, MMM dd, yyyy h:mm tt") : "Schedule Confirmed")
+                </div>
+                <div class="small chat-text-muted mt-1">
+                    <i class="bi bi-person-badge text-primary me-1"></i>Agent: <span class="fw-medium chat-text-heading">@(Model.AgentName ?? "Assigned Verification Agent")</span>
+                    @if (!string.IsNullOrEmpty(Model.MeetingLocationNotes))
+                    {
+                        <span class="mx-1">•</span>
+                        <span class="text-truncate" title="@Model.MeetingLocationNotes">@Model.MeetingLocationNotes</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Buyer & Seller Participants -->
+            <div class="col-lg-3 col-md-12 d-flex justify-content-lg-end gap-2 mt-3 mt-lg-0">
+                <div class="chat-participant-pill flex-fill flex-lg-grow-0">
+                    <span class="chat-participant-label">BUYER</span>
+                    <span class="chat-participant-name text-truncate" title="@Model.BuyerName">
+                        <i class="bi bi-person-fill text-primary me-1"></i>@Model.BuyerName
+                    </span>
+                </div>
+                <div class="chat-participant-pill flex-fill flex-lg-grow-0">
+                    <span class="chat-participant-label">SELLER</span>
+                    <span class="chat-participant-name text-truncate" title="@Model.SellerName">
+                        <i class="bi bi-house-door-fill text-emerald me-1"></i>@Model.SellerName
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notice / Audit Banner -->
+    @if (isStaff)
+    {
+        <div class="chat-banner-audit mb-4">
+            <div class="chat-banner-icon audit">
+                <i class="bi bi-shield-lock-fill fs-5"></i>
+            </div>
+            <div>
+                <div class="fw-bold chat-banner-title">Staff Audit & Compliance View (Read-Only)</div>
+                <div class="small chat-banner-desc">
+                    As an Administrator, Moderator, or Verification Agent, you are monitoring this buyer-seller conversation for anti-fraud auditing and safety compliance. <strong>You cannot participate in messaging.</strong>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="chat-banner-info mb-4">
+            <div class="chat-banner-icon info">
+                <i class="bi bi-shield-check fs-5"></i>
+            </div>
+            <div>
+                <div class="fw-bold chat-banner-title">Schedule Fixed — Direct Channel Unlocked</div>
+                <div class="small chat-banner-desc">
+                    Use this discussion to coordinate parking, gate entry, or document preparation before your on-site physical inspection. For your protection, all chats are recorded for platform compliance.
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Chat Stream Container -->
+    <div class="chat-main-card">
+        <!-- Chat Header -->
+        <div class="chat-card-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="chat-status-pulse"></span>
+                <span class="fw-bold chat-text-heading mb-0">Direct Inspection Discussion</span>
+                <span class="chat-count-pill ms-2" id="messageCountBadge">@Model.Messages.Count messages</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="chat-btn-sync" onclick="refreshMessages()" id="btnRefresh" title="Live sync messages">
+                    <i class="bi bi-arrow-clockwise me-1" id="refreshIcon"></i> Live Sync
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Messages Body -->
+        <div class="chat-stream-box" id="chatMessagesBox">
+            @if (!Model.Messages.Any())
+            {
+                <div class="text-center py-5" id="emptyChatState">
+                    <div class="chat-empty-icon-wrap mb-3">
+                        <i class="bi bi-chat-dots-fill text-primary fs-2"></i>
+                    </div>
+                    <h6 class="fw-bold chat-text-heading">Schedule Fixed! Channel is Open</h6>
+                    <p class="small chat-text-muted max-w-md mx-auto mb-3" style="max-width: 440px;">
+                        The verification agent has fixed the physical inspection date. Buyer and seller can now exchange necessary meeting details and coordinate on-site logistics.
+                    </p>
+                    @if (Model.CanSendMessage)
+                    {
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill small fw-semibold">
+                            Send the first message below
+                        </span>
+                    }
+                </div>
+            }
+
+            <div class="d-flex flex-column gap-3" id="messagesList">
+                @foreach (var msg in Model.Messages)
+                {
+                    var isMe = msg.IsFromCurrentUser;
+                    var isMsgBuyer = msg.SenderRole == "Buyer";
+
+                    <div class="d-flex @(isMe ? "justify-content-end" : "justify-content-start") message-item" data-id="@msg.Id">
+                        <div class="d-flex flex-column @(isMe ? "align-items-end" : "align-items-start")" style="max-width: 78%;">
+                            <!-- Sender Name & Role Label -->
+                            <div class="d-flex align-items-center gap-1 mb-1 px-1">
+                                <span class="small fw-bold @(isMe ? "chat-sender-me" : "chat-sender-other")">
+                                    @(isMe ? "You" : msg.SenderName)
+                                </span>
+                                <span class="chat-role-tag @(isMsgBuyer ? "buyer" : "seller")">
+                                    @msg.SenderRole
+                                </span>
+                                <span class="chat-msg-time ms-1">@msg.SentAt.ToString("MMM dd, h:mm tt")</span>
+                            </div>
+
+                            <!-- Bubble -->
+                            <div class="chat-bubble @(isMe ? "outgoing" : "incoming")">
+                                <p class="mb-0 chat-bubble-text">@msg.Message</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Chat Input Footer -->
+        <div class="chat-card-footer">
+            @if (Model.CanSendMessage)
+            {
+                <form id="sendMessageForm" onsubmit="handleSendMessage(event)">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="BookingId" value="@Model.BookingId" />
+                    
+                    <div class="d-flex gap-2 align-items-end">
+                        <div class="flex-grow-1 position-relative">
+                            <textarea class="form-control chat-input-textarea" 
+                                      id="messageInput" 
+                                      name="Message" 
+                                      rows="2" 
+                                      placeholder="Type your message to @(Model.CurrentUserRole == "Buyer" ? "the seller" : "the buyer")... (Enter to send, Shift+Enter for new line)"
+                                      required></textarea>
+                        </div>
+                        <button type="submit" class="chat-send-btn flex-shrink-0" id="btnSubmitMessage">
+                            <span>Send</span>
+                            <i class="bi bi-send-fill ms-1"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                        <small class="chat-text-muted" style="font-size: 0.76rem;">
+                            <i class="bi bi-shield-check text-primary me-1"></i>Official inspection coordination channel.
+                        </small>
+                        <small class="chat-text-muted" style="font-size: 0.76rem;">
+                            Press <kbd class="chat-kbd">Enter</kbd> to send
+                        </small>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="chat-locked-panel">
+                    <i class="bi bi-lock-fill text-muted me-2 fs-5"></i>
+                    <span class="small fw-semibold chat-text-muted">
+                        @if (isStaff)
+                        {
+                            <span>Administrative & Verification staff have read-only audit visibility. Staff messaging is disabled.</span>
+                        }
+                        else
+                        {
+                            <span>Chat messaging is locked for this booking status.</span>
+                        }
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ==========================================================================
+       Scoped Professional Chat System Styles (Full Light & Dark Theme Support)
+       ========================================================================== */
+    .chat-page-wrapper {
+        color: var(--text-body);
+    }
+
+    .chat-text-heading {
+        color: var(--text-heading) !important;
+    }
+
+    .chat-text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    /* Back Button */
+    .chat-btn-back {
+        display: inline-flex;
+        align-items: center;
+        background: var(--bg-card);
+        color: var(--text-heading);
+        border: 1px solid var(--border-color);
+        padding: 0.45rem 1rem;
+        border-radius: 50px;
+        font-size: 0.86rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+    .chat-btn-back:hover {
+        background: var(--bg-subtle);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-1px);
+    }
+
+    /* Status Badges */
+    .chat-badge-monitored {
+        background: var(--primary-light);
+        color: var(--primary);
+        border: 1px solid var(--primary-border);
+        padding: 0.45rem 1rem;
+        border-radius: 50px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .chat-badge-audit {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        padding: 0.45rem 1rem;
+        border-radius: 50px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Context Information Card */
+    .chat-info-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg, 18px);
+        padding: 1.25rem 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .chat-property-thumb {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+    }
+
+    .chat-property-link {
+        color: var(--text-heading);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+    .chat-property-link:hover {
+        color: var(--primary) !important;
+    }
+
+    .chat-badge-offer {
+        background: var(--primary-light);
+        color: var(--primary);
+        border: 1px solid var(--primary-border);
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.18rem 0.6rem;
+        border-radius: 50px;
+    }
+
+    .border-start-custom {
+        border-left: 1px solid var(--border-color);
+    }
+    @@media (max-width: 991.98px) {
+        .border-start-custom {
+            border-left: none;
+            padding-left: 0 !important;
+            margin-top: 0.75rem;
+        }
+    }
+
+    .chat-participant-pill {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.5rem 0.85rem;
+        min-width: 110px;
+        text-align: center;
+    }
+    .chat-participant-label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+    }
+    .chat-participant-name {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-heading);
+        margin-top: 1px;
+    }
+
+    /* Banners */
+    .chat-banner-audit {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .chat-banner-icon.audit {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .chat-banner-title {
+        color: var(--text-heading);
+        font-size: 0.95rem;
+    }
+    .chat-banner-desc {
+        color: var(--text-body);
+        opacity: 0.9;
+        margin-top: 2px;
+    }
+
+    .chat-banner-info {
+        background: var(--primary-light);
+        border: 1px solid var(--primary-border);
+        border-radius: 14px;
+        padding: 0.9rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .chat-banner-icon.info {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--primary);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Main Chat Frame */
+    .chat-main-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg, 18px);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .chat-card-header {
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-status-pulse {
+        width: 10px;
+        height: 10px;
+        background-color: var(--primary);
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 0 3px var(--primary-light);
+        animation: chatPulse 2s infinite;
+    }
+    @@keyframes chatPulse {
+        0% { box-shadow: 0 0 0 0 var(--primary-glow); }
+        70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .chat-count-pill {
+        background: var(--bg-subtle);
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+    }
+
+    .chat-btn-sync {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-color);
+        color: var(--text-heading);
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+    .chat-btn-sync:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    /* Message Stream Box */
+    .chat-stream-box {
+        height: 500px;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: var(--bg-subtle);
+        display: flex;
+        flex-direction: column;
+        scroll-behavior: smooth;
+    }
+
+    /* Scrollbar styling */
+    .chat-stream-box::-webkit-scrollbar {
+        width: 6px;
+    }
+    .chat-stream-box::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .chat-stream-box::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 10px;
+    }
+    .chat-stream-box::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    .chat-empty-icon-wrap {
+        width: 64px;
+        height: 64px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Chat Bubbles */
+    .chat-bubble {
+        padding: 0.85rem 1.15rem;
+        border-radius: 16px;
+        word-break: break-word;
+        box-shadow: var(--shadow-sm);
+        position: relative;
+    }
+
+    .chat-bubble.outgoing {
+        background: var(--emerald-gradient) !important;
+        color: #ffffff !important;
+        border-top-right-radius: 3px !important;
+        box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .chat-bubble.incoming {
+        background: var(--bg-card) !important;
+        color: var(--text-heading) !important;
+        border: 1px solid var(--border-color);
+        border-top-left-radius: 3px !important;
+    }
+
+    .chat-bubble-text {
+        white-space: pre-wrap;
+        font-size: 0.93rem;
+        line-height: 1.55;
+    }
+
+    .chat-sender-me {
+        color: var(--primary) !important;
+    }
+    .chat-sender-other {
+        color: var(--text-heading) !important;
+    }
+
+    .chat-role-tag {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.1rem 0.5rem;
+        border-radius: 50px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .chat-role-tag.buyer {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .chat-role-tag.seller {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .chat-msg-time {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+    }
+
+    /* Footer & Input Controls */
+    .chat-card-footer {
+        background: var(--bg-card);
+        border-top: 1px solid var(--border-color);
+        padding: 1.25rem 1.5rem;
+    }
+
+    .chat-input-textarea {
+        background: var(--bg-subtle) !important;
+        border: 1.5px solid var(--border-color) !important;
+        color: var(--text-heading) !important;
+        border-radius: 14px !important;
+        padding: 0.85rem 1rem !important;
+        font-size: 0.93rem !important;
+        font-family: inherit !important;
+        resize: none !important;
+        transition: var(--transition-smooth) !important;
+    }
+    .chat-input-textarea::placeholder {
+        color: var(--text-muted) !important;
+        opacity: 0.75;
+    }
+    .chat-input-textarea:focus {
+        background: var(--bg-card) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px var(--primary-light) !important;
+        outline: none !important;
+    }
+
+    .chat-send-btn {
+        background: var(--emerald-gradient);
+        color: #ffffff;
+        border: none;
+        border-radius: 14px;
+        padding: 0.85rem 1.5rem;
+        font-weight: 700;
+        font-size: 0.92rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 14px var(--primary-glow);
+        transition: var(--transition-smooth);
+        min-height: 52px;
+    }
+    .chat-send-btn:hover {
+        background: var(--emerald-gradient-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--primary-glow);
+    }
+    .chat-send-btn:active {
+        transform: scale(0.98);
+    }
+
+    .chat-locked-panel {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .chat-kbd {
+        background: var(--bg-card);
+        color: var(--text-heading);
+        border: 1px solid var(--border-color);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.72rem;
+    }
+
+    .spin-animation {
+        animation: spin 0.6s linear infinite;
+    }
+    @@keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const bookingId = "@Model.BookingId";
+        const currentUserId = "@Model.CurrentUserId";
+        const canSend = @(Model.CanSendMessage ? "true" : "false");
+        const chatBox = document.getElementById("chatMessagesBox");
+        const messagesList = document.getElementById("messagesList");
+        const emptyState = document.getElementById("emptyChatState");
+        const messageCountBadge = document.getElementById("messageCountBadge");
+        const messageInput = document.getElementById("messageInput");
+
+        // Auto-scroll to bottom of chat
+        function scrollToBottom() {
+            if (chatBox) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            scrollToBottom();
+            
+            // Enter key shortcut
+            if (messageInput) {
+                messageInput.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        document.getElementById("sendMessageForm")?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+                    }
+                });
+            }
+        });
+
+        // Send message handler via AJAX
+        async function handleSendMessage(event) {
+            event.preventDefault();
+            if (!canSend) return;
+
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            const form = document.getElementById("sendMessageForm");
+            const formData = new FormData(form);
+            const btnSubmit = document.getElementById("btnSubmitMessage");
+
+            btnSubmit.disabled = true;
+
+            try {
+                const response = await fetch("/inspection/send-chat-message", {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                const result = await response.json();
+                if (result.success && result.message) {
+                    messageInput.value = "";
+                    appendSingleMessage(result.message, true);
+                    if (emptyState) emptyState.style.display = "none";
+                } else {
+                    alert(result.message || "Failed to send message. Please try again.");
+                }
+            } catch (err) {
+                console.error("Chat send error:", err);
+            } finally {
+                btnSubmit.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        // Append message element dynamically with professional styles
+        function appendSingleMessage(msg, isMe) {
+            const existing = document.querySelector(`.message-item[data-id="${msg.id}"]`);
+            if (existing) return;
+
+            const isBuyer = msg.senderRole === "Buyer";
+            const roleTagClass = isBuyer ? "buyer" : "seller";
+            const bubbleClass = isMe ? "outgoing" : "incoming";
+            const alignClass = isMe ? "justify-content-end" : "justify-content-start";
+            const colAlignClass = isMe ? "align-items-end" : "align-items-start";
+            const senderName = isMe ? "You" : msg.senderName;
+            const senderNameClass = isMe ? "chat-sender-me" : "chat-sender-other";
+
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `d-flex ${alignClass} message-item`;
+            msgDiv.setAttribute("data-id", msg.id);
+
+            msgDiv.innerHTML = `
+                <div class="d-flex flex-column ${colAlignClass}" style="max-width: 78%;">
+                    <div class="d-flex align-items-center gap-1 mb-1 px-1">
+                        <span class="small fw-bold ${senderNameClass}">${escapeHtml(senderName)}</span>
+                        <span class="chat-role-tag ${roleTagClass}">
+                            ${escapeHtml(msg.senderRole)}
+                        </span>
+                        <span class="chat-msg-time ms-1">${escapeHtml(msg.sentAt)}</span>
+                    </div>
+                    <div class="chat-bubble ${bubbleClass}">
+                        <p class="mb-0 chat-bubble-text">${escapeHtml(msg.message)}</p>
+                    </div>
+                </div>
+            `;
+
+            messagesList.appendChild(msgDiv);
+            scrollToBottom();
+
+            const count = document.querySelectorAll(".message-item").length;
+            if (messageCountBadge) {
+                messageCountBadge.textContent = `${count} messages`;
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Live Polling Refresh
+        async function refreshMessages() {
+            const icon = document.getElementById("refreshIcon");
+            if (icon) icon.classList.add("spin-animation");
+
+            try {
+                const response = await fetch(`/inspection/chat-messages/${bookingId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.messages) {
+                        if (data.messages.length > 0 && emptyState) {
+                            emptyState.style.display = "none";
+                        }
+                        data.messages.forEach(msg => {
+                            appendSingleMessage(msg, msg.isFromCurrentUser);
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Polling error:", e);
+            } finally {
+                if (icon) {
+                    setTimeout(() => icon.classList.remove("spin-animation"), 400);
+                }
+            }
+        }
+
+        // Poll every 3.5 seconds
+        setInterval(refreshMessages, 3500);
+    </script>
+}

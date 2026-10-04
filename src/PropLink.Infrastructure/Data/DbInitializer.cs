@@ -134,6 +134,34 @@ public static class DbInitializer
                         ""ScheduledAt"" timestamp with time zone,
                         ""CompletedAt"" timestamp with time zone
                     );",
+                    @"CREATE TABLE IF NOT EXISTS ""InspectionChatMessages"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""BookingId"" uuid NOT NULL REFERENCES ""InspectionBookings""(""Id"") ON DELETE CASCADE,
+                        ""SenderId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                        ""SenderName"" character varying(150) NOT NULL,
+                        ""SenderRole"" character varying(50) NOT NULL,
+                        ""Message"" character varying(2000) NOT NULL,
+                        ""SentAt"" timestamp with time zone NOT NULL,
+                        ""IsRead"" boolean NOT NULL DEFAULT FALSE
+                    );",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""IsSubscribed"" boolean NOT NULL DEFAULT FALSE;",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SubscriptionTier"" character varying(50) DEFAULT 'Free';",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SubscriptionExpiresAt"" timestamp with time zone;",
+                    @"CREATE TABLE IF NOT EXISTS ""SubscriptionPayments"" (
+                        ""Id"" uuid NOT NULL PRIMARY KEY,
+                        ""UserId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE CASCADE,
+                        ""TransactionId"" character varying(100) NOT NULL,
+                        ""ValidationId"" character varying(100),
+                        ""BankTranId"" character varying(100),
+                        ""PaymentMethod"" character varying(50) NOT NULL DEFAULT 'SSLCommerz',
+                        ""CardType"" character varying(100),
+                        ""Amount"" numeric(18,2) NOT NULL DEFAULT 999.00,
+                        ""Currency"" character varying(10) NOT NULL DEFAULT 'BDT',
+                        ""Status"" character varying(50) NOT NULL DEFAULT 'Pending',
+                        ""CreatedAt"" timestamp with time zone NOT NULL,
+                        ""PaidAt"" timestamp with time zone,
+                        ""SubscriptionExpiresAt"" timestamp with time zone NOT NULL
+                    );",
                     @"UPDATE ""Users"" SET ""IsBanned"" = FALSE, ""BannedAt"" = NULL, ""BanReason"" = NULL WHERE ""Email"" = 'user@proplink.com';",
                     @"UPDATE ""Properties"" SET ""SellerId"" = (SELECT ""Id"" FROM ""Users"" WHERE ""Email"" = 'user@proplink.com' LIMIT 1) WHERE ""Id"" = 'd32f47bc-479c-46c1-b267-0a54036ebde2';"
                 };

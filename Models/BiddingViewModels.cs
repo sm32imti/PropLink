@@ -55,6 +55,7 @@ public class AuctionDetailViewModel
     public Guid? HighestBidderId { get; set; }
     public string? HighestBidderName { get; set; }
     public bool IsViewerHighestBidder { get; set; }
+    public Guid? ViewerHighestBidId { get; set; }
 
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
@@ -78,6 +79,7 @@ public class BidHistoryItemViewModel
     public string FormattedPlacedAt => PlacedAt.ToString("MMM dd, yyyy HH:mm:ss");
     public bool IsFromDirectOffer { get; set; }
     public bool IsViewer { get; set; }
+    public bool CanCancel { get; set; }
 }
 
 public class AdminBiddingDashboardViewModel
@@ -177,4 +179,5 @@ public class BuyerBidItemViewModel
 
     // Position: "Winning", "Outbid", "Won", "Lost"
     public string BidPosition { get; set; } = "Winning";
+    public bool CanCancel { get; set; }
 }

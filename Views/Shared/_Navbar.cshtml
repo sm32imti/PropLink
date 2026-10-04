@@ -61,6 +61,11 @@
                 <li class="nav-item">
                     <a class="nav-link" href="@Url.Action("Index", "Home")#trust-guarantee">Trust Guarantee</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Subscription" asp-action="Pricing">
+                        <i class="bi bi-gem text-warning me-1"></i>Pricing & Plans
+                    </a>
+                </li>
             </ul>
 
             <div class="d-flex align-items-center gap-2">
@@ -136,6 +141,7 @@
                                 <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-person-circle text-emerald"></i> My Profile and Activity</a></li>
                                 <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-lightning-charge-fill text-danger"></i> My Auctions & Bids</a></li>
                                 <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Property" asp-action="Sell"><i class="bi bi-plus-circle text-emerald"></i> Sell a Property</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 fw-semibold text-warning" asp-controller="Subscription" asp-action="Pricing"><i class="bi bi-gem text-warning"></i> Membership & Plans</a></li>
                                 <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-building text-emerald"></i> Selling / Listing History</a></li>
                                 <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index"><i class="bi bi-bag-check text-muted"></i> Buying History</a></li>
                             }

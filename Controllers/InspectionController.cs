@@ -18,6 +18,7 @@ public class InspectionController : Controller
     // Concurrent registry fallback to guarantee immediate memory persistence
     internal static readonly ConcurrentDictionary<Guid, InspectionBooking> _inspectionRegistry = new();
     internal static readonly ConcurrentDictionary<Guid, PropertyTransaction> _transactionRegistry = new();
+    internal static readonly ConcurrentDictionary<Guid, List<InspectionChatMessage>> _chatRegistry = new();
 
     public InspectionController(ApplicationDbContext context)
     {
@@ -169,6 +170,33 @@ public class InspectionController : Controller
         try
         {
             buyer = await _context.Users.FirstOrDefaultAsync(u => u.Id == buyerId.Value);
+        // 3. Subscription Monthly Visit Limit Check:
+        // Free Member: Max 2 visits per month (last 30 days)
+        // Pro Member: Unlimited visits
+        var buyerUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == buyerId.Value);
+        bool isProBuyer = buyerUser != null && buyerUser.HasActiveProSubscription;
+
+        if (!isProBuyer)
+        {
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            int monthlyRequestsCount = await _context.InspectionBookings
+                .CountAsync(i => i.BuyerId == buyerId.Value && i.CreatedAt >= thirtyDaysAgo && i.Status != InspectionStatus.Cancelled);
+
+            if (monthlyRequestsCount >= 2)
+            {
+                TempData["SubscriptionLimitReached"] = "You have used your 2 free property visit requests for this month. Upgrade to PropLink Pro for unlimited property visit requests!";
+                return RedirectToAction("Pricing", "Subscription");
+            }
+        }
+
+        // Find buyer entity or create placeholder
+        User? buyer = buyerUser;
+        try
+        {
+            if (buyer == null)
+            {
+                buyer = await _context.Users.FirstOrDefaultAsync(u => u.Id == buyerId.Value);
+            }
         }
         catch
         {
@@ -522,5 +550,359 @@ public class InspectionController : Controller
 
         TempData["ToastMessage"] = "The buyer request has been marked as declined.";
         return RedirectToAction(nameof(PropertyRequests), new { propertyId = booking.PropertyId });
+    }
+
+    // ==============================================================================
+    // 7. INSPECTION CHAT SYSTEM (UNLOCKED AFTER SCHEDULE IS FIXED)
+    // ==============================================================================
+    [HttpGet]
+    [Route("inspection/chat/{bookingId:guid}")]
+    public async Task<IActionResult> Chat(Guid bookingId)
+    {
+        var currentUserId = CurrentUserId;
+        if (!currentUserId.HasValue)
+        {
+            return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Chat", "Inspection", new { bookingId }) });
+        }
+
+        InspectionBooking? booking = null;
+        try
+        {
+            booking = await _context.InspectionBookings
+                .Include(b => b.Property)
+                    .ThenInclude(p => p!.Images)
+                .Include(b => b.Buyer)
+                .Include(b => b.Seller)
+                .Include(b => b.Agent)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+        }
+        catch
+        {
+        }
+
+        if (booking == null && _inspectionRegistry.TryGetValue(bookingId, out var regBooking))
+        {
+            booking = regBooking;
+        }
+
+        if (booking == null)
+        {
+            TempData["ErrorMessage"] = "The requested inspection booking could not be located.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        // STRICT REQUIREMENT: Chat option is ONLY available after the schedule is fixed
+        bool isScheduleFixed = booking.Status == InspectionStatus.ScheduleFixed 
+                            || booking.Status == InspectionStatus.InspectionCompleted 
+                            || booking.Status == InspectionStatus.UnderProcessing;
+
+        if (!isScheduleFixed)
+        {
+            TempData["ErrorMessage"] = "Direct chat unlocks only after the Verification Agent has confirmed and fixed the on-site inspection schedule.";
+            if (booking.BuyerId == currentUserId.Value)
+            {
+                return RedirectToAction(nameof(MyRequests));
+            }
+            if (booking.SellerId == currentUserId.Value)
+            {
+                return RedirectToAction(nameof(PropertyRequests), new { propertyId = booking.PropertyId });
+            }
+            if (User.IsInRole("Admin"))
+            {
+                return RedirectToAction("Inspections", "Admin");
+            }
+            return RedirectToAction("Index", "Agent");
+        }
+
+        // Authorization check: Only Buyer, Seller, Admin, Moderator, or VerificationAgent can access
+        bool isBuyer = booking.BuyerId == currentUserId.Value;
+        bool isSeller = booking.SellerId == currentUserId.Value;
+        bool isAdmin = User.IsInRole("Admin");
+        bool isModerator = User.IsInRole("Moderator");
+        bool isAgent = User.IsInRole("VerificationAgent");
+        bool isReadOnlyStaff = isAdmin || isModerator || isAgent;
+
+        if (!isBuyer && !isSeller && !isReadOnlyStaff)
+        {
+            TempData["ErrorMessage"] = "You do not have authorization to view this private inspection communication.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        // STRICT REQUIREMENT: Admin and Moderator can see the chat, but CANNOT join in messaging
+        bool canSendMessage = (isBuyer || isSeller) && !isReadOnlyStaff;
+
+        string currentUserRole = isBuyer ? "Buyer" 
+                               : isSeller ? "Seller" 
+                               : isAdmin ? "Admin" 
+                               : isModerator ? "Moderator" 
+                               : "VerificationAgent";
+
+        string? staffRoleBadge = isReadOnlyStaff ? (isAdmin ? "Admin (Audit Mode)" : isModerator ? "Moderator (Audit Mode)" : "Verification Agent (Audit Mode)") : null;
+
+        // Load messages from database and in-memory fallback
+        List<InspectionChatMessage> messages = new();
+        try
+        {
+            messages = await _context.InspectionChatMessages
+                .Where(m => m.BookingId == bookingId)
+                .OrderBy(m => m.SentAt)
+                .ToListAsync();
+        }
+        catch
+        {
+        }
+
+        if (_chatRegistry.TryGetValue(bookingId, out var memMessages))
+        {
+            lock (memMessages)
+            {
+                foreach (var msg in memMessages)
+                {
+                    if (!messages.Any(m => m.Id == msg.Id))
+                    {
+                        messages.Add(msg);
+                    }
+                }
+            }
+        }
+
+        messages = messages.OrderBy(m => m.SentAt).ToList();
+
+        var viewModel = new InspectionChatViewModel
+        {
+            BookingId = booking.Id,
+            PropertyId = booking.PropertyId,
+            PropertyTitle = booking.Property?.Title ?? "Verified Real Estate Property",
+            PropertyAddress = booking.Property?.Address ?? "Audited Property Address",
+            PropertyCity = booking.Property?.City ?? "PropLink Marketplace",
+            PropertyImageUrl = booking.Property?.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl
+                ?? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+            AskingPrice = booking.AskingPrice,
+            OfferedPrice = booking.OfferedPrice,
+            Status = booking.Status,
+            ScheduledDate = booking.ScheduledDate,
+            MeetingLocationNotes = booking.MeetingLocationNotes,
+            AgentName = booking.AgentName,
+            BuyerId = booking.BuyerId,
+            BuyerName = booking.Buyer?.FullName ?? "Prospective Buyer",
+            SellerId = booking.SellerId,
+            SellerName = booking.Seller?.FullName ?? "Property Owner",
+            CurrentUserId = currentUserId.Value,
+            CurrentUserRole = currentUserRole,
+            CanSendMessage = canSendMessage,
+            IsReadOnlyStaff = isReadOnlyStaff,
+            StaffRoleBadge = staffRoleBadge,
+            Messages = messages.Select(m => new InspectionChatMessageItemViewModel
+            {
+                Id = m.Id,
+                SenderId = m.SenderId,
+                SenderName = m.SenderName,
+                SenderRole = m.SenderRole,
+                Message = m.Message,
+                SentAt = m.SentAt,
+                IsFromCurrentUser = m.SenderId == currentUserId.Value
+            }).ToList()
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Route("inspection/send-chat-message")]
+    public async Task<IActionResult> SendChatMessage([FromForm] SendInspectionChatMessageRequest model)
+    {
+        var currentUserId = CurrentUserId;
+        if (!currentUserId.HasValue)
+        {
+            return Json(new { success = false, message = "Please sign in to send messages." });
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Message))
+        {
+            return Json(new { success = false, message = "Message content cannot be blank." });
+        }
+
+        InspectionBooking? booking = null;
+        try
+        {
+            booking = await _context.InspectionBookings
+                .Include(b => b.Buyer)
+                .Include(b => b.Seller)
+                .FirstOrDefaultAsync(b => b.Id == model.BookingId);
+        }
+        catch { }
+
+        if (booking == null && _inspectionRegistry.TryGetValue(model.BookingId, out var regBooking))
+        {
+            booking = regBooking;
+        }
+
+        if (booking == null)
+        {
+            return Json(new { success = false, message = "Inspection booking not found." });
+        }
+
+        // STRICT REQUIREMENT: Chat is only permitted after schedule is fixed
+        bool isScheduleFixed = booking.Status == InspectionStatus.ScheduleFixed 
+                            || booking.Status == InspectionStatus.InspectionCompleted 
+                            || booking.Status == InspectionStatus.UnderProcessing;
+
+        if (!isScheduleFixed)
+        {
+            return Json(new { success = false, message = "Chat is locked until the inspection schedule is fixed by an agent." });
+        }
+
+        // STRICT REQUIREMENT: Admin and Moderator CANNOT join in messaging
+        bool isAdmin = User.IsInRole("Admin");
+        bool isModerator = User.IsInRole("Moderator");
+        bool isAgent = User.IsInRole("VerificationAgent");
+        if (isAdmin || isModerator || isAgent)
+        {
+            return Json(new { success = false, message = "Administrative and verification staff have read-only audit visibility and cannot send messages in buyer-seller chat." });
+        }
+
+        bool isBuyer = booking.BuyerId == currentUserId.Value;
+        bool isSeller = booking.SellerId == currentUserId.Value;
+
+        if (!isBuyer && !isSeller)
+        {
+            return Json(new { success = false, message = "Only the assigned buyer and seller are permitted to send messages." });
+        }
+
+        string senderRole = isBuyer ? "Buyer" : "Seller";
+        string senderName = User.Identity?.Name ?? (isBuyer ? (booking.Buyer?.FullName ?? "Buyer") : (booking.Seller?.FullName ?? "Seller"));
+
+        var newChatMessage = new InspectionChatMessage
+        {
+            Id = Guid.NewGuid(),
+            BookingId = booking.Id,
+            SenderId = currentUserId.Value,
+            SenderName = senderName,
+            SenderRole = senderRole,
+            Message = model.Message.Trim(),
+            SentAt = DateTime.UtcNow,
+            IsRead = false
+        };
+
+        // Save in memory fallback
+        var list = _chatRegistry.GetOrAdd(booking.Id, _ => new List<InspectionChatMessage>());
+        lock (list)
+        {
+            list.Add(newChatMessage);
+        }
+
+        // Save to Database
+        try
+        {
+            _context.InspectionChatMessages.Add(newChatMessage);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+        }
+
+        bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" || 
+                      (Request.Headers["Accept"].ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase));
+
+        if (isAjax)
+        {
+            return Json(new
+            {
+                success = true,
+                message = new
+                {
+                    id = newChatMessage.Id,
+                    senderId = newChatMessage.SenderId,
+                    senderName = newChatMessage.SenderName,
+                    senderRole = newChatMessage.SenderRole,
+                    message = newChatMessage.Message,
+                    sentAt = newChatMessage.SentAt.ToString("MMM dd, yyyy h:mm tt"),
+                    isFromCurrentUser = true
+                }
+            });
+        }
+
+        return RedirectToAction(nameof(Chat), new { bookingId = booking.Id });
+    }
+
+    [HttpGet]
+    [Route("inspection/chat-messages/{bookingId:guid}")]
+    public async Task<IActionResult> GetChatMessages(Guid bookingId)
+    {
+        var currentUserId = CurrentUserId;
+        if (!currentUserId.HasValue)
+        {
+            return Unauthorized();
+        }
+
+        InspectionBooking? booking = null;
+        try
+        {
+            booking = await _context.InspectionBookings
+                .Include(b => b.Buyer)
+                .Include(b => b.Seller)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+        }
+        catch { }
+
+        if (booking == null && _inspectionRegistry.TryGetValue(bookingId, out var regBooking))
+        {
+            booking = regBooking;
+        }
+
+        if (booking == null)
+        {
+            return NotFound();
+        }
+
+        bool isBuyer = booking.BuyerId == currentUserId.Value;
+        bool isSeller = booking.SellerId == currentUserId.Value;
+        bool isStaff = User.IsInRole("Admin") || User.IsInRole("Moderator") || User.IsInRole("VerificationAgent");
+
+        if (!isBuyer && !isSeller && !isStaff)
+        {
+            return Forbid();
+        }
+
+        List<InspectionChatMessage> messages = new();
+        try
+        {
+            messages = await _context.InspectionChatMessages
+                .Where(m => m.BookingId == bookingId)
+                .OrderBy(m => m.SentAt)
+                .ToListAsync();
+        }
+        catch { }
+
+        if (_chatRegistry.TryGetValue(bookingId, out var memMessages))
+        {
+            lock (memMessages)
+            {
+                foreach (var msg in memMessages)
+                {
+                    if (!messages.Any(m => m.Id == msg.Id))
+                    {
+                        messages.Add(msg);
+                    }
+                }
+            }
+        }
+
+        var results = messages
+            .OrderBy(m => m.SentAt)
+            .Select(m => new
+            {
+                id = m.Id,
+                senderId = m.SenderId,
+                senderName = m.SenderName,
+                senderRole = m.SenderRole,
+                message = m.Message,
+                sentAt = m.SentAt.ToString("MMM dd, yyyy h:mm tt"),
+                isFromCurrentUser = m.SenderId == currentUserId.Value
+            })
+            .ToList();
+
+        return Json(new { success = true, messages = results });
     }
 }

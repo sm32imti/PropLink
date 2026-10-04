@@ -21,6 +21,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Bid> Bids => Set<Bid>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
     public DbSet<InspectionBooking> InspectionBookings => Set<InspectionBooking>();
+    public DbSet<InspectionChatMessage> InspectionChatMessages => Set<InspectionChatMessage>();
+    public DbSet<SubscriptionPayment> SubscriptionPayments => Set<SubscriptionPayment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -246,6 +248,41 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(i => i.AgentId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure InspectionChatMessage
+        modelBuilder.Entity<InspectionChatMessage>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.SenderName).IsRequired().HasMaxLength(150);
+            entity.Property(m => m.SenderRole).IsRequired().HasMaxLength(50);
+            entity.Property(m => m.Message).IsRequired().HasMaxLength(2000);
+
+            entity.HasOne(m => m.Booking)
+                .WithMany(b => b.ChatMessages)
+                .HasForeignKey(m => m.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure SubscriptionPayment
+        modelBuilder.Entity<SubscriptionPayment>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.TransactionId).IsRequired().HasMaxLength(100);
+            entity.Property(s => s.Amount).HasPrecision(18, 2);
+            entity.Property(s => s.PaymentMethod).HasMaxLength(50);
+            entity.Property(s => s.Currency).HasMaxLength(10);
+            entity.Property(s => s.Status).HasMaxLength(50);
+
+            entity.HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -1,0 +1,138 @@
+@model PropLink.Web.Models.SubscriptionSuccessViewModel
+@{
+    ViewData["Title"] = "Subscription Activated - PropLink";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
+            <div class="card sub-receipt-card border-0 shadow-lg rounded-4 p-4 p-md-5 text-center overflow-hidden position-relative">
+                <!-- Top Ribbon -->
+                <div class="sub-receipt-ribbon">
+                    <span>PAYMENT CONFIRMED</span>
+                </div>
+
+                <!-- Success Icon -->
+                <div class="mb-4">
+                    <div class="sub-success-icon-wrap d-inline-flex align-items-center justify-content-center rounded-circle">
+                        <i class="bi bi-patch-check-fill text-success" style="font-size: 3.5rem;"></i>
+                    </div>
+                </div>
+
+                <h3 class="fw-bold sub-heading-text mb-2">Welcome to PropLink Pro!</h3>
+                <p class="sub-muted-text small mb-4">
+                    Your subscription payment via <strong>@Model.PaymentMethod</strong> has been verified by the gateway. Your enhanced account limits are now active.
+                </p>
+
+                <!-- Receipt Invoice Box -->
+                <div class="sub-receipt-box text-start p-4 rounded-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                        <div>
+                            <span class="small sub-muted-text text-uppercase fw-bold" style="font-size: 0.72rem;">TRANSACTION ID</span>
+                            <div class="fw-bold sub-heading-text font-monospace">@Model.TransactionId</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="small sub-muted-text text-uppercase fw-bold" style="font-size: 0.72rem;">STATUS</span>
+                            <div><span class="badge bg-success text-white rounded-pill px-3 py-1">PAID & VALIDATED</span></div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <span class="small sub-muted-text d-block">Subscriber:</span>
+                            <span class="fw-semibold sub-heading-text">@Model.CustomerName</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="small sub-muted-text d-block">Payment Method:</span>
+                            <span class="fw-semibold sub-heading-text">
+                                <i class="bi bi-wallet2 text-primary me-1"></i>@(Model.CardType ?? Model.PaymentMethod)
+                            </span>
+                        </div>
+                        <div class="col-6">
+                            <span class="small sub-muted-text d-block">Gateway Bank Tran ID:</span>
+                            <span class="fw-semibold sub-heading-text font-monospace small">@(Model.BankTranId ?? "TXN_VERIFIED")</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="small sub-muted-text d-block">Payment Date:</span>
+                            <span class="fw-semibold sub-heading-text">@Model.PaymentDate.ToString("MMM dd, yyyy h:mm tt")</span>
+                        </div>
+                        <div class="col-12">
+                            <span class="small sub-muted-text d-block">Subscription Valid Until:</span>
+                            <span class="fw-bold text-success fs-6">
+                                <i class="bi bi-calendar-check-fill me-1"></i>@Model.SubscriptionExpiresAt.ToString("MMMM dd, yyyy") (30 Days Active)
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-bold sub-heading-text">Total Amount Paid:</span>
+                        <span class="fs-4 fw-bold text-success">৳@Model.Amount.ToString("N2") @Model.Currency</span>
+                    </div>
+                </div>
+
+                <!-- Unlocked Perks Summary -->
+                <div class="row g-2 mb-4 text-start">
+                    <div class="col-sm-6">
+                        <div class="p-2 px-3 rounded-3 sub-perk-item">
+                            <i class="bi bi-check2-circle text-success me-1"></i>
+                            <span class="small fw-semibold sub-heading-text">10 Property Listings / Month</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-2 px-3 rounded-3 sub-perk-item">
+                            <i class="bi bi-check2-circle text-success me-1"></i>
+                            <span class="small fw-semibold sub-heading-text">Unlimited Visit Requests</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    <a asp-controller="Property" asp-action="Sell" class="btn btn-primary rounded-pill px-4 py-2 fw-bold">
+                        <i class="bi bi-plus-circle me-1"></i> Post a Property (10 Available)
+                    </a>
+                    <a asp-controller="Property" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold">
+                        <i class="bi bi-search me-1"></i> Browse Verified Properties
+                    </a>
+                    <button type="button" class="btn btn-light border rounded-pill px-3 py-2 text-muted" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i> Print Receipt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sub-receipt-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+    }
+    .sub-heading-text {
+        color: var(--text-heading) !important;
+    }
+    .sub-muted-text {
+        color: var(--text-muted) !important;
+    }
+    .sub-receipt-box {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-color);
+    }
+    .sub-perk-item {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-color);
+    }
+    .sub-receipt-ribbon {
+        position: absolute;
+        top: 20px;
+        right: -35px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        padding: 4px 40px;
+        transform: rotate(45deg);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+</style>
